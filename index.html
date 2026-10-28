@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BOWFLIT</title>
-<meta name="description" content="マインクラフト統合版の弓バトルロイヤル。2発で脱落。空を制した者が、最後に立つ。">
+<meta name="description" content="1回の被弾が命取り。アクション重視の異能弓PVP。マインクラフト統合版。">
 <meta property="og:title" content="BOWFLIT">
-<meta property="og:description" content="マインクラフト統合版の弓バトルロイヤル。2発で脱落。空を制した者が、最後に立つ。">
+<meta property="og:description" content="1回の被弾が命取り。アクション重視の異能弓PVP。マインクラフト統合版。">
 <meta property="og:image" content="assets/floating_quarry.png">
 <link rel="icon" href="assets/heads/jack.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
@@ -58,6 +58,7 @@ nav ul a:hover{color:#fff}
 .copy .logo{width:min(440px,90%);display:block;margin:0 0 26px}
 .copy h1{font-family:var(--jp);font-weight:900;font-size:clamp(34px,4.6vw,62px);line-height:1.15;letter-spacing:-.01em;margin:0 0 20px;text-wrap:balance}
 .copy p{color:var(--sub);max-width:30em;margin:0 0 32px}
+.copy .tagline{font-weight:700;font-size:clamp(16px,1.6vw,19px);color:#c9cbd8;line-height:1.7}
 .copy .row{display:flex;gap:12px;flex-wrap:wrap}
 .chars{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
 .chars img{position:relative;height:auto;filter:drop-shadow(0 0 30px rgba(162,75,255,.35))}
@@ -94,6 +95,7 @@ section{padding-block:110px;position:relative}
 .rule{background:var(--bg2);padding:30px 28px 32px;min-width:0;position:relative}
 .rule .n{font-family:var(--en);font-size:96px;line-height:.8;color:var(--ink)}
 .rule .n i{font-style:normal;color:var(--accent);font-size:.5em;margin-left:6px}
+.inf{height:.62em;width:auto;vertical-align:baseline;margin-bottom:.06em;display:inline-block}
 .rule h3{font-family:var(--jp);font-weight:900;font-size:19px;margin:18px 0 8px}
 .rule p{margin:0;color:var(--sub);font-size:14.5px}
 @media (max-width:820px){.rules{grid-template-columns:minmax(0,1fr)}}
@@ -172,7 +174,7 @@ footer img{height:22px;width:auto;opacity:.7}
   <div class="wrap">
     <a class="logo" href="#top"><img src="assets/logo.png" alt="BOWFLIT" width="112" height="28"></a>
     <ul>
-      <li><a href="#gameplay">Gameplay</a></li>
+      <li><a href="#how-to-play">How to play</a></li>
       <li><a href="#uniques">Uniques</a></li>
       <li><a href="#map">Map</a></li>
       <li><a href="#modes">Modes</a></li>
@@ -188,10 +190,10 @@ footer img{height:22px;width:auto;opacity:.7}
       <p class="kicker">Bedrock / Bow Battle Royale</p>
       <img class="logo" src="assets/logo.png" alt="BOWFLIT" width="1024" height="256">
       <h1>空を制した者が、<br>最後に立つ。</h1>
-      <p>鎧1枚、矢は無限。2発で脱落。壁を蹴り、宙を滑り、ユニークで出し抜け。マインクラフト統合版の弓バトルロイヤル。</p>
+      <p class="tagline">1回の被弾が命取り<br>アクション重視の異能弓PVP</p>
       <div class="row">
         <a class="btn" href="https://discord.gg/Ksta82WWR" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.4C.6 9-.1 13.5.3 17.9a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.1-.8-9.6-3.8-13.5ZM8.5 15.2c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm7 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>Discordで参加</a>
-        <a class="btn ghost" href="#gameplay">Gameplay</a>
+        <a class="btn ghost" href="#how-to-play">How to play</a>
       </div>
     </div>
     <div class="chars" aria-hidden="true">
@@ -203,7 +205,7 @@ footer img{height:22px;width:auto;opacity:.7}
   <div class="hud">
     <div class="wrap">
       <div class="stat"><b>2</b><span>Shots</span><small>2発で脱落</small></div>
-      <div class="stat"><b>∞</b><span>Arrows</span><small>矢は無限</small></div>
+      <div class="stat"><b><svg class="inf" viewBox="0 0 48 24" aria-label="無限"><path d="M12 4a8 8 0 1 0 0 16c6 0 10-8 12-8s6 8 12 8a8 8 0 1 0 0-16c-6 0-10 8-12 8S18 4 12 4Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"/></svg></b><span>Arrows</span><small>矢は無限</small></div>
       <div class="stat"><b>16</b><span>Uniques</span><small>能力を持つキャラ</small></div>
       <div class="stat"><b>4</b><span>Moves</span><small>キャラコン</small></div>
     </div>
@@ -211,12 +213,12 @@ footer img{height:22px;width:auto;opacity:.7}
 </header>
 
 <main>
-<section id="gameplay">
+<section id="how-to-play">
   <div class="wrap">
-    <div class="sh"><p class="en">Game<i>play</i></p><h2>撃って、跳んで、生き残る</h2><p>最後の1人になったら勝ち。勝負を決めるのは、エイムと立ち回りと、ユニークの使いどころ。</p></div>
+    <div class="sh"><p class="en">How to <i>play</i></p><h2>撃って、跳んで、生き残る</h2><p>最後の1人になったら勝ち。勝負を決めるのは、エイムと立ち回りと、ユニークの使いどころ。</p></div>
     <div class="rules">
       <div class="rule"><div class="n">2<i>SHOTS</i></div><h3>2発で脱落</h3><p>1発目で鎧が割れて、2発目で脱落。島から落ちても脱落。</p></div>
-      <div class="rule"><div class="n">∞<i>ARROWS</i></div><h3>矢は無限</h3><p>弾切れはない。当たるまで撃ち続けろ。</p></div>
+      <div class="rule"><div class="n"><svg class="inf" viewBox="0 0 48 24" aria-label="無限"><path d="M12 4a8 8 0 1 0 0 16c6 0 10-8 12-8s6 8 12 8a8 8 0 1 0 0-16c-6 0-10 8-12 8S18 4 12 4Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"/></svg><i>ARROWS</i></div><h3>矢は無限</h3><p>弾切れはない。当たるまで撃ち続けろ。</p></div>
       <div class="rule"><div class="n">16<i>UNIQUES</i></div><h3>ユニーク</h3><p>1人1体、固有の能力を持って戦う。熟練度を上げると専用スキン。</p></div>
     </div>
     <div class="moves">
