@@ -48,7 +48,8 @@ nav ul a:hover{opacity:1;color:var(--sky)}
 /* ヒーロー */
 .hero{position:relative;overflow:hidden;background:radial-gradient(120% 80% at 70% 10%,#3b2a8f 0%,var(--night2) 45%,var(--night) 100%);padding-block:56px 72px}
 .stars{position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 70% 20%,#fff9 50%,transparent 51%),radial-gradient(1.5px 1.5px at 40% 70%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 85% 60%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 10% 85%,#fff7 50%,transparent 51%);background-size:340px 300px;opacity:.7;pointer-events:none}
-.hero .wrap{position:relative;display:grid;grid-template-columns:1fr 1.15fr;gap:32px;align-items:center}
+.hero .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:32px;align-items:center}
+.hero .wrap>*{min-width:0}
 .hero h1{margin:0}
 .hero h1 img{width:min(440px,100%)}
 .tag{font-family:var(--display);font-size:clamp(26px,4vw,40px);line-height:1.25;margin:18px 0 12px;text-wrap:balance}
@@ -57,7 +58,7 @@ nav ul a:hover{opacity:1;color:var(--sky)}
 .hero .cta{display:flex;flex-wrap:wrap;gap:12px}
 .island{animation:float 6s ease-in-out infinite;filter:drop-shadow(0 30px 40px rgba(0,0,0,.45))}
 @keyframes float{50%{transform:translateY(-14px)}}
-@media (max-width:820px){.hero .wrap{grid-template-columns:1fr}.island{order:-1;max-width:520px;margin:0 auto}}
+@media (max-width:820px){.hero{padding-block:24px 48px}.hero .wrap{grid-template-columns:minmax(0,1fr);gap:8px;text-align:center}.island{order:-1;width:100%;max-width:420px;margin:0 auto}.hero h1 img{width:min(300px,80%)}.hero p{margin-inline:auto}.hero .cta{justify-content:center}}
 
 /* 特徴 */
 .feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
@@ -99,10 +100,10 @@ nav ul a:hover{opacity:1;color:var(--sky)}
 @media (max-width:820px){.main{grid-template-columns:1fr;max-width:420px;padding:16px}.model{max-width:240px;margin:0 auto;width:100%}.info{text-align:center}.meta{justify-content:center}.l1,.r1{display:none}.arrow{width:42px;height:42px}}
 
 /* マップ */
-.map{display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center}
+.map{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:36px;align-items:center}
 .map ul{margin:0 0 24px;padding-left:1.2em;color:var(--sub)}
 .map li{margin-bottom:4px}
-@media (max-width:820px){.map{grid-template-columns:1fr}}
+@media (max-width:820px){.map{grid-template-columns:minmax(0,1fr)}}
 
 /* モード */
 .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -145,7 +146,7 @@ footer{padding-block:32px calc(32px + env(safe-area-inset-bottom,0px));color:var
         <a class="btn ghost" href="#play">どんなゲーム?</a>
       </div>
     </div>
-    <img class="island" src="assets/floating_quarry.png" alt="マップ「浮島の採石場」。巨大な木とクレーンが立つ空中の採石場" width="1485" height="1059">
+    <img class="island" src="assets/floating_quarry.png" alt="マップ「浮島の採石場」。巨大な木とクレーンが立つ空中の採石場" width="980" height="817">
   </div>
 </header>
 
@@ -202,7 +203,7 @@ footer{padding-block:32px calc(32px + env(safe-area-inset-bottom,0px));color:var
 
 <section id="map">
   <div class="wrap map">
-    <img src="assets/floating_quarry.png" alt="浮島の採石場の全体図" width="1485" height="1059" loading="lazy">
+    <img src="assets/floating_quarry.png" alt="浮島の採石場の全体図" width="980" height="817" loading="lazy">
     <div>
       <p class="eyebrow">New map</p>
       <h2>浮島の採石場</h2>
@@ -260,7 +261,7 @@ let viewer = null;
 try {
   viewer = new skinview3d.SkinViewer({ canvas: $('skin'), width: 300, height: 400 });
   viewer.animation = new skinview3d.WalkingAnimation(); viewer.animation.speed = 0.6;
-  viewer.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches; viewer.autoRotateSpeed = 0.6;
+  viewer.autoRotate = false; // いつも正面(ドラッグで回せる)
   viewer.zoom = 0.85; viewer.fov = 40;
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) viewer.animation.paused = true;
 } catch (e) { /* 3D が使えない時は顔だけ */ }
@@ -269,7 +270,7 @@ U.forEach((u, k) => { const b = document.createElement('button'); b.setAttribute
 function show(k) {
   i = (k % U.length + U.length) % U.length; const u = U[i];
   $('u-name').textContent = u.name; $('u-motif').textContent = 'モチーフ: ' + u.motif; $('u-ct').textContent = u.ct ? `CT ${u.ct}秒` : 'CT なし'; $('u-desc').textContent = u.desc;
-  if (viewer) viewer.loadSkin(`assets/skins/${u.id}.png`, { model: u.slim ? 'slim' : 'default' });
+  if (viewer) { viewer.loadSkin(`assets/skins/${u.id}.png`, { model: u.slim ? 'slim' : 'default' }); viewer.playerWrapper.rotation.y = 0; viewer.resetCameraPose(); viewer.zoom = 0.85; }
   else $('skin').replaceWith(Object.assign(new Image(), { src: `assets/heads/${u.id}.png`, alt: u.name, style: 'width:100%;image-rendering:pixelated' }));
   document.querySelectorAll('.side').forEach(b => { const v = U[((i + +b.dataset.k) % U.length + U.length) % U.length]; b.querySelector('img').src = `assets/heads/${v.id}.png`; b.title = v.name; });
   [...dots.children].forEach((d, n) => d.setAttribute('aria-current', String(n === i)));
