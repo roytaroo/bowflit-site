@@ -73,21 +73,30 @@ nav ul a:hover{opacity:1;color:var(--sky)}
 .move span{color:var(--sub);font-size:14px}
 .chip{width:44px;height:44px;border-radius:8px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.25),inset 0 0 0 3px rgba(255,255,255,.15)}
 
-/* ユニーク */
-.uniques{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.uq{display:grid;grid-template-columns:64px 1fr;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
-.uq img,.rw img{image-rendering:pixelated;width:64px;height:64px;border-radius:10px;background:rgba(255,255,255,.06)}
-.uq-body{min-width:0}
-.uq h3{margin:0;font-family:var(--display);font-weight:400;font-size:20px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
-.uq h3 span{font-family:var(--body);font-size:12px;font-weight:700;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:0 8px}
-.uq .ct{margin:2px 0 6px;font-size:12.5px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
-.uq p:last-child{margin:0;color:var(--sub);font-size:14px;line-height:1.65}
-
-/* ご褒美スキン */
-.rewards{display:flex;flex-wrap:wrap;gap:14px}
-.rw{margin:0;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,207,74,.14),rgba(163,92,255,.12));border:1px solid rgba(255,207,74,.35);border-radius:14px;padding:12px 16px 12px 12px}
-.rw figcaption{font-family:var(--display);font-size:18px;display:flex;flex-direction:column;line-height:1.3}
-.rw figcaption span{font-family:var(--body);font-weight:800;font-size:12.5px;color:var(--gold)}
+/* ユニーク(マップ投票と同じ並び: まん中に大きく1体、左右に次の顔) */
+.car{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
+.stage{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;min-width:0}
+.main{display:grid;grid-template-columns:minmax(0,300px) minmax(0,360px);gap:24px;align-items:center;background:linear-gradient(160deg,#30246e,var(--panel));border:2px solid rgba(163,92,255,.55);border-radius:22px;padding:18px 26px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.model{aspect-ratio:3/4;max-width:100%;background:radial-gradient(60% 50% at 50% 60%,rgba(90,209,255,.22),transparent 70%);border-radius:16px}
+.model canvas{width:100%!important;height:100%!important;display:block;cursor:grab;touch-action:pan-y}
+.info h3{font-family:var(--display);font-weight:400;font-size:clamp(30px,4vw,42px);margin:0;line-height:1.1}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.meta span{font-size:13px;font-weight:800;border-radius:999px;padding:2px 12px;background:rgba(255,255,255,.08)}
+.meta span:last-child{color:var(--gold);background:rgba(255,207,74,.12)}
+.info p:last-child{margin:0;color:var(--sub);font-size:15px}
+.side{border:0;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;cursor:pointer;opacity:.55;transition:opacity .15s,transform .15s;flex:none}
+.side:hover{opacity:.9;transform:translateY(-3px)}
+.side img{display:block;image-rendering:pixelated;width:100%;height:100%;border-radius:13px}
+.l1,.r1{width:76px;height:76px}.l2,.r2{width:52px;height:52px;opacity:.3}
+.arrow{width:48px;height:48px;border-radius:50%;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.arrow:hover{border-color:var(--purple);color:#fff}
+.arrow svg{width:22px;height:22px}
+.arrow:focus-visible,.side:focus-visible,.dots button:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.dots{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+.dots button{width:10px;height:10px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.22);cursor:pointer}
+.dots button[aria-current="true"]{background:var(--sky);transform:scale(1.3)}
+@media (max-width:980px){.l2,.r2{display:none}}
+@media (max-width:820px){.main{grid-template-columns:1fr;max-width:420px;padding:16px}.model{max-width:240px;margin:0 auto;width:100%}.info{text-align:center}.meta{justify-content:center}.l1,.r1{display:none}.arrow{width:42px;height:42px}}
 
 /* マップ */
 .map{display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center}
@@ -168,145 +177,25 @@ footer{padding-block:32px calc(32px + env(safe-area-inset-bottom,0px));color:var
   <div class="wrap">
     <p class="eyebrow">Uniques</p>
     <h2>16体のユニーク</h2>
-    <p class="lead">試合の前に1体えらぶ。能力にはクールタイム(CT)がある。</p>
-    <div class="uniques">
-      <article class="uq">
-        <img src="assets/heads/jack.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Jack<span>スライム</span></h3>
-          <p class="ct">CT 8秒</p>
-          <p>大ジャンプができる。スニークしながらだと低く横へ跳ぶ。着地の瞬間にしゃがんでいると、もう一度跳ねる(横跳びは同じ長さ・大ジャンプは半分の高さ)。奈落に落ちかけても跳んで戻れる</p>
+    <p class="lead">試合の前に1体えらぶ。能力にはクールタイム(CT)がある。ドラッグで回して見られる。</p>
+    <div class="car" id="car" aria-roledescription="カルーセル" aria-label="ユニーク">
+      <button class="arrow prev" id="prev" aria-label="前のユニーク"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="stage">
+        <button class="side l2" data-k="-2" tabindex="-1" aria-hidden="true"><img alt=""></button>
+        <button class="side l1" data-k="-1" tabindex="-1" aria-hidden="true"><img alt=""></button>
+        <div class="main" aria-live="polite">
+          <div class="model"><canvas id="skin" width="300" height="400" aria-label="ユニークの全身"></canvas></div>
+          <div class="info">
+            <h3 id="u-name"></h3>
+            <p class="meta"><span id="u-motif"></span><span id="u-ct"></span></p>
+            <p id="u-desc"></p>
+          </div>
         </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/humming.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Humming<span>ハチ</span></h3>
-          <p class="ct">CT 12秒</p>
-          <p>使うたびに小爆発で跳ぶ。最初に使ってから5秒間・5回まで。跳んだ回数が少ないほど、次のクールタイムが短い(4〜12秒)。持ってスニークで羽ばたいてゆっくり落ちる</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/widow.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Widow<span>クモ</span></h3>
-          <p class="ct">CT 19秒</p>
-          <p>見ている所(40マスまで)に糸を刺して、振り子のようにぶら下がって移動する。しゃがむと糸を巻き取る(合計3秒で焼き切れる)。糸は10秒、もう一度使うと外せる</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/splash.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Splash<span>カエル</span></h3>
-          <p class="ct">CT 18秒</p>
-          <p>8秒間 足が速くなりジャンプ力が上がる。その間はダイヤブロックのブリンクも強くなる。クールタイム中に空中で使うと、見ている方向の斜め下へ加速する(着地するまで1回)</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/shade.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Shade<span>小悪魔</span></h3>
-          <p class="ct">CT 13秒</p>
-          <p>鎧を外して8秒間透明になる。使うと全員に知らせが出る。透明中は視界が暗い。終わると鎧が戻る</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/jester.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Jester<span>ピエロ</span></h3>
-          <p class="ct">CT 12秒</p>
-          <p>見ている相手と位置を入れ替える。入れ替えられた相手は後ろを向く</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/replica.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Replica<span>キツネ</span></h3>
-          <p class="ct">CT 10秒</p>
-          <p>自分と同じ姿の分身を20秒出す。分身は2秒まっすぐ歩き、そのあとは自分と同じ動きをする。分身が出ている間に使うと、分身を自分のところへ呼び戻せる。分身を撃った相手は3秒盲目になる。分身が倒されるとクールタイム3秒、20秒倒されなければクールタイム10秒</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/meteor.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Meteor<span>宇宙人</span></h3>
-          <p class="ct">CT 12秒</p>
-          <p>見ている所に巨大なブロック(約7.5×7.5×7.5)を10秒置く。自分には見えない(ふちだけ見える)。中にいる相手は盲目になり、ユニークが使えない</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/oracle.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Oracle<span>スケルトン</span></h3>
-          <p class="ct">CT 15秒</p>
-          <p>見ている所のまわり(半径7)の壁を8秒間 透明にする(ぶつかるのはそのまま)。範囲の中の相手が自分にだけ光って見え、自分の矢は範囲の中のブロックを通り抜ける</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/echo.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Echo<span>コウモリ</span></h3>
-          <p class="ct">CT 18秒</p>
-          <p>前後左右の4方向にシュルカーを飛ばす。どれかを見ながらもう一度使うとそこへ転移し、まわりの相手を盲目にする。時間内なら残りのシュルカーにも続けて転移できる。アイテムを持って殴ると残りを回収して、残した数が多いほどクールタイムが短い(3〜18秒)</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/pierce.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Pierce<span>ハリネズミ</span></h3>
-          <p class="ct">CT 15秒</p>
-          <p>まわりを3匹のハリネズミが走り回る。使うたびに1匹が丸まって飛んでいく。当たった相手はノックバック、鎧を着ていたら鎧が壊れる(鎧がなければ一瞬遅くなる)。3匹投げると15秒後に全員帰ってくる</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/wormhole.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Astro<span>ポータルガン</span></h3>
-          <p class="ct">CT 20秒</p>
-          <p>使うたびに見ている所(40マスまで)へゲートを置く(2つ)。2つのゲートはつながっていて、くぐると向きと勢いを保ったまま反対のゲートから出る。矢もくぐる。敵も使える。ゲートは12秒</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/rampart.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Rampart<span>カメ</span></h3>
-          <p class="ct">CT なし</p>
-          <p>敵を倒すと鎧がもらえる。金ブロックの上で使うと、5秒ためて1回だけ鎧を作れる(試合ごと)</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/mason.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Sprout<span>パンダ</span></h3>
-          <p class="ct">CT 10秒</p>
-          <p>見ている所(40マスまで)に柱(2×2・高さ6)を地面からせり上げる。しゃがんで使うか足元を見て使うと、自分の真下から生えて高い所へ持ち上がる。足場にも、矢をふせぐ盾にもなる。柱でのウォールキックなどのキャラコンは、Sprout なら食料ゲージが減らない。3本までためておけて、10秒ごとに1本もどる。4本目を立てると一番古い柱が消える</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/byte.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Byte<span>テレビ</span></h3>
-          <p class="ct">CT 20秒</p>
-          <p>まわり(半径4)のダイヤブロック・エメラルドブロックを8秒ハッキングする。ハッキング中は見た目が変わり、自分が乗るとブリンク・アップドラフトが強くなる。他の人が乗っても反応しない</p>
-        </div>
-      </article>
-      <article class="uq">
-        <img src="assets/heads/chef.png" alt="" width="64" height="64" loading="lazy">
-        <div class="uq-body">
-          <h3>Olive<span>シェフ</span></h3>
-          <p class="ct">CT 6秒</p>
-          <p>見ている方へピザ生地を投げる。生地は12マス飛ぶか壁の手前で止まり、空中で5秒回り続ける。自分が上から乗ると大きく跳ねる(勢いはそのまま)。3枚まで置けて、4枚目で一番古い生地が消える。3枚までためておけて、6秒ごとに1枚もどる</p>
-        </div>
-      </article>
-    </div>
-    <h3 style="font-family:var(--display);font-weight:400;font-size:24px;margin:56px 0 4px">ご褒美スキン</h3>
-    <p class="lead" style="margin-bottom:16px">熟練度を S まで上げると手に入る、特別な見た目。</p>
-    <div class="rewards">
-      <figure class="rw"><img src="assets/heads/meteor_v1.png" alt="Meteor のスキン" width="64" height="64" loading="lazy"><figcaption>Meteor<span>熟練度 S</span></figcaption></figure>
-      <figure class="rw"><img src="assets/heads/jack_v1.png" alt="Jack のスキン" width="64" height="64" loading="lazy"><figcaption>Jack<span>熟練度 S</span></figcaption></figure>
-      <figure class="rw"><img src="assets/heads/shade_v1.png" alt="Shade のスキン" width="64" height="64" loading="lazy"><figcaption>Shade<span>熟練度 S</span></figcaption></figure>
-      <figure class="rw"><img src="assets/heads/byte_v1.png" alt="Byte のスキン" width="64" height="64" loading="lazy"><figcaption>Byte<span>熟練度 S</span></figcaption></figure>
-      <figure class="rw"><img src="assets/heads/meteor_v2.png" alt="Meteor のスキン" width="64" height="64" loading="lazy"><figcaption>Meteor<span>5000 コイン</span></figcaption></figure>
+        <button class="side r1" data-k="1" tabindex="-1" aria-hidden="true"><img alt=""></button>
+        <button class="side r2" data-k="2" tabindex="-1" aria-hidden="true"><img alt=""></button>
+      </div>
+      <button class="arrow next" id="next" aria-label="次のユニーク"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="dots" id="dots"></div>
     </div>
   </div>
 </section>
@@ -362,5 +251,37 @@ footer{padding-block:32px calc(32px + env(safe-area-inset-bottom,0px));color:var
 <footer>
   <div class="wrap">BOWFLIT はマインクラフト統合版のファンメイドのゲームです。Mojang・Microsoft とは関係ありません。Minecraft は Mojang Synergies AB の商標です。</div>
 </footer>
+<script src="https://unpkg.com/skinview3d@3.0.1/bundles/skinview3d.bundle.js"></script>
+<script>
+const U = [{"id": "jack", "name": "Jack", "motif": "スライム", "ct": 8, "desc": "大ジャンプができる。スニークしながらだと低く横へ跳ぶ。着地の瞬間にしゃがんでいると、もう一度跳ねる(横跳びは同じ長さ・大ジャンプは半分の高さ)。奈落に落ちかけても跳んで戻れる", "slim": false}, {"id": "humming", "name": "Humming", "motif": "ハチ", "ct": 12, "desc": "使うたびに小爆発で跳ぶ。最初に使ってから5秒間・5回まで。跳んだ回数が少ないほど、次のクールタイムが短い(4〜12秒)。持ってスニークで羽ばたいてゆっくり落ちる", "slim": true}, {"id": "widow", "name": "Widow", "motif": "クモ", "ct": 19, "desc": "見ている所(40マスまで)に糸を刺して、振り子のようにぶら下がって移動する。しゃがむと糸を巻き取る(合計3秒で焼き切れる)。糸は10秒、もう一度使うと外せる", "slim": true}, {"id": "splash", "name": "Splash", "motif": "カエル", "ct": 18, "desc": "8秒間 足が速くなりジャンプ力が上がる。その間はダイヤブロックのブリンクも強くなる。クールタイム中に空中で使うと、見ている方向の斜め下へ加速する(着地するまで1回)", "slim": true}, {"id": "shade", "name": "Shade", "motif": "小悪魔", "ct": 13, "desc": "鎧を外して8秒間透明になる。使うと全員に知らせが出る。透明中は視界が暗い。終わると鎧が戻る", "slim": true}, {"id": "jester", "name": "Jester", "motif": "ピエロ", "ct": 12, "desc": "見ている相手と位置を入れ替える。入れ替えられた相手は後ろを向く", "slim": true}, {"id": "replica", "name": "Replica", "motif": "キツネ", "ct": 10, "desc": "自分と同じ姿の分身を20秒出す。分身は2秒まっすぐ歩き、そのあとは自分と同じ動きをする。分身が出ている間に使うと、分身を自分のところへ呼び戻せる。分身を撃った相手は3秒盲目になる。分身が倒されるとクールタイム3秒、20秒倒されなければクールタイム10秒", "slim": true}, {"id": "meteor", "name": "Meteor", "motif": "宇宙人", "ct": 12, "desc": "見ている所に巨大なブロック(約7.5×7.5×7.5)を10秒置く。自分には見えない(ふちだけ見える)。中にいる相手は盲目になり、ユニークが使えない", "slim": false}, {"id": "oracle", "name": "Oracle", "motif": "スケルトン", "ct": 15, "desc": "見ている所のまわり(半径7)の壁を8秒間 透明にする(ぶつかるのはそのまま)。範囲の中の相手が自分にだけ光って見え、自分の矢は範囲の中のブロックを通り抜ける", "slim": true}, {"id": "echo", "name": "Echo", "motif": "コウモリ", "ct": 18, "desc": "前後左右の4方向にシュルカーを飛ばす。どれかを見ながらもう一度使うとそこへ転移し、まわりの相手を盲目にする。時間内なら残りのシュルカーにも続けて転移できる。アイテムを持って殴ると残りを回収して、残した数が多いほどクールタイムが短い(3〜18秒)", "slim": true}, {"id": "pierce", "name": "Pierce", "motif": "ハリネズミ", "ct": 15, "desc": "まわりを3匹のハリネズミが走り回る。使うたびに1匹が丸まって飛んでいく。当たった相手はノックバック、鎧を着ていたら鎧が壊れる(鎧がなければ一瞬遅くなる)。3匹投げると15秒後に全員帰ってくる", "slim": true}, {"id": "wormhole", "name": "Astro", "motif": "ポータルガン", "ct": 20, "desc": "使うたびに見ている所(40マスまで)へゲートを置く(2つ)。2つのゲートはつながっていて、くぐると向きと勢いを保ったまま反対のゲートから出る。矢もくぐる。敵も使える。ゲートは12秒", "slim": false}, {"id": "rampart", "name": "Rampart", "motif": "カメ", "ct": 0, "desc": "敵を倒すと鎧がもらえる。金ブロックの上で使うと、5秒ためて1回だけ鎧を作れる(試合ごと)", "slim": true}, {"id": "mason", "name": "Sprout", "motif": "パンダ", "ct": 10, "desc": "見ている所(40マスまで)に柱(2×2・高さ6)を地面からせり上げる。しゃがんで使うか足元を見て使うと、自分の真下から生えて高い所へ持ち上がる。足場にも、矢をふせぐ盾にもなる。柱でのウォールキックなどのキャラコンは、Sprout なら食料ゲージが減らない。3本までためておけて、10秒ごとに1本もどる。4本目を立てると一番古い柱が消える", "slim": true}, {"id": "byte", "name": "Byte", "motif": "テレビ", "ct": 20, "desc": "まわり(半径4)のダイヤブロック・エメラルドブロックを8秒ハッキングする。ハッキング中は見た目が変わり、自分が乗るとブリンク・アップドラフトが強くなる。他の人が乗っても反応しない", "slim": true}, {"id": "chef", "name": "Olive", "motif": "シェフ", "ct": 6, "desc": "見ている方へピザ生地を投げる。生地は12マス飛ぶか壁の手前で止まり、空中で5秒回り続ける。自分が上から乗ると大きく跳ねる(勢いはそのまま)。3枚まで置けて、4枚目で一番古い生地が消える。3枚までためておけて、6秒ごとに1枚もどる", "slim": true}];
+let i = 0;
+const $ = id => document.getElementById(id);
+let viewer = null;
+try {
+  viewer = new skinview3d.SkinViewer({ canvas: $('skin'), width: 300, height: 400 });
+  viewer.animation = new skinview3d.WalkingAnimation(); viewer.animation.speed = 0.6;
+  viewer.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches; viewer.autoRotateSpeed = 0.6;
+  viewer.zoom = 0.85; viewer.fov = 40;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) viewer.animation.paused = true;
+} catch (e) { /* 3D が使えない時は顔だけ */ }
+const dots = $('dots');
+U.forEach((u, k) => { const b = document.createElement('button'); b.setAttribute('aria-label', u.name); b.onclick = () => show(k); dots.appendChild(b); });
+function show(k) {
+  i = (k % U.length + U.length) % U.length; const u = U[i];
+  $('u-name').textContent = u.name; $('u-motif').textContent = 'モチーフ: ' + u.motif; $('u-ct').textContent = u.ct ? `CT ${u.ct}秒` : 'CT なし'; $('u-desc').textContent = u.desc;
+  if (viewer) viewer.loadSkin(`assets/skins/${u.id}.png`, { model: u.slim ? 'slim' : 'default' });
+  else $('skin').replaceWith(Object.assign(new Image(), { src: `assets/heads/${u.id}.png`, alt: u.name, style: 'width:100%;image-rendering:pixelated' }));
+  document.querySelectorAll('.side').forEach(b => { const v = U[((i + +b.dataset.k) % U.length + U.length) % U.length]; b.querySelector('img').src = `assets/heads/${v.id}.png`; b.title = v.name; });
+  [...dots.children].forEach((d, n) => d.setAttribute('aria-current', String(n === i)));
+}
+$('prev').onclick = () => show(i - 1); $('next').onclick = () => show(i + 1);
+document.querySelectorAll('.side').forEach(b => b.onclick = () => show(i + +b.dataset.k));
+$('car').addEventListener('keydown', e => { if (e.key === 'ArrowLeft') show(i - 1); if (e.key === 'ArrowRight') show(i + 1); });
+// スマホ: 説明のところを左右にスワイプで切りかえ(3D のところはドラッグで回す)
+let sx = null;
+document.querySelector('.info').addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+document.querySelector('.info').addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); sx = null; });
+show(0);
+</script>
 </body>
 </html>
