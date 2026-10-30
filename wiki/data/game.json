@@ -1,0 +1,973 @@
+{
+ "rarity": {
+  "common": {
+   "order": 1,
+   "label": "コモン",
+   "color": "§f"
+  },
+  "uncommon": {
+   "order": 2,
+   "label": "アンコモン",
+   "color": "§a"
+  },
+  "rare": {
+   "order": 3,
+   "label": "レア",
+   "color": "§9"
+  },
+  "epic": {
+   "order": 4,
+   "label": "エピック",
+   "color": "§5"
+  },
+  "legend": {
+   "order": 5,
+   "label": "レジェンド",
+   "color": "§6"
+  },
+  "mythic": {
+   "order": 6,
+   "label": "ミシック",
+   "color": "§d"
+  },
+  "super_legend": {
+   "order": 7,
+   "label": "スーパーレジェンド",
+   "color": "§6§l"
+  }
+ },
+ "pets": [
+  {
+   "id": "pet_bee",
+   "label": "ミツバチ",
+   "price": 1000,
+   "rarity": "rare"
+  },
+  {
+   "id": "pet_parrot",
+   "label": "インコ",
+   "price": 1000,
+   "rarity": "rare"
+  },
+  {
+   "id": "pet_pig",
+   "label": "こぶた",
+   "price": 1000,
+   "rarity": "rare"
+  },
+  {
+   "id": "pet_cat",
+   "label": "子猫",
+   "price": 1000,
+   "rarity": "rare"
+  },
+  {
+   "id": "pet_wolf",
+   "label": "子狼",
+   "price": 1000,
+   "rarity": "rare"
+  },
+  {
+   "id": "pet_fox",
+   "label": "キツネ",
+   "price": 2000,
+   "rarity": "epic"
+  },
+  {
+   "id": "pet_allay",
+   "label": "アレイ",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_panda",
+   "label": "パンダ",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_ender_dragon",
+   "label": "ちびエンダードラゴン",
+   "price": 5000,
+   "rarity": "mythic"
+  },
+  {
+   "id": "pet_red_panda",
+   "label": "守護霊レッサーパンダ",
+   "price": 5000,
+   "rarity": "mythic"
+  },
+  {
+   "id": "pet_dolphin",
+   "label": "イルカ",
+   "price": 2000,
+   "rarity": "epic"
+  },
+  {
+   "id": "pet_tropical_fish",
+   "label": "熱帯魚の群れ",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_squid",
+   "label": "浮いてるイカ",
+   "price": 1000,
+   "rarity": "rare"
+  },
+  {
+   "id": "pet_goldfish",
+   "label": "テラい金魚",
+   "price": 2000,
+   "rarity": "epic"
+  },
+  {
+   "id": "pet_roi",
+   "label": "ろい",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_rate",
+   "label": "らて",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_pom",
+   "label": "ぽむ",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_megami",
+   "label": "めがみ",
+   "price": 3000,
+   "rarity": "legend"
+  },
+  {
+   "id": "pet_golden_pig",
+   "label": "金のブタ",
+   "price": null,
+   "rarity": "mythic",
+   "obtain": "mission",
+   "obtainNote": "ミッション【節約家】"
+  },
+  {
+   "id": "pet_silver_chicken",
+   "label": "シルバー鶏",
+   "price": null,
+   "rarity": "legend",
+   "obtain": "mission",
+   "obtainNote": "ミッション【新規客】"
+  },
+  {
+   "id": "pet_golden_chicken",
+   "label": "ゴールデン鶏",
+   "price": null,
+   "rarity": "legend",
+   "obtain": "mission",
+   "obtainNote": "ミッション【常連さん】"
+  },
+  {
+   "id": "pet_rainbow_chicken",
+   "label": "レインボー鶏",
+   "price": null,
+   "rarity": "mythic",
+   "obtain": "mission",
+   "obtainNote": "ミッション【太客】"
+  },
+  {
+   "id": "pet_red_allay",
+   "label": "赤色アレイ",
+   "price": null,
+   "rarity": "mythic",
+   "obtain": "mission",
+   "obtainNote": "ミッション【真バーサーカー】"
+  }
+ ],
+ "symbols": [
+  {
+   "id": "symbol_arrow",
+   "label": "矢印 (>)",
+   "price": 0,
+   "rarity": "common",
+   "symbol": ">"
+  },
+  {
+   "id": "symbol_chevron",
+   "label": "シェブロン",
+   "price": 500,
+   "rarity": "rare",
+   "symbol": ""
+  },
+  {
+   "id": "symbol_skull",
+   "label": "ドクロ",
+   "price": 500,
+   "rarity": "epic",
+   "symbol": ""
+  },
+  {
+   "id": "symbol_cross",
+   "label": "バツ",
+   "price": 500,
+   "rarity": "epic",
+   "symbol": ""
+  }
+ ],
+ "hitfx": [
+  {
+   "id": "hit_red",
+   "label": "照準が赤く",
+   "price": 0,
+   "rarity": "common",
+   "desc": "当てた瞬間、照準が赤くなって少し大きくなる"
+  },
+  {
+   "id": "hit_x",
+   "label": "×マーク",
+   "price": 800,
+   "rarity": "rare",
+   "desc": "当てた瞬間、照準のまわりに白い ×(FPS でおなじみ)"
+  },
+  {
+   "id": "hit_text",
+   "label": "HIT の字",
+   "price": 800,
+   "rarity": "rare",
+   "desc": "照準の右上に小さく HIT が浮いて消える"
+  }
+ ],
+ "titles": [
+  {
+   "id": "beginner",
+   "label": "初心者",
+   "price": null,
+   "rarity": "common"
+  },
+  {
+   "id": "serious",
+   "label": "まじめ",
+   "price": 30,
+   "rarity": "common"
+  },
+  {
+   "id": "clumsy",
+   "label": "ドジ",
+   "price": 30,
+   "rarity": "common"
+  },
+  {
+   "id": "playful",
+   "label": "おちゃめ",
+   "price": 30,
+   "rarity": "common"
+  },
+  {
+   "id": "kind",
+   "label": "お人好し",
+   "price": 30,
+   "rarity": "common"
+  },
+  {
+   "id": "short_temper",
+   "label": "短気",
+   "price": 30,
+   "rarity": "common"
+  },
+  {
+   "id": "jokester",
+   "label": "お調子者",
+   "price": 30,
+   "rarity": "common"
+  },
+  {
+   "id": "cool",
+   "label": "かっこいい",
+   "price": 50,
+   "rarity": "uncommon"
+  },
+  {
+   "id": "cute",
+   "label": "かわいい",
+   "price": 50,
+   "rarity": "uncommon"
+  },
+  {
+   "id": "popular",
+   "label": "モテモテ",
+   "price": 50,
+   "rarity": "uncommon"
+  },
+  {
+   "id": "chic",
+   "label": "渋い",
+   "price": 50,
+   "rarity": "uncommon"
+  },
+  {
+   "id": "beautiful",
+   "label": "美しい",
+   "price": 50,
+   "rarity": "uncommon"
+  },
+  {
+   "id": "bad_breath",
+   "label": "口臭い",
+   "price": 100,
+   "rarity": "rare"
+  },
+  {
+   "id": "weirdo",
+   "label": "変わり者",
+   "price": 100,
+   "rarity": "rare"
+  },
+  {
+   "id": "nostalgia",
+   "label": "懐古厨",
+   "price": 100,
+   "rarity": "rare"
+  },
+  {
+   "id": "smart",
+   "label": "頭がいい",
+   "price": 100,
+   "rarity": "rare"
+  },
+  {
+   "id": "wild",
+   "label": "やんちゃ",
+   "price": 100,
+   "rarity": "rare"
+  },
+  {
+   "id": "good_voice",
+   "label": "声良い",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "hysteric",
+   "label": "ヒステリック",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "loved_by_all",
+   "label": "みんな大好き",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "cheater",
+   "label": "浮気癖",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "genius",
+   "label": "天才",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "addon",
+   "label": "アドオン",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "night_owl",
+   "label": "夜ふかし",
+   "price": 50,
+   "rarity": "uncommon"
+  },
+  {
+   "id": "thaw_master",
+   "label": "解凍職人",
+   "price": 100,
+   "rarity": "rare"
+  },
+  {
+   "id": "one_shot",
+   "label": "一撃必殺",
+   "price": 200,
+   "rarity": "epic"
+  },
+  {
+   "id": "ice_ruler",
+   "label": "氷の支配者",
+   "price": 500,
+   "rarity": "legend"
+  },
+  {
+   "id": "clutch_god",
+   "label": "クラッチの神",
+   "price": 1000,
+   "rarity": "legend"
+  },
+  {
+   "id": "new_rich",
+   "label": "成金",
+   "price": 500,
+   "rarity": "legend"
+  },
+  {
+   "id": "wealthy",
+   "label": "資産家",
+   "price": 1000,
+   "rarity": "legend"
+  },
+  {
+   "id": "tycoon",
+   "label": "大富豪",
+   "price": 3000,
+   "rarity": "mythic"
+  },
+  {
+   "id": "all_gone",
+   "label": "全財産これに消えた",
+   "price": 5000,
+   "rarity": "mythic"
+  },
+  {
+   "id": "new_customer",
+   "label": "新規客",
+   "price": null,
+   "rarity": "legend"
+  },
+  {
+   "id": "regular",
+   "label": "常連さん",
+   "price": null,
+   "rarity": "mythic"
+  },
+  {
+   "id": "big_spender",
+   "label": "太客",
+   "price": null,
+   "rarity": "mythic"
+  },
+  {
+   "id": "berserker",
+   "label": "バーサーカー",
+   "price": null,
+   "rarity": "legend"
+  },
+  {
+   "id": "true_berserker",
+   "label": "真バーサーカー",
+   "price": null,
+   "rarity": "mythic"
+  },
+  {
+   "id": "saver",
+   "label": "貯金好き",
+   "price": null,
+   "rarity": "legend"
+  },
+  {
+   "id": "miracle_child",
+   "label": "奇跡の子",
+   "price": 400,
+   "rarity": "epic"
+  },
+  {
+   "id": "lone_wolf",
+   "label": "一匹狼",
+   "price": 400,
+   "rarity": "epic"
+  },
+  {
+   "id": "slot_addict",
+   "label": "スロット中毒",
+   "price": 500,
+   "rarity": "epic"
+  },
+  {
+   "id": "hw_candy_thief",
+   "label": "お菓子どろぼう",
+   "price": null,
+   "rarity": "uncommon",
+   "obtain": "halloween"
+  },
+  {
+   "id": "hw_trick_or_treat",
+   "label": "トリック・オア・トリート",
+   "price": null,
+   "rarity": "rare",
+   "obtain": "halloween"
+  },
+  {
+   "id": "hw_pumpkin_king",
+   "label": "かぼちゃ大王",
+   "price": null,
+   "rarity": "legend",
+   "obtain": "halloween"
+  }
+ ],
+ "emotes": [
+  {
+   "id": "wave",
+   "label": "手を振る",
+   "price": 0,
+   "rarity": "common"
+  },
+  {
+   "id": "bow",
+   "label": "お辞儀",
+   "price": 0,
+   "rarity": "common"
+  },
+  {
+   "id": "nop",
+   "label": "いいえ",
+   "price": 0,
+   "rarity": "common"
+  },
+  {
+   "id": "shrug",
+   "label": "肩をすくめる",
+   "price": 0,
+   "rarity": "common"
+  },
+  {
+   "id": "laugh",
+   "label": "笑う",
+   "price": 500,
+   "rarity": "rare"
+  },
+  {
+   "id": "military_salute",
+   "label": "敬礼",
+   "price": 0,
+   "rarity": "common"
+  },
+  {
+   "id": "dab",
+   "label": "ダブ",
+   "price": 500,
+   "rarity": "rare"
+  },
+  {
+   "id": "prostration",
+   "label": "土下座",
+   "price": 500,
+   "rarity": "rare"
+  },
+  {
+   "id": "head_spin",
+   "label": "ヘッドスピン",
+   "price": 800,
+   "rarity": "epic"
+  },
+  {
+   "id": "griddy",
+   "label": "グリディ",
+   "price": 1000,
+   "rarity": "legend"
+  },
+  {
+   "id": "hakari_dance",
+   "label": "ハカリダンス",
+   "price": 1000,
+   "rarity": "legend"
+  },
+  {
+   "id": "moonwalk",
+   "label": "ムーンウォーク",
+   "price": 1000,
+   "rarity": "legend"
+  },
+  {
+   "id": "hero_landing",
+   "label": "ヒーロー着地",
+   "price": 1000,
+   "rarity": "legend"
+  }
+ ],
+ "badgeCats": [
+  {
+   "id": "rank",
+   "label": "ランクバッジ"
+  },
+  {
+   "id": "challenge",
+   "label": "チャレンジバッジ"
+  },
+  {
+   "id": "special",
+   "label": "おもしろバッジ"
+  },
+  {
+   "id": "elite",
+   "label": "エリートバッジ"
+  },
+  {
+   "id": "mastery",
+   "label": "熟練度バッジ"
+  }
+ ],
+ "badges": [
+  {
+   "id": "rank_t1",
+   "label": "壱段バッジ",
+   "how": "ランク「壱段」に到達",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "rank_t2",
+   "label": "弐段バッジ",
+   "how": "ランク「弐段」に到達",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "rank_t3",
+   "label": "参段バッジ",
+   "how": "ランク「参段」に到達",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "rank_t4",
+   "label": "肆段バッジ",
+   "how": "ランク「肆段」に到達",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "rank_t5",
+   "label": "伍段バッジ",
+   "how": "ランク「伍段」に到達",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "rank_top",
+   "label": "陸段バッジ",
+   "how": "ランク「陸段」に到達",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "rank_champion",
+   "label": "最高峰バッジ",
+   "how": "陸段のワールド1位",
+   "cat": "rank",
+   "glyph": ""
+  },
+  {
+   "id": "mvp",
+   "label": "MVPバッジ",
+   "how": "BOWFLITでMVPを累計10回",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "veteran",
+   "label": "ベテランバッジ",
+   "how": "BOWFLITに100試合参加",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "win100",
+   "label": "30勝バッジ",
+   "how": "BOWFLITで通算30勝",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "mvp50",
+   "label": "MVPレジェンドバッジ",
+   "how": "BOWFLITでMVPを累計30回",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "untouchable",
+   "label": "無傷バッジ",
+   "how": "鎧を1回も割られずに試合に勝つのを累計20回",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "sniper",
+   "label": "スナイパーバッジ",
+   "how": "40m以上離れた相手を倒すのを累計30回",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "first_blood",
+   "label": "先制の鬼バッジ",
+   "how": "試合で最初のキルを取るのを累計20回",
+   "cat": "special",
+   "glyph": ""
+  },
+  {
+   "id": "zako",
+   "label": "雑魚乙バッジ",
+   "how": "0ヒットのまま最初に脱落する",
+   "cat": "special",
+   "glyph": ""
+  },
+  {
+   "id": "perfect_game",
+   "label": "パーフェクトゲームバッジ",
+   "how": "プレイヤー4人以上の試合で、鎧を割られず他の全員を倒して勝つ",
+   "cat": "elite",
+   "glyph": ""
+  },
+  {
+   "id": "snowman",
+   "label": "割れ物バッジ",
+   "how": "通算200回鎧を割られる(割られるのも才能)",
+   "cat": "special",
+   "glyph": ""
+  },
+  {
+   "id": "iron_will",
+   "label": "鉄の意志バッジ",
+   "how": "鎧を割られてから生き残って試合に勝つのを累計30回",
+   "cat": "elite",
+   "glyph": ""
+  },
+  {
+   "id": "hawkeye",
+   "label": "ホークアイバッジ",
+   "how": "1試合で40m以上のキルを3回",
+   "cat": "elite",
+   "glyph": ""
+  },
+  {
+   "id": "early_bird",
+   "label": "早起きバッジ",
+   "how": "朝5時〜8時(日本時間)に試合をやり切る",
+   "cat": "special",
+   "glyph": ""
+  },
+  {
+   "id": "marathon",
+   "label": "耐久王バッジ",
+   "how": "1日(日本時間)に試合を30回やり切る",
+   "cat": "special",
+   "glyph": ""
+  },
+  {
+   "id": "login",
+   "label": "皆勤賞バッジ",
+   "how": "30日ログインする",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "login100",
+   "label": "50日ログインバッジ",
+   "how": "50日ログインする",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "playtime",
+   "label": "住人バッジ",
+   "how": "合計100時間プレイ",
+   "cat": "challenge",
+   "glyph": ""
+  },
+  {
+   "id": "rich",
+   "label": "大富豪バッジ",
+   "how": "手持ちのコインを5000枚貯める",
+   "cat": "challenge",
+   "glyph": ""
+  }
+ ],
+ "grades": [
+  {
+   "id": "D",
+   "min": 0
+  },
+  {
+   "id": "C",
+   "min": 100
+  },
+  {
+   "id": "B",
+   "min": 250
+  },
+  {
+   "id": "B+",
+   "min": 350
+  },
+  {
+   "id": "A",
+   "min": 500
+  },
+  {
+   "id": "A+",
+   "min": 650
+  },
+  {
+   "id": "S",
+   "min": 1200
+  },
+  {
+   "id": "S+",
+   "min": 2500
+  },
+  {
+   "id": "Z",
+   "min": 5000
+  },
+  {
+   "id": "Ω",
+   "min": 10000,
+   "wins": 2000
+  }
+ ],
+ "uniques": [
+  {
+   "id": "jack",
+   "name": "Jack",
+   "motif": "スライム",
+   "ct": 8,
+   "desc": "大ジャンプができる。スニークしながらだと低く横へ跳ぶ。着地の瞬間にしゃがんでいると、もう一度跳ねる(横跳びは同じ長さ・大ジャンプは半分の高さ)。奈落に落ちかけても跳んで戻れる"
+  },
+  {
+   "id": "humming",
+   "name": "Humming",
+   "motif": "ハチ",
+   "ct": 12,
+   "desc": "使うたびに小爆発で跳ぶ。最初に使ってから5秒間・5回まで。跳んだ回数が少ないほど、次のクールタイムが短い(4〜12秒)。持ってスニークで羽ばたいてゆっくり落ちる"
+  },
+  {
+   "id": "jester",
+   "name": "Jester",
+   "motif": "ピエロ",
+   "ct": 12,
+   "desc": "見ている相手と位置を入れ替える。入れ替えられた相手は後ろを向く"
+  },
+  {
+   "id": "shade",
+   "name": "Shade",
+   "motif": "小悪魔",
+   "ct": 13,
+   "desc": "鎧を外して8秒間透明になる。使うと全員に知らせが出る。透明中は視界が暗い。終わると鎧が戻る"
+  },
+  {
+   "id": "rampart",
+   "name": "Rampart",
+   "motif": "カメ",
+   "ct": 0,
+   "desc": "敵を倒すと鎧がもらえる。金ブロックの上で使うと、5秒ためて1回だけ鎧を作れる(試合ごと)"
+  },
+  {
+   "id": "widow",
+   "name": "Widow",
+   "motif": "クモ",
+   "ct": 19,
+   "desc": "見ている所(40マスまで)に糸を刺して、振り子のようにぶら下がって移動する。しゃがむと糸を巻き取る(合計3秒で焼き切れる)。糸は10秒、もう一度使うと外せる"
+  },
+  {
+   "id": "pierce",
+   "name": "Pierce",
+   "motif": "ハリネズミ",
+   "ct": 15,
+   "desc": "まわりを3匹のハリネズミが走り回る。使うたびに1匹が丸まって飛んでいく。当たった相手はノックバック、鎧を着ていたら鎧が壊れる(鎧がなければ一瞬遅くなる)。3匹投げると15秒後に全員帰ってくる"
+  },
+  {
+   "id": "echo",
+   "name": "Echo",
+   "motif": "コウモリ",
+   "ct": 18,
+   "desc": "前後左右の4方向にシュルカーを飛ばす。どれかを見ながらもう一度使うとそこへ転移し、まわりの相手を盲目にする。時間内なら残りのシュルカーにも続けて転移できる。アイテムを持って殴ると残りを回収して、残した数が多いほどクールタイムが短い(3〜18秒)"
+  },
+  {
+   "id": "meteor",
+   "name": "Meteor",
+   "motif": "宇宙人",
+   "ct": 12,
+   "desc": "見ている所に巨大なブロック(約7.5×7.5×7.5)を10秒置く。自分には見えない(ふちだけ見える)。中にいる相手は盲目になり、ユニークが使えない"
+  },
+  {
+   "id": "oracle",
+   "name": "Oracle",
+   "motif": "スケルトン",
+   "ct": 15,
+   "desc": "見ている所のまわり(半径7)の壁を8秒間 透明にする(ぶつかるのはそのまま)。範囲の中の相手が自分にだけ光って見え、自分の矢は範囲の中のブロックを通り抜ける"
+  },
+  {
+   "id": "replica",
+   "name": "Replica",
+   "motif": "キツネ",
+   "ct": 10,
+   "desc": "自分と同じ姿の分身を20秒出す。分身は2秒まっすぐ歩き、そのあとは自分と同じ動きをする。分身が出ている間に使うと、分身を自分のところへ呼び戻せる。分身を撃った相手は3秒盲目になる。分身が倒されるとクールタイム3秒、20秒倒されなければクールタイム10秒"
+  },
+  {
+   "id": "splash",
+   "name": "Splash",
+   "motif": "カエル",
+   "ct": 18,
+   "desc": "8秒間 足が速くなりジャンプ力が上がる。その間はダイヤブロックのブリンクも強くなる。クールタイム中に空中で使うと、見ている方向の斜め下へ加速する(着地するまで1回)"
+  },
+  {
+   "id": "byte",
+   "name": "Byte",
+   "motif": "テレビ",
+   "ct": 20,
+   "desc": "まわり(半径4)のダイヤブロック・エメラルドブロックを8秒ハッキングする。ハッキング中は見た目が変わり、自分が乗るとブリンク・アップドラフトが強くなる。他の人が乗っても反応しない"
+  },
+  {
+   "id": "wormhole",
+   "name": "Astro",
+   "motif": "ポータルガン",
+   "ct": 20,
+   "desc": "使うたびに見ている所(40マスまで)へゲートを置く(2つ)。2つのゲートはつながっていて、くぐると向きと勢いを保ったまま反対のゲートから出る。矢もくぐる。敵も使える。ゲートは12秒"
+  },
+  {
+   "id": "mason",
+   "name": "Sprout",
+   "motif": "パンダ",
+   "ct": 10,
+   "desc": "見ている所(40マスまで)に柱(2×2・高さ6)を地面からせり上げる。しゃがんで使うか足元を見て使うと、自分の真下から生えて高い所へ持ち上がる。足場にも、矢をふせぐ盾にもなる。柱でのウォールキックなどのキャラコンは、Sprout なら食料ゲージが減らない。3本までためておけて、10秒ごとに1本もどる。4本目を立てると一番古い柱が消える"
+  },
+  {
+   "id": "chef",
+   "name": "Olive",
+   "motif": "シェフ",
+   "ct": 6,
+   "desc": "見ている方へピザ生地を投げる。生地は12マス飛ぶか壁の手前で止まり、空中で5秒回り続ける。自分が上から乗ると大きく跳ねる(勢いはそのまま)。3枚まで置けて、4枚目で一番古い生地が消える。3枚までためておけて、6秒ごとに1枚もどる"
+  }
+ ],
+ "ranks": [
+  {
+   "label": "壱段",
+   "min": 0
+  },
+  {
+   "label": "弐段",
+   "min": 300
+  },
+  {
+   "label": "参段",
+   "min": 700
+  },
+  {
+   "label": "肆段",
+   "min": 1200
+  },
+  {
+   "label": "伍段",
+   "min": 1700
+  },
+  {
+   "label": "陸段",
+   "min": 2100
+  }
+ ]
+}

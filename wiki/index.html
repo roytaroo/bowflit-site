@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BOWFLIT 公式Wiki</title>
+<meta name="description" content="BOWFLIT の公式Wiki。ユニークの能力・ストーリー・相性・テクニック・対処法、ランクと熟練度、コスメの一覧。">
+<link rel="icon" href="../assets/heads/jack.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* 公式サイトと同じ見た目(ほぼ黒・紫の差し色・斜めに切った角)。読みやすさ優先で文字は少し大きめ */
+:root{
+  --bg:#07080c; --bg2:#0e1018; --bg3:#151826; --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.18);
+  --ink:#eeedf5; --sub:#8d91a6; --accent:#a24bff; --accent2:#c58bff; --good:#5fe08a; --bad:#ff5a6a; --gold:#ffc446;
+  --en:"Bebas Neue","Zen Kaku Gothic New",sans-serif; --ui:"Rajdhani","Zen Kaku Gothic New",sans-serif; --jp:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:var(--jp);font-weight:500;font-size:15.5px;line-height:1.85;-webkit-font-smoothing:antialiased}
+a{color:var(--accent2)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+.px{image-rendering:pixelated}
+/* 上のバー */
+header{position:sticky;top:0;z-index:30;background:rgba(7,8,12,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+header .wrap{display:flex;align-items:center;gap:18px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.brand img{height:24px;width:auto;display:block}
+.brand b{font-family:var(--en);font-weight:400;font-size:22px;letter-spacing:.08em;color:var(--accent2);line-height:1}
+header nav{display:flex;gap:22px;margin-left:auto}
+header nav a{font-family:var(--ui);font-weight:700;font-size:14px;letter-spacing:.12em;color:var(--sub);text-decoration:none;text-transform:uppercase}
+header nav a:hover,header nav a.on{color:#fff}
+.search{position:relative;flex:none}
+.search input{width:180px;font:inherit;font-size:14px;color:var(--ink);background:var(--bg3);border:1px solid var(--line2);padding:6px 10px}
+.menu-btn{display:none;width:40px;height:40px;border:1px solid var(--line2);background:transparent;color:#fff;cursor:pointer;flex:none}
+.menu-btn svg{width:20px;height:20px;display:block;margin:auto}
+@media (max-width:900px){
+  header nav{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:0;background:#07080c;border-bottom:1px solid var(--line);padding:6px 18px 12px;margin:0}
+  header.open nav{display:flex}
+  header nav a{padding:12px 0;border-bottom:1px solid var(--line)}
+  .menu-btn{display:block;margin-left:auto}
+  .search input{width:130px}
+}
+@media (max-width:420px){.brand img{display:none}.search input{width:110px}}
+.results{position:absolute;right:0;top:calc(100% + 4px);width:min(320px,80vw);background:var(--bg2);border:1px solid var(--line2);z-index:40;max-height:60vh;overflow:auto}
+.results a{display:flex;gap:10px;align-items:center;padding:8px 12px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line);font-size:14px}
+.results a:hover{background:var(--bg3)}
+.results img{width:24px;height:24px}
+.results small{color:var(--sub);margin-left:auto}
+/* 共通 */
+main{min-height:70vh;padding-bottom:80px}
+.crumb{font-family:var(--ui);font-weight:700;font-size:13px;letter-spacing:.12em;color:var(--sub);margin:22px 0 8px}
+.crumb a{color:var(--sub);text-decoration:none}.crumb a:hover{color:#fff}
+h1.t{font-family:var(--en);font-weight:400;font-size:clamp(48px,8vw,96px);line-height:.9;margin:0 0 8px;letter-spacing:.02em}
+h1.t i{font-style:normal;color:var(--accent)}
+.lead{color:var(--sub);max-width:46em;margin:0 0 30px}
+h2.s{font-weight:900;font-size:20px;margin:44px 0 14px;display:flex;align-items:center;gap:12px}
+h2.s::before{content:"";width:10px;height:10px;background:var(--accent);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);flex:none}
+h2.s small{font-family:var(--ui);font-weight:700;font-size:12px;letter-spacing:.18em;color:var(--sub);text-transform:uppercase}
+.card{background:var(--bg2);border:1px solid var(--line);padding:18px 20px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+.tabs button{font-family:var(--ui);font-weight:700;font-size:13px;letter-spacing:.1em;border:1px solid var(--line2);background:transparent;color:var(--sub);padding:6px 14px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+/* ホーム */
+.home-hero{position:relative;padding:40px 0 10px}
+.story{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:center}
+.story p{margin:0 0 12px;color:#c9cbd8}
+.story .cast{display:flex;justify-content:center;align-items:flex-end}
+.story .cast img{width:30%;margin:0 -5%}
+.story .cast img:nth-child(2){width:38%;z-index:1}
+@media (max-width:760px){.story{grid-template-columns:minmax(0,1fr)}.story .cast{order:-1;max-width:360px;margin:0 auto}}
+.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:30px}
+.quick a{display:block;background:var(--bg2);border:1px solid var(--line);padding:16px 18px;text-decoration:none;color:var(--ink);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.quick a:hover{border-color:var(--accent);background:var(--bg3)}
+.quick b{display:block;font-family:var(--en);font-weight:400;font-size:28px;letter-spacing:.04em;line-height:1}
+.quick span{font-size:13px;color:var(--sub)}
+@media (max-width:760px){.quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ユニーク一覧 */
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:10px}
+.ucard{position:relative;display:block;background:var(--bg2);border:1px solid var(--line);text-decoration:none;color:var(--ink);overflow:hidden;transition:border-color .15s,transform .15s}
+.ucard:hover{border-color:var(--uc);transform:translateY(-2px)}
+.ucard .pic{aspect-ratio:4/5;display:grid;place-items:end center;background:radial-gradient(70% 60% at 50% 70%,color-mix(in srgb,var(--uc) 40%,transparent),transparent 70%);border-bottom:3px solid var(--uc)}
+.ucard .pic{position:relative}.ucard .pic img{position:absolute;left:50%;bottom:0;transform:translateX(-50%);height:92%;width:auto;max-width:none}
+.ucard .nm{padding:8px 12px 10px}
+.ucard b{font-family:var(--en);font-weight:400;font-size:26px;letter-spacing:.04em;line-height:1;display:block}
+.ucard span{font-size:12.5px;color:var(--sub)}
+.ucard .role{position:absolute;left:8px;top:8px;font-family:var(--ui);font-weight:700;font-size:11px;letter-spacing:.12em;background:rgba(7,8,12,.75);padding:2px 8px;color:var(--uc)}
+/* ユニークのページ */
+.uhead{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:32px;align-items:end;margin-top:6px}
+.uhead .pic{aspect-ratio:3/4;display:grid;place-items:end center;background:radial-gradient(60% 55% at 50% 65%,color-mix(in srgb,var(--uc) 45%,transparent),transparent 70%);border-bottom:3px solid var(--uc)}
+.uhead .pic{position:relative;overflow:hidden}.uhead .pic img{position:absolute;left:50%;bottom:0;transform:translateX(-50%);height:94%;width:auto;max-width:none}
+.uhead .motif{font-weight:700;color:var(--uc);margin:0}
+.uhead h1{font-family:var(--en);font-weight:400;font-size:clamp(64px,10vw,120px);line-height:.85;margin:4px 0 6px;letter-spacing:.02em}
+.uhead .catch{font-weight:900;font-size:18px;margin:0 0 16px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.meta div{background:var(--bg2);border:1px solid var(--line);padding:6px 14px}
+.meta span{display:block;font-family:var(--ui);font-weight:700;font-size:11px;letter-spacing:.16em;color:var(--sub)}
+.meta b{font-family:var(--en);font-weight:400;font-size:24px;letter-spacing:.04em;line-height:1.1}
+.stars{color:var(--gold);letter-spacing:.1em}
+.ability{border-left:3px solid var(--uc);padding:4px 0 4px 16px;color:#d6d8e4;margin:0}
+@media (max-width:760px){.uhead{grid-template-columns:minmax(0,1fr)}.uhead .pic{max-width:260px;margin:0 auto;width:100%}}
+.toc{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 0;position:sticky;top:60px;z-index:5;background:rgba(7,8,12,.9);padding:8px 0;border-bottom:1px solid var(--line)}
+.toc a{font-size:13px;font-weight:700;color:var(--sub);text-decoration:none;border:1px solid var(--line2);padding:3px 10px}
+.toc a:hover{color:#fff;border-color:var(--uc)}
+.lore{font-size:16px;color:#d6d8e4;max-width:46em}
+.rel{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:10px}
+.rel a,.mu a{display:grid;grid-template-columns:48px minmax(0,1fr);gap:14px;align-items:start;background:var(--bg2);border:1px solid var(--line);padding:14px 16px;text-decoration:none;color:var(--ink)}
+.rel a:hover,.mu a:hover{border-color:var(--line2);background:var(--bg3)}
+.rel img,.mu img{width:48px;height:48px}
+.rel b,.mu b{font-weight:900}
+.rel em{font-style:normal;font-family:var(--ui);font-weight:700;font-size:12px;letter-spacing:.12em;color:var(--accent2);margin-left:8px}
+.rel p,.mu p{margin:2px 0 0;color:var(--sub);font-size:14.5px}
+.mu{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.mu h3{font-family:var(--ui);font-weight:700;font-size:14px;letter-spacing:.16em;margin:0 0 8px}
+.mu .g h3{color:var(--good)}.mu .b h3{color:var(--bad)}
+.mu .g a{border-left:3px solid var(--good)}.mu .b a{border-left:3px solid var(--bad)}
+.mu > div{display:grid;gap:8px;align-content:start}
+@media (max-width:760px){.mu{grid-template-columns:minmax(0,1fr)}}
+.tips{counter-reset:t;display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.tips li{counter-increment:t;display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;background:var(--bg2);border:1px solid var(--line);padding:12px 16px}
+.tips li::before{content:counter(t,decimal-leading-zero);font-family:var(--en);font-size:26px;line-height:1.1;color:var(--uc,var(--accent2))}
+.tips.ct li::before{color:var(--bad)}
+.pn{display:flex;justify-content:space-between;gap:10px;margin-top:40px}
+.pn a{display:flex;overflow:hidden;align-items:center;gap:10px;text-decoration:none;color:var(--ink);background:var(--bg2);border:1px solid var(--line);padding:10px 14px;min-width:0}
+.pn a:hover{border-color:var(--line2)}
+.pn img{width:32px;height:32px}
+.pn span{font-family:var(--en);font-size:22px;letter-spacing:.04em}
+/* 表 */
+.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+.tbl th,.tbl td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-family:var(--ui);font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--sub);text-transform:uppercase;white-space:nowrap}
+.tbl td.num{font-family:var(--en);font-size:20px;letter-spacing:.04em;white-space:nowrap}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--bg2)}
+.rar{font-family:var(--ui);font-weight:700;font-size:12px;letter-spacing:.08em;padding:1px 8px;border:1px solid currentColor;white-space:nowrap}
+.basic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+.basic-grid .card b{display:block;font-weight:900;margin-bottom:4px}
+.basic-grid .card .k{font-family:var(--ui);font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--accent2)}
+.basic-grid .card p{margin:0;color:var(--sub);font-size:14.5px}
+.empty{color:var(--sub)}
+footer{border-top:1px solid var(--line);color:var(--sub);font-size:12.5px;padding-block:22px calc(22px + env(safe-area-inset-bottom,0px))}
+footer .wrap{display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header id="hd">
+  <div class="wrap">
+    <a class="brand" href="#/"><img src="../assets/logo.png" alt="BOWFLIT" width="96" height="24"><b>WIKI</b></a>
+    <nav id="nav">
+      <a href="#/uniques" data-r="uniques">Uniques</a>
+      <a href="#/basics" data-r="basics">遊び方</a>
+      <a href="#/progress" data-r="progress">ランク・熟練度</a>
+      <a href="#/cosmetics" data-r="cosmetics">コスメ</a>
+      <a href="../">公式サイト</a>
+    </nav>
+    <div class="search"><input id="q" type="search" placeholder="さがす" aria-label="Wiki の中をさがす" autocomplete="off"><div class="results" id="res" hidden></div></div>
+    <button class="menu-btn" id="menu-btn" aria-label="メニュー" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2"/></svg></button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<footer><div class="wrap"><span>BOWFLIT 公式Wiki · 中身はゲームとあわせて更新します</span><span>Minecraft は Mojang Synergies AB の商標です。Mojang・Microsoft とは関係ありません。</span></div></footer>
+<script>
+const FALLBACK = {"game": {"rarity": {"common": {"order": 1, "label": "コモン", "color": "§f"}, "uncommon": {"order": 2, "label": "アンコモン", "color": "§a"}, "rare": {"order": 3, "label": "レア", "color": "§9"}, "epic": {"order": 4, "label": "エピック", "color": "§5"}, "legend": {"order": 5, "label": "レジェンド", "color": "§6"}, "mythic": {"order": 6, "label": "ミシック", "color": "§d"}, "super_legend": {"order": 7, "label": "スーパーレジェンド", "color": "§6§l"}}, "pets": [{"id": "pet_bee", "label": "ミツバチ", "price": 1000, "rarity": "rare"}, {"id": "pet_parrot", "label": "インコ", "price": 1000, "rarity": "rare"}, {"id": "pet_pig", "label": "こぶた", "price": 1000, "rarity": "rare"}, {"id": "pet_cat", "label": "子猫", "price": 1000, "rarity": "rare"}, {"id": "pet_wolf", "label": "子狼", "price": 1000, "rarity": "rare"}, {"id": "pet_fox", "label": "キツネ", "price": 2000, "rarity": "epic"}, {"id": "pet_allay", "label": "アレイ", "price": 3000, "rarity": "legend"}, {"id": "pet_panda", "label": "パンダ", "price": 3000, "rarity": "legend"}, {"id": "pet_ender_dragon", "label": "ちびエンダードラゴン", "price": 5000, "rarity": "mythic"}, {"id": "pet_red_panda", "label": "守護霊レッサーパンダ", "price": 5000, "rarity": "mythic"}, {"id": "pet_dolphin", "label": "イルカ", "price": 2000, "rarity": "epic"}, {"id": "pet_tropical_fish", "label": "熱帯魚の群れ", "price": 3000, "rarity": "legend"}, {"id": "pet_squid", "label": "浮いてるイカ", "price": 1000, "rarity": "rare"}, {"id": "pet_goldfish", "label": "テラい金魚", "price": 2000, "rarity": "epic"}, {"id": "pet_roi", "label": "ろい", "price": 3000, "rarity": "legend"}, {"id": "pet_rate", "label": "らて", "price": 3000, "rarity": "legend"}, {"id": "pet_pom", "label": "ぽむ", "price": 3000, "rarity": "legend"}, {"id": "pet_megami", "label": "めがみ", "price": 3000, "rarity": "legend"}, {"id": "pet_golden_pig", "label": "金のブタ", "price": null, "rarity": "mythic", "obtain": "mission", "obtainNote": "ミッション【節約家】"}, {"id": "pet_silver_chicken", "label": "シルバー鶏", "price": null, "rarity": "legend", "obtain": "mission", "obtainNote": "ミッション【新規客】"}, {"id": "pet_golden_chicken", "label": "ゴールデン鶏", "price": null, "rarity": "legend", "obtain": "mission", "obtainNote": "ミッション【常連さん】"}, {"id": "pet_rainbow_chicken", "label": "レインボー鶏", "price": null, "rarity": "mythic", "obtain": "mission", "obtainNote": "ミッション【太客】"}, {"id": "pet_red_allay", "label": "赤色アレイ", "price": null, "rarity": "mythic", "obtain": "mission", "obtainNote": "ミッション【真バーサーカー】"}], "symbols": [{"id": "symbol_arrow", "label": "矢印 (>)", "price": 0, "rarity": "common", "symbol": ">"}, {"id": "symbol_chevron", "label": "シェブロン", "price": 500, "rarity": "rare", "symbol": ""}, {"id": "symbol_skull", "label": "ドクロ", "price": 500, "rarity": "epic", "symbol": ""}, {"id": "symbol_cross", "label": "バツ", "price": 500, "rarity": "epic", "symbol": ""}], "hitfx": [{"id": "hit_red", "label": "照準が赤く", "price": 0, "rarity": "common", "desc": "当てた瞬間、照準が赤くなって少し大きくなる"}, {"id": "hit_x", "label": "×マーク", "price": 800, "rarity": "rare", "desc": "当てた瞬間、照準のまわりに白い ×(FPS でおなじみ)"}, {"id": "hit_text", "label": "HIT の字", "price": 800, "rarity": "rare", "desc": "照準の右上に小さく HIT が浮いて消える"}], "titles": [{"id": "beginner", "label": "初心者", "price": null, "rarity": "common"}, {"id": "serious", "label": "まじめ", "price": 30, "rarity": "common"}, {"id": "clumsy", "label": "ドジ", "price": 30, "rarity": "common"}, {"id": "playful", "label": "おちゃめ", "price": 30, "rarity": "common"}, {"id": "kind", "label": "お人好し", "price": 30, "rarity": "common"}, {"id": "short_temper", "label": "短気", "price": 30, "rarity": "common"}, {"id": "jokester", "label": "お調子者", "price": 30, "rarity": "common"}, {"id": "cool", "label": "かっこいい", "price": 50, "rarity": "uncommon"}, {"id": "cute", "label": "かわいい", "price": 50, "rarity": "uncommon"}, {"id": "popular", "label": "モテモテ", "price": 50, "rarity": "uncommon"}, {"id": "chic", "label": "渋い", "price": 50, "rarity": "uncommon"}, {"id": "beautiful", "label": "美しい", "price": 50, "rarity": "uncommon"}, {"id": "bad_breath", "label": "口臭い", "price": 100, "rarity": "rare"}, {"id": "weirdo", "label": "変わり者", "price": 100, "rarity": "rare"}, {"id": "nostalgia", "label": "懐古厨", "price": 100, "rarity": "rare"}, {"id": "smart", "label": "頭がいい", "price": 100, "rarity": "rare"}, {"id": "wild", "label": "やんちゃ", "price": 100, "rarity": "rare"}, {"id": "good_voice", "label": "声良い", "price": 200, "rarity": "epic"}, {"id": "hysteric", "label": "ヒステリック", "price": 200, "rarity": "epic"}, {"id": "loved_by_all", "label": "みんな大好き", "price": 200, "rarity": "epic"}, {"id": "cheater", "label": "浮気癖", "price": 200, "rarity": "epic"}, {"id": "genius", "label": "天才", "price": 200, "rarity": "epic"}, {"id": "addon", "label": "アドオン", "price": 200, "rarity": "epic"}, {"id": "night_owl", "label": "夜ふかし", "price": 50, "rarity": "uncommon"}, {"id": "thaw_master", "label": "解凍職人", "price": 100, "rarity": "rare"}, {"id": "one_shot", "label": "一撃必殺", "price": 200, "rarity": "epic"}, {"id": "ice_ruler", "label": "氷の支配者", "price": 500, "rarity": "legend"}, {"id": "clutch_god", "label": "クラッチの神", "price": 1000, "rarity": "legend"}, {"id": "new_rich", "label": "成金", "price": 500, "rarity": "legend"}, {"id": "wealthy", "label": "資産家", "price": 1000, "rarity": "legend"}, {"id": "tycoon", "label": "大富豪", "price": 3000, "rarity": "mythic"}, {"id": "all_gone", "label": "全財産これに消えた", "price": 5000, "rarity": "mythic"}, {"id": "new_customer", "label": "新規客", "price": null, "rarity": "legend"}, {"id": "regular", "label": "常連さん", "price": null, "rarity": "mythic"}, {"id": "big_spender", "label": "太客", "price": null, "rarity": "mythic"}, {"id": "berserker", "label": "バーサーカー", "price": null, "rarity": "legend"}, {"id": "true_berserker", "label": "真バーサーカー", "price": null, "rarity": "mythic"}, {"id": "saver", "label": "貯金好き", "price": null, "rarity": "legend"}, {"id": "miracle_child", "label": "奇跡の子", "price": 400, "rarity": "epic"}, {"id": "lone_wolf", "label": "一匹狼", "price": 400, "rarity": "epic"}, {"id": "slot_addict", "label": "スロット中毒", "price": 500, "rarity": "epic"}, {"id": "hw_candy_thief", "label": "お菓子どろぼう", "price": null, "rarity": "uncommon", "obtain": "halloween"}, {"id": "hw_trick_or_treat", "label": "トリック・オア・トリート", "price": null, "rarity": "rare", "obtain": "halloween"}, {"id": "hw_pumpkin_king", "label": "かぼちゃ大王", "price": null, "rarity": "legend", "obtain": "halloween"}], "emotes": [{"id": "wave", "label": "手を振る", "price": 0, "rarity": "common"}, {"id": "bow", "label": "お辞儀", "price": 0, "rarity": "common"}, {"id": "nop", "label": "いいえ", "price": 0, "rarity": "common"}, {"id": "shrug", "label": "肩をすくめる", "price": 0, "rarity": "common"}, {"id": "laugh", "label": "笑う", "price": 500, "rarity": "rare"}, {"id": "military_salute", "label": "敬礼", "price": 0, "rarity": "common"}, {"id": "dab", "label": "ダブ", "price": 500, "rarity": "rare"}, {"id": "prostration", "label": "土下座", "price": 500, "rarity": "rare"}, {"id": "head_spin", "label": "ヘッドスピン", "price": 800, "rarity": "epic"}, {"id": "griddy", "label": "グリディ", "price": 1000, "rarity": "legend"}, {"id": "hakari_dance", "label": "ハカリダンス", "price": 1000, "rarity": "legend"}, {"id": "moonwalk", "label": "ムーンウォーク", "price": 1000, "rarity": "legend"}, {"id": "hero_landing", "label": "ヒーロー着地", "price": 1000, "rarity": "legend"}], "badgeCats": [{"id": "rank", "label": "ランクバッジ"}, {"id": "challenge", "label": "チャレンジバッジ"}, {"id": "special", "label": "おもしろバッジ"}, {"id": "elite", "label": "エリートバッジ"}, {"id": "mastery", "label": "熟練度バッジ"}], "badges": [{"id": "rank_t1", "label": "壱段バッジ", "how": "ランク「壱段」に到達", "cat": "rank", "glyph": ""}, {"id": "rank_t2", "label": "弐段バッジ", "how": "ランク「弐段」に到達", "cat": "rank", "glyph": ""}, {"id": "rank_t3", "label": "参段バッジ", "how": "ランク「参段」に到達", "cat": "rank", "glyph": ""}, {"id": "rank_t4", "label": "肆段バッジ", "how": "ランク「肆段」に到達", "cat": "rank", "glyph": ""}, {"id": "rank_t5", "label": "伍段バッジ", "how": "ランク「伍段」に到達", "cat": "rank", "glyph": ""}, {"id": "rank_top", "label": "陸段バッジ", "how": "ランク「陸段」に到達", "cat": "rank", "glyph": ""}, {"id": "rank_champion", "label": "最高峰バッジ", "how": "陸段のワールド1位", "cat": "rank", "glyph": ""}, {"id": "mvp", "label": "MVPバッジ", "how": "BOWFLITでMVPを累計10回", "cat": "challenge", "glyph": ""}, {"id": "veteran", "label": "ベテランバッジ", "how": "BOWFLITに100試合参加", "cat": "challenge", "glyph": ""}, {"id": "win100", "label": "30勝バッジ", "how": "BOWFLITで通算30勝", "cat": "challenge", "glyph": ""}, {"id": "mvp50", "label": "MVPレジェンドバッジ", "how": "BOWFLITでMVPを累計30回", "cat": "challenge", "glyph": ""}, {"id": "untouchable", "label": "無傷バッジ", "how": "鎧を1回も割られずに試合に勝つのを累計20回", "cat": "challenge", "glyph": ""}, {"id": "sniper", "label": "スナイパーバッジ", "how": "40m以上離れた相手を倒すのを累計30回", "cat": "challenge", "glyph": ""}, {"id": "first_blood", "label": "先制の鬼バッジ", "how": "試合で最初のキルを取るのを累計20回", "cat": "special", "glyph": ""}, {"id": "zako", "label": "雑魚乙バッジ", "how": "0ヒットのまま最初に脱落する", "cat": "special", "glyph": ""}, {"id": "perfect_game", "label": "パーフェクトゲームバッジ", "how": "プレイヤー4人以上の試合で、鎧を割られず他の全員を倒して勝つ", "cat": "elite", "glyph": ""}, {"id": "snowman", "label": "割れ物バッジ", "how": "通算200回鎧を割られる(割られるのも才能)", "cat": "special", "glyph": ""}, {"id": "iron_will", "label": "鉄の意志バッジ", "how": "鎧を割られてから生き残って試合に勝つのを累計30回", "cat": "elite", "glyph": ""}, {"id": "hawkeye", "label": "ホークアイバッジ", "how": "1試合で40m以上のキルを3回", "cat": "elite", "glyph": ""}, {"id": "early_bird", "label": "早起きバッジ", "how": "朝5時〜8時(日本時間)に試合をやり切る", "cat": "special", "glyph": ""}, {"id": "marathon", "label": "耐久王バッジ", "how": "1日(日本時間)に試合を30回やり切る", "cat": "special", "glyph": ""}, {"id": "login", "label": "皆勤賞バッジ", "how": "30日ログインする", "cat": "challenge", "glyph": ""}, {"id": "login100", "label": "50日ログインバッジ", "how": "50日ログインする", "cat": "challenge", "glyph": ""}, {"id": "playtime", "label": "住人バッジ", "how": "合計100時間プレイ", "cat": "challenge", "glyph": ""}, {"id": "rich", "label": "大富豪バッジ", "how": "手持ちのコインを5000枚貯める", "cat": "challenge", "glyph": ""}], "grades": [{"id": "D", "min": 0}, {"id": "C", "min": 100}, {"id": "B", "min": 250}, {"id": "B+", "min": 350}, {"id": "A", "min": 500}, {"id": "A+", "min": 650}, {"id": "S", "min": 1200}, {"id": "S+", "min": 2500}, {"id": "Z", "min": 5000}, {"id": "Ω", "min": 10000, "wins": 2000}], "uniques": [{"id": "jack", "name": "Jack", "motif": "スライム", "ct": 8, "desc": "大ジャンプができる。スニークしながらだと低く横へ跳ぶ。着地の瞬間にしゃがんでいると、もう一度跳ねる(横跳びは同じ長さ・大ジャンプは半分の高さ)。奈落に落ちかけても跳んで戻れる"}, {"id": "humming", "name": "Humming", "motif": "ハチ", "ct": 12, "desc": "使うたびに小爆発で跳ぶ。最初に使ってから5秒間・5回まで。跳んだ回数が少ないほど、次のクールタイムが短い(4〜12秒)。持ってスニークで羽ばたいてゆっくり落ちる"}, {"id": "jester", "name": "Jester", "motif": "ピエロ", "ct": 12, "desc": "見ている相手と位置を入れ替える。入れ替えられた相手は後ろを向く"}, {"id": "shade", "name": "Shade", "motif": "小悪魔", "ct": 13, "desc": "鎧を外して8秒間透明になる。使うと全員に知らせが出る。透明中は視界が暗い。終わると鎧が戻る"}, {"id": "rampart", "name": "Rampart", "motif": "カメ", "ct": 0, "desc": "敵を倒すと鎧がもらえる。金ブロックの上で使うと、5秒ためて1回だけ鎧を作れる(試合ごと)"}, {"id": "widow", "name": "Widow", "motif": "クモ", "ct": 19, "desc": "見ている所(40マスまで)に糸を刺して、振り子のようにぶら下がって移動する。しゃがむと糸を巻き取る(合計3秒で焼き切れる)。糸は10秒、もう一度使うと外せる"}, {"id": "pierce", "name": "Pierce", "motif": "ハリネズミ", "ct": 15, "desc": "まわりを3匹のハリネズミが走り回る。使うたびに1匹が丸まって飛んでいく。当たった相手はノックバック、鎧を着ていたら鎧が壊れる(鎧がなければ一瞬遅くなる)。3匹投げると15秒後に全員帰ってくる"}, {"id": "echo", "name": "Echo", "motif": "コウモリ", "ct": 18, "desc": "前後左右の4方向にシュルカーを飛ばす。どれかを見ながらもう一度使うとそこへ転移し、まわりの相手を盲目にする。時間内なら残りのシュルカーにも続けて転移できる。アイテムを持って殴ると残りを回収して、残した数が多いほどクールタイムが短い(3〜18秒)"}, {"id": "meteor", "name": "Meteor", "motif": "宇宙人", "ct": 12, "desc": "見ている所に巨大なブロック(約7.5×7.5×7.5)を10秒置く。自分には見えない(ふちだけ見える)。中にいる相手は盲目になり、ユニークが使えない"}, {"id": "oracle", "name": "Oracle", "motif": "スケルトン", "ct": 15, "desc": "見ている所のまわり(半径7)の壁を8秒間 透明にする(ぶつかるのはそのまま)。範囲の中の相手が自分にだけ光って見え、自分の矢は範囲の中のブロックを通り抜ける"}, {"id": "replica", "name": "Replica", "motif": "キツネ", "ct": 10, "desc": "自分と同じ姿の分身を20秒出す。分身は2秒まっすぐ歩き、そのあとは自分と同じ動きをする。分身が出ている間に使うと、分身を自分のところへ呼び戻せる。分身を撃った相手は3秒盲目になる。分身が倒されるとクールタイム3秒、20秒倒されなければクールタイム10秒"}, {"id": "splash", "name": "Splash", "motif": "カエル", "ct": 18, "desc": "8秒間 足が速くなりジャンプ力が上がる。その間はダイヤブロックのブリンクも強くなる。クールタイム中に空中で使うと、見ている方向の斜め下へ加速する(着地するまで1回)"}, {"id": "byte", "name": "Byte", "motif": "テレビ", "ct": 20, "desc": "まわり(半径4)のダイヤブロック・エメラルドブロックを8秒ハッキングする。ハッキング中は見た目が変わり、自分が乗るとブリンク・アップドラフトが強くなる。他の人が乗っても反応しない"}, {"id": "wormhole", "name": "Astro", "motif": "ポータルガン", "ct": 20, "desc": "使うたびに見ている所(40マスまで)へゲートを置く(2つ)。2つのゲートはつながっていて、くぐると向きと勢いを保ったまま反対のゲートから出る。矢もくぐる。敵も使える。ゲートは12秒"}, {"id": "mason", "name": "Sprout", "motif": "パンダ", "ct": 10, "desc": "見ている所(40マスまで)に柱(2×2・高さ6)を地面からせり上げる。しゃがんで使うか足元を見て使うと、自分の真下から生えて高い所へ持ち上がる。足場にも、矢をふせぐ盾にもなる。柱でのウォールキックなどのキャラコンは、Sprout なら食料ゲージが減らない。3本までためておけて、10秒ごとに1本もどる。4本目を立てると一番古い柱が消える"}, {"id": "chef", "name": "Olive", "motif": "シェフ", "ct": 6, "desc": "見ている方へピザ生地を投げる。生地は12マス飛ぶか壁の手前で止まり、空中で5秒回り続ける。自分が上から乗ると大きく跳ねる(勢いはそのまま)。3枚まで置けて、4枚目で一番古い生地が消える。3枚までためておけて、6秒ごとに1枚もどる"}], "ranks": [{"label": "壱段", "min": 0}, {"label": "弐段", "min": 300}, {"label": "参段", "min": 700}, {"label": "肆段", "min": 1200}, {"label": "伍段", "min": 1700}, {"label": "陸段", "min": 2100}]}, "uniques": {"_説明": "wiki のユニークのページの中身(手で書く所)。能力・クールタイムはゲームから自動で入る(game.json)。ここを直して tools/wiki_build.py を流すか、公開リポジトリの wiki/data/uniques.json を直接直す", "world": {"title": "空の弓闘会 BOWFLIT", "body": ["雲より高い所に浮かぶ島々。そこでは年に何度も、弓だけで戦う大会「BOWFLIT(ボウフリット)」が開かれる。", "ルールはひとつ。2発当てられたら負け、島から落ちても負け。剣も魔法の杖もない。持てるのは弓と、生まれつきの力「ユニーク」だけ。", "集まるのは、スライムの体を持つ少年から、遠い星から来た宇宙人、テレビの体を持つ機械まで。ねらいは賞品か、名誉か、ただのひまつぶしか。それぞれの理由を胸に、今日も誰かが島に降り立つ。"]}, "uniques": {"jack": {"role": "移動", "difficulty": 1, "catch": "どこまでも跳ねる、スライムの少年", "lore": "スライムの沼で育った、体が半分スライムの少年。落ち着きがなく、話しているあいだもずっと跳ねている。BOWFLIT に出るのは「いちばん高く跳んだやつが勝ち」だと勘ちがいしているから。それでも勝っているので、本人は気にしていない。", "relations": [{"with": "splash", "kind": "ライバル", "text": "跳ぶ高さで張り合う仲。Splash に「跳ぶのはぼくらカエルの仕事」と言われてから、毎試合こっそり高さを比べている。"}, {"with": "chef", "kind": "お得意さん", "text": "Olive のピザ生地の上で跳ねるのが大好き。食べ物で遊ぶなと毎回しかられている。"}], "good": [{"vs": "pierce", "why": "ハリネズミに当たって島から押し出されても、大ジャンプで戻ってこられる。"}, {"vs": "widow", "why": "糸で追いかけられても、真上に跳べば振り子の外に出られる。高い所の取り合いで負けにくい。"}], "bad": [{"vs": "meteor", "why": "ブロックの中に閉じこめられるとユニークが使えず、自慢のジャンプで逃げられない。"}, {"vs": "oracle", "why": "跳んでいる間は動きが読みやすく、壁ごしに光って見えると着地をねらわれる。"}], "tech": ["着地の瞬間にしゃがんでおくと、もう一度跳ねる。大ジャンプ → 着地しゃがみで、2回分の高さを稼げる。", "スニークしながら使うと低く横へ跳ぶ。撃ち合いの最中に横へずれて、相手の矢を外させる。", "奈落に落ちかけた時の保険にクールタイムを残しておく。攻めで使い切らないのが上級者。"], "counter": ["跳んだ瞬間ではなく、落ちてくる着地点をねらう。空中では向きを変えられない。", "使った直後の8秒はただの人。クールタイム中に詰める。", "Meteor のブロックや Jester の入れ替えで、跳ぶ前の場所に閉じこめる。"]}, "humming": {"role": "移動", "difficulty": 2, "catch": "羽音と爆発で空を飛ぶ、ハチの子", "lore": "巨大な巣で暮らすハチの一族の末っ子。羽が小さくて飛べないかわりに、お尻の小さな爆発で跳ぶ方法を自分で編み出した。巣のみんなに「それは飛んでるんじゃなくて落ちてるだけ」と笑われたのがくやしくて、空の大会で見返そうとしている。", "relations": [{"with": "mason", "kind": "ご近所", "text": "Sprout の竹林の近くに巣がある。柱の上はちょうどいい休けい場所。"}, {"with": "echo", "kind": "苦手", "text": "夜の洞窟育ちの Echo とは生活リズムが真逆。試合が夜にあると調子が出ない。"}], "good": [{"vs": "widow", "why": "5回の小ジャンプで向きを細かく変えられるので、糸で追ってくる相手を空中で振り切れる。"}, {"vs": "jester", "why": "入れ替えられて後ろを向かされても、すぐ跳んで位置を立て直せる。"}], "bad": [{"vs": "oracle", "why": "空中で長く浮いている分、光って見えると矢を当てられやすい。"}, {"vs": "byte", "why": "Byte が乗っ取ったブロックは使えない。着地点のダイヤ・エメラルドを封じられると動きが止まる。"}], "tech": ["跳ぶ回数が少ないほど次のクールタイムが短い(4〜12秒)。2回で足りる時は2回でやめる。", "持ってスニークで羽ばたいてゆっくり落ちる。高い所から相手の上を取って、落ちながら撃つ。", "1回目を移動、2回目以降を相手の矢をかわすために取っておくと、撃ち合いで負けにくい。"], "counter": ["ゆっくり落ちている間は的が大きい。上を見て待つ。", "5秒の間に5回まで。数えておいて、使い切った所をねらう。", "下から追わず、着地しそうな足場の近くで待ち伏せる。"]}, "widow": {"role": "移動", "difficulty": 3, "catch": "糸で空を渡る、物静かなクモ", "lore": "古い廃坑の奥に住む、口数の少ないクモ。島から島へ糸を張って渡る姿は「空の振り子」と呼ばれている。大会に出る理由は誰も知らないが、試合のあとはいつも島の天井に糸を張って昼寝している。", "relations": [{"with": "echo", "kind": "夜の友だち", "text": "同じ洞窟の暗がりで育った幼なじみ。言葉が少なくても通じ合う。"}, {"with": "jack", "kind": "うるさい", "text": "昼寝の糸の上で跳ねられたことがある。それ以来、Jack を見ると少し距離を取る。"}], "good": [{"vs": "meteor", "why": "ブロックが落ちてきても、40マス先に糸を刺して一気に逃げられる。"}, {"vs": "rampart", "why": "高い所から振り子で回りこみ、守りの固い相手の真上や後ろを取れる。"}], "bad": [{"vs": "jester", "why": "振り子の途中で入れ替えられると、相手の場所(多くは地上)に落とされて勢いを全部失う。"}, {"vs": "pierce", "why": "振り子の道すじは読みやすく、ハリネズミのノックバックで糸の外へはじかれる。"}], "tech": ["しゃがむと糸を巻き取って一気に近づく。巻き取りは合計3秒で焼き切れるので、短く何回かに分ける。", "振り子の一番下で撃つと体がぶれにくい。上に振り上がる時は撃たずに位置を取る。", "糸は10秒。もう一度使うと外せるので、ほしい高さで外して飛び出す。"], "counter": ["振り子は行って戻る。戻ってくる所に先に矢を置いておく。", "クールタイムが19秒と長い。外した直後はしばらく動けない。", "糸を刺す先(高い壁・天井)の近くに立っておくと、移動先をつぶせる。"]}, "splash": {"role": "移動", "difficulty": 2, "catch": "本気を出すと誰より速い、池のカエル", "lore": "空の島の小さな池で育ったカエル。ふだんはのんびりしていて、試合が始まってもしばらく日なたぼっこをしている。ところが一度「本気」になると、8秒だけ誰も追いつけない速さになる。その8秒を見たくて、ファンが増えている。", "relations": [{"with": "jack", "kind": "ライバル", "text": "跳ぶのは自分たちの仕事だと思っている。Jack がうらやましくて、つい張り合ってしまう。"}, {"with": "byte", "kind": "相棒", "text": "Byte が乗っ取ったダイヤブロックの上でブリンクすると、とんでもなく遠くまで行ける。2人で練習していたことがある。"}], "good": [{"vs": "shade", "why": "透明になって近づかれても、足の速さで距離を取り直せる。"}, {"vs": "oracle", "why": "壁ごしに光って見えても、8秒の速さで射線から外れられる。"}], "bad": [{"vs": "meteor", "why": "ブロックの中ではユニークが使えない。速さが命なので、止められると弱い。"}, {"vs": "rampart", "why": "鎧をため直す相手には、一気に攻めても押し切れないことが多い。"}], "tech": ["8秒の間はダイヤブロックのブリンクも強くなる。ダイヤブロックが多い場所で使う。", "クールタイム中でも、空中で使うと見ている方向の斜め下へ加速する(着地まで1回)。追いかけっこの最後の一押しに。", "使う前に逃げ道を決めておく。8秒は短い。"], "counter": ["使った直後の8秒は追わない。終わってから18秒のクールタイムをねらう。", "ダイヤブロックの近くを先に取っておく。", "Meteor のブロックで閉じこめると、速さが全部止まる。"]}, "shade": {"role": "奇襲", "difficulty": 3, "catch": "消えて現れる、目立ちたがりの小悪魔", "lore": "いたずらが大好きな小悪魔。姿を消すことができるのに、消えるたびに「今から消えるよ!」とみんなに知らせてしまう。本人いわく「知られていても見つからないのが一流」。消えている間は自分の目も暗くなるのが悩み。", "relations": [{"with": "jester", "kind": "いたずら仲間", "text": "2人そろうと試合がめちゃくちゃになる。観客には大人気。"}, {"with": "oracle", "kind": "天敵", "text": "Oracle の前では消えても光って見えてしまう。Shade がいちばん会いたくない相手。"}], "good": [{"vs": "widow", "why": "振り子で動き回る相手の真下に、消えたまま回りこめる。"}, {"vs": "rampart", "why": "守りを固めて待つ相手に、見えないまま近づいて先に当てられる。"}], "bad": [{"vs": "oracle", "why": "Oracle の範囲の中では光って見える。消えている意味がなくなる。"}, {"vs": "echo", "why": "シュルカーで転移してきて盲目にされると、暗い視界がさらに見えなくなる。"}], "tech": ["使うと全員に知らせが出る。あえて逆方向に走ってから回りこむと読まれにくい。", "透明中は鎧がない。1発で負けるので、撃ち合いではなく、見つかる前に当てる。", "8秒が終わると鎧が戻る。消えている間に安全な場所へ動き、鎧が戻ってから戦うのもあり。"], "counter": ["知らせが出たら、自分の背中を壁につけて回りこまれないようにする。", "透明中は鎧がない。1発当てれば勝てる。足音や矢の飛んでくる方向で見当をつける。", "Oracle がいれば、範囲の中で光って丸見えになる。"]}, "jester": {"role": "妨害", "difficulty": 3, "catch": "入れ替えて、からかう道化師", "lore": "旅回りの一座から逃げ出してきたピエロ。人をからかうのが生きがいで、相手と場所を入れ替えて、きょとんと後ろを向く顔を見るのがたまらなく好き。勝ち負けより、相手がどれだけ驚いたかを数えている。", "relations": [{"with": "shade", "kind": "いたずら仲間", "text": "Shade とは息がぴったり。2人で組むと誰も手がつけられない。"}, {"with": "replica", "kind": "化かし合い", "text": "入れ替えたと思ったら分身だった。そんなことが何度もあって、Replica にだけは本気で張り合う。"}], "good": [{"vs": "widow", "why": "振り子の途中の相手と入れ替えると、相手は地上(自分のいた所)に落とされて勢いを失う。"}, {"vs": "rampart", "why": "金ブロックの上で鎧をためている相手を、まるごと別の場所へ飛ばせる。"}], "bad": [{"vs": "replica", "why": "入れ替えた相手が分身だと、自分だけが危ない場所に飛ぶ。"}, {"vs": "meteor", "why": "ブロックの中ではユニークが使えず、見ている相手も見えない。"}], "tech": ["入れ替えられた相手は後ろを向く。入れ替えた直後の、相手が振り向く前が当てどき。", "高い所の相手と入れ替えれば、自分が高い所を取れる。島のはしの相手と入れ替えれば、相手を落とし場所に送れる。", "仲間が危ない時は、敵と入れ替えて敵を仲間から引きはがす。"], "counter": ["Jester に見られている時は、島のはしや高い所に立たない。", "入れ替えられたらすぐ振り向く。後ろに Jester がいる。", "クールタイムは12秒。入れ替えた直後に撃ち返せば、相手は次の手がない。"]}, "replica": {"role": "かく乱", "difficulty": 4, "catch": "本物はどっち? 分身使いのキツネ", "lore": "森でいちばんずる賢いと言われるキツネ。自分そっくりの分身を作れるので、相手が分身を撃っているあいだに本物は背中に回っている。分身を撃った相手はしばらく目がくらむ。本人は「だまされる方が悪い」が口ぐせ。", "relations": [{"with": "jester", "kind": "化かし合い", "text": "どっちがより人を驚かせられるか、ずっと勝負している。今のところ引き分け。"}, {"with": "oracle", "kind": "やりにくい", "text": "Oracle の前では本物だけが光って見えてしまう。森の外でいちばん苦手な相手。"}], "good": [{"vs": "jester", "why": "分身と入れ替えさせれば、Jester だけが危ない所へ飛ぶ。"}, {"vs": "meteor", "why": "分身にブロックを使わせれば、本物は外から自由に撃てる。"}], "bad": [{"vs": "oracle", "why": "範囲の中では本物だけが光るので、分身が意味をなくす。"}, {"vs": "pierce", "why": "ハリネズミは数を投げられる。分身と本物の両方に当てられやすい。"}], "tech": ["分身は2秒まっすぐ歩いたあと、自分と同じ動きをする。自分が止まれば分身も止まるので、2人で並んで撃っているように見せる。", "分身が出ている間にもう一度使うと、分身を手元に呼び戻せる。逃げ道に置いた分身を戻して身代わりに。", "分身が倒されるとクールタイムは3秒。わざと撃たせて、すぐ次を出す。"], "counter": ["同じ動きをしている2人のうち、少し遅れて動く方が分身。", "分身を撃つと3秒目がくらむ。あやしい時は撃たずに、動きを見てから。", "Oracle の範囲なら本物だけが光る。"]}, "meteor": {"role": "妨害", "difficulty": 2, "catch": "空から箱を落とす、遠い星の宇宙人", "lore": "遠い星から観光に来た宇宙人。地球の「ブロック」がめずらしくて、巨大なブロックを空から落としては中を観察している。中に閉じこめられた相手は目が見えず、力も使えなくなる。本人には悪気がまったくない。", "relations": [{"with": "wormhole", "kind": "研究仲間", "text": "Astro とは宇宙の話で盛り上がる。Astro のゲートの研究に、こっそり協力している。"}, {"with": "byte", "kind": "通信相手", "text": "母星との通信に Byte の画面を借りている。そのお礼に試合では手加減しているらしい。"}], "good": [{"vs": "splash", "why": "速さが命の相手を、ブロックで止めてユニークを封じられる。"}, {"vs": "jack", "why": "跳ぶ前に閉じこめれば、大ジャンプで逃げられない。"}], "bad": [{"vs": "widow", "why": "40マス先に糸を刺して、ブロックの外へ一気に逃げられる。"}, {"vs": "replica", "why": "分身にブロックを使ってしまうと、12秒のクールタイムが空ぶりになる。"}], "tech": ["ブロックの中の相手は盲目でユニークが使えない。閉じこめたら、ふちの外から落ち着いて撃つ。", "自分にはブロックが見えない(ふちだけ見える)。ふちを目印に、出てくる場所に矢を置く。", "逃げ道をふさぐ使い方もできる。狭い通路にブロックを置いて、相手を回り道させる。"], "counter": ["閉じこめられたら、まっすぐ一方向に走ってすぐ出る。盲目でも動ける。", "クールタイムは12秒。使った直後に攻める。", "Widow・Echo・Astro のように遠くへ動ける相手は、ブロックから逃げやすい。"]}, "oracle": {"role": "索敵", "difficulty": 3, "catch": "壁の向こうを見通す、骨の占い師", "lore": "骨の体を持つ占い師。手をかざすと、まわりの壁が透けて、隠れている相手の姿だけが光って見える。占いの的中率はほぼ100%。ただし占えるのは「誰がどこに隠れているか」だけで、明日の天気はわからない。", "relations": [{"with": "shade", "kind": "天敵", "text": "Shade の透明は Oracle には通じない。Shade からいちばん嫌われている。"}, {"with": "echo", "kind": "同業者", "text": "目に見えないものを見る者どうし。Echo は音、Oracle は骨で感じる。たまに見え方の話で盛り上がる。"}], "good": [{"vs": "shade", "why": "範囲の中では透明でも光って見える。鎧がない Shade を1発で倒せる。"}, {"vs": "replica", "why": "本物だけが光るので、分身にだまされない。"}], "bad": [{"vs": "splash", "why": "見えていても速すぎて当たらない。8秒の間は範囲の外へ出られてしまう。"}, {"vs": "wormhole", "why": "ゲートで範囲の外へ一瞬で抜けられる。"}], "tech": ["範囲の中では自分の矢がブロックを通り抜ける。壁の向こうの光った相手を、壁ごしに撃てる。", "範囲は見ている所のまわり半径7。相手が隠れていそうな建物の中心を見て使う。", "8秒しかない。使う前に弓を引いておくと、見えた瞬間に撃てる。"], "counter": ["Oracle に見られたら、範囲(半径7)の外へ走る。8秒で終わる。", "壁ごしに撃たれるので、壁は盾にならない。距離を取る。", "クールタイムは15秒。使った後は見えない。"]}, "echo": {"role": "移動", "difficulty": 4, "catch": "音で見て、シュルカーに飛ぶコウモリ", "lore": "真っ暗な洞窟で育ったコウモリ。目はあまり見えないが、音のはね返りでまわりのすべてがわかる。4匹のシュルカーを放って、好きな所へ一瞬で移る。移った先では大きな音で相手の目をくらませる。", "relations": [{"with": "widow", "kind": "夜の友だち", "text": "同じ洞窟の幼なじみ。Widow の糸にぶら下がって寝るのが好き。"}, {"with": "humming", "kind": "苦手", "text": "昼型の Humming とは時間が合わない。羽音がうるさいとも思っている。"}], "good": [{"vs": "shade", "why": "転移した先の相手を盲目にできる。暗い視界の Shade はほとんど何も見えなくなる。"}, {"vs": "meteor", "why": "シュルカーへ転移して、ブロックの外へ一瞬で出られる。"}], "bad": [{"vs": "pierce", "why": "転移した先にハリネズミが走っていると、ノックバックで島から押し出される。"}, {"vs": "oracle", "why": "転移しても範囲の中なら光って見え、出てくる所をねらわれる。"}], "tech": ["4方向のシュルカーのどれかを見ながらもう一度使うと転移。時間内なら続けて残りにも転移できる。", "アイテムを持って殴ると残りを回収。残した数が多いほどクールタイムが短い(3〜18秒)。1回だけ使って回収すれば、すぐ次が使える。", "転移した先のまわりの相手は盲目になる。転移して → すぐ撃つ、を1セットで練習する。"], "counter": ["シュルカーが飛んだ方向を見ておく。転移してくる場所はその4か所のどれか。", "盲目は数秒。目がくらんだら下がって時間をかせぐ。", "使い切った後のクールタイムは最大18秒。全部使ったのを見たら攻める。"]}, "pierce": {"role": "攻撃", "difficulty": 2, "catch": "3匹のハリネズミと戦う、トゲの子", "lore": "3匹のハリネズミをいつも連れている子ども。ハリネズミたちは主人のまわりを走り回り、合図ひとつで丸まって相手に飛んでいく。当たると鎧も割れる。投げたハリネズミは15秒すると、ちゃんと戻ってくる。", "relations": [{"with": "rampart", "kind": "守りの話", "text": "トゲで守る Pierce と、こうらで守る Rampart。どっちの守りが上か、よく言い合っている。"}, {"with": "chef", "kind": "まかない係", "text": "ハリネズミのエサは Olive のピザの耳。試合の後はいつも Olive の店に寄る。"}], "good": [{"vs": "widow", "why": "振り子の道すじにハリネズミを投げれば、糸の外へはじき出せる。"}, {"vs": "echo", "why": "転移してきた所にハリネズミが走っていれば、ノックバックで押し出せる。"}], "bad": [{"vs": "jack", "why": "島から押し出しても、大ジャンプで戻ってくる。"}, {"vs": "shade", "why": "見えない相手にはハリネズミをねらって投げられない。"}], "tech": ["当たった相手が鎧を着ていたら鎧が壊れる。ハリネズミで鎧を割ってから矢で仕上げる。", "島のはしにいる相手に投げると、ノックバックで落とせる。", "3匹投げると15秒後に全員戻る。1匹ずつ投げて、いつも何匹か残しておく。"], "counter": ["まわりを走るハリネズミの数を見る。0匹なら15秒は投げてこない。", "島のはしで向かい合わない。押し出される。", "高い所から撃つ。ハリネズミは地面を走る。"]}, "wormhole": {"role": "移動", "difficulty": 4, "catch": "2つのゲートをつなぐ、天才発明家", "lore": "宇宙研究所から来た若い発明家。手作りのポータルガンで、2つのゲートをつないで行き来できる。敵もゲートを使えてしまうのは「仕様」だと言いはっている。試合はゲートの実験の場だと思っている。", "relations": [{"with": "meteor", "kind": "研究仲間", "text": "宇宙人の Meteor とは話が合う。ゲートで星まで行けないか、2人で研究中。"}, {"with": "byte", "kind": "機械好き", "text": "Byte の体の中身に興味しんしん。分解させてほしいと毎回たのんで断られている。"}], "good": [{"vs": "oracle", "why": "見つかっても、ゲートで範囲の外へ一瞬で抜けられる。"}, {"vs": "meteor", "why": "ブロックが来る前にゲートを置いておけば、閉じこめられても外へ出られる。"}], "bad": [{"vs": "jester", "why": "ゲートに入る直前に入れ替えられると、置いたゲートを相手に使われる。"}, {"vs": "pierce", "why": "ゲートから出た所は読まれやすく、ハリネズミを置かれる。"}], "tech": ["くぐると向きと勢いを保ったまま出てくる。高い所から落ちてゲートに入れば、勢いよく飛び出せる。", "矢もゲートをくぐる。ゲートの向こうの相手を、こちらから撃てる。", "ゲートは12秒。逃げ道を先に作っておいて、危なくなったら飛びこむ。"], "counter": ["敵のゲートは自分も使える。くぐって後ろを取る。", "片方のゲートの前で待てば、出てきた所を撃てる。", "クールタイムは20秒と長い。2つ置いた後はしばらく何もできない。"]}, "rampart": {"role": "防御", "difficulty": 1, "catch": "倒すほど固くなる、カメの鎧職人", "lore": "代々続く鎧職人の家のカメ。相手を倒すたびに、その場で鎧を打ち直して身につける。金ブロックがあれば、5秒で新しい鎧を作れる(1試合に1回だけ)。のんびりしているが、守りに入ると誰より固い。", "relations": [{"with": "pierce", "kind": "守りの話", "text": "こうらとトゲ、どっちが強いかで言い合いになる。結論はまだ出ていない。"}, {"with": "mason", "kind": "のんびり仲間", "text": "Sprout とは話すテンポが同じ。2人で話していると、試合の開始を聞き逃す。"}], "good": [{"vs": "splash", "why": "速さで攻めてくる相手にも、鎧をため直して耐えられる。"}, {"vs": "pierce", "why": "ハリネズミで鎧を割られても、倒した相手から鎧をもらってすぐ戻せる。"}], "bad": [{"vs": "jester", "why": "金ブロックの上で鎧をためている所を入れ替えられると、ためが無駄になる。"}, {"vs": "widow", "why": "動きが少ない分、真上や後ろから振り子で回りこまれやすい。"}], "tech": ["敵を倒すと鎧がもらえる。連続で倒せば、ずっと2発の体力で戦える。", "金ブロックの上で使うと5秒ためて鎧を作れる(1試合1回)。安全な金ブロックの場所を先に覚えておく。", "クールタイムがない。ためる5秒の間だけ、まわりに注意する。"], "counter": ["金ブロックの上で動かずにいたら、ためている合図。今すぐ撃つ。", "一度に2発当てて、鎧をもらう前に倒し切る。", "Jester がいれば、ためている最中に入れ替えて台なしにできる。"]}, "mason": {"role": "地形", "difficulty": 2, "catch": "竹の柱を生やす、のんびりパンダ", "lore": "竹林の奥で暮らすパンダ。地面から竹の柱を生やすことができ、足場にも盾にもする。柱を使った壁蹴りではお腹がすかないらしく、一日じゅう柱の上で過ごしている。本人の目標は「大会の島を竹林にすること」。", "relations": [{"with": "humming", "kind": "ご近所", "text": "竹林の近くに Humming の巣がある。柱の上で一緒にひなたぼっこする仲。"}, {"with": "chef", "kind": "料理の話", "text": "竹の子をピザに乗せてみようと Olive に提案中。まだ実現していない。"}], "good": [{"vs": "pierce", "why": "柱で地面のハリネズミの道をふさいだり、柱の上に逃げたりできる。"}, {"vs": "oracle", "why": "壁が透けても、柱は矢をふせぐ盾になる(ぶつかるのはそのまま)。"}], "bad": [{"vs": "byte", "why": "Byte は乗っ取ったブロックで速く動き回り、柱の守りを回りこんでくる。"}, {"vs": "wormhole", "why": "柱で守っても、ゲートで後ろに回りこまれる。"}], "tech": ["しゃがんで使うか足元を見て使うと、自分の真下から柱が生えて高い所へ持ち上がる。高い所を一瞬で取れる。", "柱は3本までためておけて、10秒ごとに1本戻る。4本目を立てると一番古い柱が消える。", "柱でのウォールキックは食料ゲージが減らない。柱2本の間でウォールキックを続けて高い所へ。"], "counter": ["柱の上の Sprout は逃げ場が少ない。柱のふちをねらう。", "柱は3本まで。立てた本数を数えておく。", "柱の陰に隠れられたら、横に回りこむ。"]}, "byte": {"role": "移動", "difficulty": 3, "catch": "ブロックを乗っ取る、テレビの機械", "lore": "捨てられたテレビに命が宿った機械。まわりのダイヤブロックとエメラルドブロックを乗っ取って、自分だけの道に変えてしまう。ふだんは画面に天気予報を流しているが、試合になると緑のコードがびっしり流れる。", "relations": [{"with": "splash", "kind": "相棒", "text": "Splash とは、乗っ取ったダイヤブロックでどこまで遠くへ行けるか、一緒に記録をのばしている。"}, {"with": "meteor", "kind": "通信相手", "text": "Meteor に画面を貸して、母星との通信を手伝っている。"}], "good": [{"vs": "humming", "why": "着地点のダイヤ・エメラルドを乗っ取れば、相手は使えなくなる。"}, {"vs": "mason", "why": "乗っ取ったブロックで速く回りこみ、柱の守りの外から撃てる。"}], "bad": [{"vs": "meteor", "why": "ブロックの中ではユニークが使えない。乗っ取っても動けない。"}, {"vs": "jester", "why": "乗っ取ったブロックの近くから、入れ替えで遠くへ飛ばされる。"}], "tech": ["乗っ取ったブロックに自分が乗ると、ブリンク・アップドラフトが強くなる。他の人が乗っても反応しない。", "半径4の中のブロックを8秒。ブロックが集まっている場所の真ん中で使う。", "相手の逃げ道のブロックを乗っ取って、相手のキャラコンを止める。"], "counter": ["乗っ取られたブロックは見た目が変わる。8秒は使わない。", "クールタイムは20秒。使った後はただの人。", "ダイヤ・エメラルドのない場所に誘いこむ。"]}, "chef": {"role": "移動", "difficulty": 3, "catch": "ピザ生地で跳ぶ、空の料理人", "lore": "空の島で小さなピザ屋を営むシェフ。生地を空に投げて回す技はプロ級で、回っている生地の上に乗ると大きく跳ねられる。大会に出ているのは店の宣伝のため。試合の後はいつも、選手たちに焼きたてのピザをふるまっている。", "relations": [{"with": "jack", "kind": "困ったお客", "text": "Jack が生地の上で遊ぶので、毎回しかっている。でも一番の常連でもある。"}, {"with": "pierce", "kind": "常連さん", "text": "ピザの耳をハリネズミのエサに分けてあげている。"}], "good": [{"vs": "widow", "why": "生地を3枚並べて跳び移れば、振り子より自由に高い所を取れる。"}, {"vs": "rampart", "why": "生地で上を取り、動きの少ない相手を上から撃てる。"}], "bad": [{"vs": "jester", "why": "生地の上で入れ替えられると、相手に生地を使われる。"}, {"vs": "oracle", "why": "空中で跳ねている間は動きが読みやすく、光って見えるとねらわれる。"}], "tech": ["生地は12マス飛ぶか壁の手前で止まり、空中で5秒回る。上から乗ると大きく跳ねて、勢いはそのまま。", "3枚までためておけて、6秒ごとに1枚戻る。3枚を階段のように投げて、一気に高い所へ。", "走りながら前に投げて乗ると、勢いを保ったまま遠くへ飛べる。"], "counter": ["生地は5秒で消える。生地の上の Olive は、生地が消える前に跳ぶしかない。跳んだ先をねらう。", "生地は3枚まで。投げた枚数を数える。", "生地は自分では使えない(跳ねるのは Olive だけ)。生地の下で待って撃つ。"]}}}};
+const COLORS = {"jack": "3fd46b", "humming": "f2c230", "jester": "e04058", "shade": "ff7a30", "rampart": "4fbf5a", "widow": "b8bcc4", "beaver": "f5c518", "pierce": "d9b48a", "bruno": "e8dcd8", "echo": "8a7cff", "meteor": "ff8a1e", "oracle": "9aa4b4", "replica": "ff8c4a", "diver": "4fb8ff", "splash": "7fd18c", "moth": "d8cfb8", "groove": "c06cff", "byte": "3ee08a", "angler": "c0b048", "frenzy": "5aa0ff", "wormhole": "7070ff", "perfume": "d09070", "mason": "e8e8e8", "puppet": "a070ff", "butterfly": "ff3f6a", "chef": "f0f0f0", "rank": "ffc446"};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const load = k => fetch(`data/${k}.json`, { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject()).catch(() => FALLBACK[k]);
+let G, W; // G = ゲームから自動で出したデータ / W = 手で書いた中身(ストーリーなど)
+const head = id => `../assets/heads/${id}.png`, hero = id => `../assets/hero/${id}.png`;
+const uc = id => '#' + (COLORS[id] ?? 'a24bff');
+const U = () => G.uniques;
+const uname = id => U().find(u => u.id === id)?.name ?? id;
+const stars = n => '★'.repeat(n) + '<span style="opacity:.25">' + '★'.repeat(5 - n) + '</span>';
+const set = (title, html) => { document.title = title ? `${title} | BOWFLIT 公式Wiki` : 'BOWFLIT 公式Wiki'; $('#app').innerHTML = html; window.scrollTo(0, 0); };
+function ucard(u) {
+  const w = W.uniques[u.id] ?? {};
+  return `<a class="ucard" href="#/u/${u.id}" style="--uc:${uc(u.id)}"><span class="role">${esc(w.role ?? '')}</span><div class="pic"><img class="px" src="${hero(u.id)}" alt="" loading="lazy"></div><div class="nm"><b>${esc(u.name)}</b><span>${esc(w.catch ?? u.motif)}</span></div></a>`;
+}
+const PAGES = {
+  '': () => {
+    const s = W.world;
+    set('', `<section class="home-hero"><h1 class="t">Official <i>Wiki</i></h1><p class="lead">ユニークの能力・ストーリー・相性・テクニック、ランクと熟練度、コスメの一覧。</p>
+      <div class="story card"><div><h2 class="s" style="margin-top:0">${esc(s.title)}</h2>${s.body.map(p => `<p>${esc(p)}</p>`).join('')}</div>
+      <div class="cast"><img class="px" src="${hero('widow')}" alt=""><img class="px" src="${hero('jack')}" alt=""><img class="px" src="${hero('shade')}" alt=""></div></div>
+      <div class="quick"><a href="#/uniques"><b>Uniques</b><span>${U().length}体のユニーク</span></a><a href="#/basics"><b>How to play</b><span>ルールとキャラコン</span></a><a href="#/progress"><b>Rank</b><span>ランクと熟練度</span></a><a href="#/cosmetics"><b>Cosmetics</b><span>コスメの一覧</span></a></div></section>
+      <h2 class="s">ユニーク <small>Uniques</small></h2><div class="ugrid">${U().map(ucard).join('')}</div>`);
+  },
+  uniques: () => {
+    const roles = [...new Set(U().map(u => W.uniques[u.id]?.role).filter(Boolean))];
+    set('ユニーク', `<p class="crumb"><a href="#/">WIKI</a> / UNIQUES</p><h1 class="t">Uniq<i>ues</i></h1><p class="lead">試合の前に1体えらぶ、能力を持ったキャラ。押すと能力・ストーリー・相性・テクニックが見られる。</p>
+      <div class="tabs" id="rf"><button aria-pressed="true" data-r="">すべて</button>${roles.map(r => `<button aria-pressed="false" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div><div class="ugrid" id="ug"></div>`);
+    const draw = r => { $('#ug').innerHTML = U().filter(u => !r || W.uniques[u.id]?.role === r).map(ucard).join(''); document.querySelectorAll('#rf button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.r === r))); };
+    document.querySelectorAll('#rf button').forEach(b => b.onclick = () => draw(b.dataset.r)); draw('');
+  },
+  u: id => {
+    const u = U().find(x => x.id === id); if (!u) return PAGES['']();
+    const w = W.uniques[id] ?? {}, i = U().indexOf(u), prev = U()[(i - 1 + U().length) % U().length], next = U()[(i + 1) % U().length];
+    const vsCard = x => `<a href="#/u/${x.vs}"><img class="px" src="${head(x.vs)}" alt=""><div><b>${esc(uname(x.vs))}</b><p>${esc(x.why)}</p></div></a>`;
+    set(u.name, `<div style="--uc:${uc(id)}"><p class="crumb"><a href="#/">WIKI</a> / <a href="#/uniques">UNIQUES</a> / ${esc(u.name.toUpperCase())}</p>
+      <div class="uhead"><div class="pic"><img class="px" src="${hero(id)}" alt="${esc(u.name)}"></div><div>
+        <p class="motif">モチーフ: ${esc(u.motif)}</p><h1>${esc(u.name)}</h1><p class="catch">${esc(w.catch ?? '')}</p>
+        <div class="meta"><div><span>ROLE</span><b>${esc(w.role ?? '-')}</b></div><div><span>COOLDOWN</span><b>${u.ct ? u.ct + 's' : '—'}</b></div><div><span>DIFFICULTY</span><b class="stars">${stars(w.difficulty ?? 0)}</b></div></div>
+        <p class="ability">${esc(u.desc)}</p></div></div>
+      <nav class="toc"><a href="#story">ストーリー</a><a href="#rel">関係</a><a href="#mu">相性</a><a href="#tech">テクニック</a><a href="#ctr">敵に来た時</a></nav>
+      <h2 class="s" id="story">ストーリー <small>Story</small></h2><p class="lore">${esc(w.lore ?? '')}</p>
+      <h2 class="s" id="rel">ほかのユニークとの関係 <small>Relations</small></h2><div class="rel">${(w.relations ?? []).map(r => `<a href="#/u/${r.with}"><img class="px" src="${head(r.with)}" alt=""><div><b>${esc(uname(r.with))}</b><em>${esc(r.kind)}</em><p>${esc(r.text)}</p></div></a>`).join('') || '<p class="empty">まだ書かれていない</p>'}</div>
+      <h2 class="s" id="mu">相性 <small>Matchups</small></h2><div class="mu"><div class="g"><h3>得意な相手</h3>${(w.good ?? []).map(vsCard).join('')}</div><div class="b"><h3>苦手な相手</h3>${(w.bad ?? []).map(vsCard).join('')}</div></div>
+      <h2 class="s" id="tech">テクニック <small>Techniques</small></h2><ol class="tips">${(w.tech ?? []).map(t => `<li><span>${esc(t)}</span></li>`).join('')}</ol>
+      <h2 class="s" id="ctr">敵に来た時の対処法 <small>Counter</small></h2><ol class="tips ct">${(w.counter ?? []).map(t => `<li><span>${esc(t)}</span></li>`).join('')}</ol>
+      <div class="pn"><a href="#/u/${prev.id}"><img class="px" src="${head(prev.id)}" alt=""><span>‹ ${esc(prev.name)}</span></a><a href="#/u/${next.id}"><span>${esc(next.name)} ›</span><img class="px" src="${head(next.id)}" alt=""></a></div></div>`);
+    // ページ内のリンク(#story など)はルートを変えずにスクロール
+    document.querySelectorAll('.toc a').forEach(a => a.onclick = e => { e.preventDefault(); document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' }); });
+  },
+  basics: () => set('遊び方', `<p class="crumb"><a href="#/">WIKI</a> / HOW TO PLAY</p><h1 class="t">How to <i>play</i></h1><p class="lead">最後の1人になったら勝ち。勝負を決めるのは、エイムと立ち回りと、ユニークの使いどころ。</p>
+    <h2 class="s">ルール <small>Rules</small></h2><div class="basic-grid">
+      <div class="card"><span class="k">2 SHOTS</span><b>2発で脱落</b><p>1発目で鎧が割れて、2発目で脱落。島から落ちても脱落。回復はない。</p></div>
+      <div class="card"><span class="k">ARROWS</span><b>矢は無限</b><p>弾切れはない。当たるまで撃ち続けられる。</p></div>
+      <div class="card"><span class="k">UNIQUE</span><b>ユニークは1人1体</b><p>ホットバーの2番目。使うとクールタイムの秒数がホットバーに出る。</p></div>
+      <div class="card"><span class="k">CEILING</span><b>高すぎる所は危ない</b><p>マップによっては、高い所にいると数秒で脱落する(警告が出る)。</p></div></div>
+    <h2 class="s">キャラコン <small>Movement</small></h2><div class="basic-grid">
+      <div class="card"><span class="k">WALL KICK</span><b>ウォールキック</b><p>壁に向かって、空中でしゃがむと跳ね返る。2枚の壁の間を登れる。</p></div>
+      <div class="card"><span class="k">VAULT</span><b>ボルト</b><p>空中で、目の前の足元にブロックがある時にしゃがむと前へ飛び出す。</p></div>
+      <div class="card"><span class="k">UPDRAFT</span><b>アップドラフト</b><p>エメラルドブロックに乗ると、見ている方向へ高く跳ぶ。</p></div>
+      <div class="card"><span class="k">BLINK</span><b>ブリンク</b><p>ダイヤブロックに乗ると、見ている方向へ滑るように進む。</p></div></div>
+    <h2 class="s">モード <small>Modes</small></h2><div class="basic-grid">
+      <div class="card"><span class="k">STANDARD</span><b>通常マッチ</b><p>全員で撃ち合い、最後の1人が勝ち。ロビーで投票したマップで始まる。</p></div>
+      <div class="card"><span class="k">TEAM</span><b>チーム戦</b><p>赤と青の2チームに分かれて戦う。</p></div>
+      <div class="card"><span class="k">DUEL</span><b>1対1</b><p>2本先取のタイマン。通常マッチと同時に遊べる。</p></div>
+      <div class="card"><span class="k">PRACTICE</span><b>練習場・AIM練習場</b><p>ユニークのお試しとキャラコンのコース。AIM練習場は30秒の的あてでランキングつき。</p></div></div>`),
+  progress: () => {
+    const R = G.ranks;
+    set('ランク・熟練度', `<p class="crumb"><a href="#/">WIKI</a> / RANK</p><h1 class="t">Rank & <i>Mastery</i></h1><p class="lead">ランクは試合の成績で上下するポイント。熟練度はユニークごとに、当てた数で上がっていく。</p>
+      <h2 class="s">ランク <small>Rank</small></h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>段</th><th>必要ポイント</th></tr></thead><tbody>${R.map((r, i) => `<tr><td><b>${esc(r.label)}</b>${i === R.length - 1 ? ' <span class="rar" style="color:var(--gold)">最上位</span>' : ''}</td><td class="num">${r.min.toLocaleString()} PT〜</td></tr>`).join('')}</tbody></table></div>
+      <p class="empty" style="font-size:13.5px">${esc(R[R.length - 1].label)}の中でワールド1位の人はチャンピオン。</p>
+      <h2 class="s">熟練度 <small>Mastery</small></h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>熟練度</th><th>必要ヒット数(そのユニークで)</th></tr></thead><tbody>${G.grades.map(g => `<tr><td class="num">${esc(g.id)}</td><td>${g.min.toLocaleString()} ヒット${g.wins ? ` + そのユニークで ${g.wins.toLocaleString()} 勝` : ''}</td></tr>`).join('')}</tbody></table></div>
+      <p class="empty" style="font-size:13.5px">熟練度が上がると専用のスキン・バッジがもらえる。</p>`);
+  },
+  cosmetics: tab => {
+    const T = [['titles', '称号'], ['pets', 'ペット'], ['emotes', 'エモート'], ['symbols', 'キルフィード記号'], ['hitfx', '当てた時の照準'], ['badges', 'バッジ']];
+    const t = T.find(x => x[0] === tab)?.[0] ?? 'titles';
+    const rar = id => { const r = G.rarity[id]; if (!r) return ''; const c = { common: '#cfd2dc', uncommon: '#7fe07a', rare: '#5a9aff', epic: '#b26bff', legend: '#ffc446', mythic: '#ff7ac8', super_legend: '#ffd84a' }[id] ?? '#ccc'; return `<span class="rar" style="color:${c}">${esc(r.label)}</span>`; };
+    const how = x => x.obtainNote ?? x.how ?? (typeof x.price === 'number' ? (x.price ? `${x.price.toLocaleString()} コイン` : '無料') : (x.obtain ? '特別な方法で入手' : '-'));
+    const list = G[t] ?? [];
+    set('コスメ', `<p class="crumb"><a href="#/">WIKI</a> / COSMETICS</p><h1 class="t">Cosme<i>tics</i></h1><p class="lead">見た目だけで、強さは変わらない。ショップ・ガチャ・ミッション・ランクなどで手に入る。</p>
+      <div class="tabs">${T.map(([k, l]) => `<button aria-pressed="${k === t}" onclick="location.hash='#/cosmetics/${k}'">${l}</button>`).join('')}</div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>名前</th><th>レア度</th><th>手に入れ方</th></tr></thead><tbody>${list.map(x => `<tr><td><b>${esc(x.label)}</b>${x.desc ? `<br><span class="empty" style="font-size:13px">${esc(x.desc)}</span>` : ''}</td><td>${rar(x.rarity)}</td><td>${esc(how(x))}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">まだない</td></tr>'}</tbody></table></div>
+      <p class="empty" style="font-size:13.5px">マントは準備中。</p>`);
+  },
+};
+function route() {
+  const [, a = '', b] = (location.hash || '#/').split('/');
+  document.querySelectorAll('#nav a[data-r]').forEach(x => x.classList.toggle('on', x.dataset.r === a || (a === 'u' && x.dataset.r === 'uniques')));
+  (PAGES[a] ?? PAGES[''])(b ? decodeURIComponent(b) : undefined);
+  $('#hd').classList.remove('open'); $('#menu-btn').setAttribute('aria-expanded', 'false');
+}
+// 検索: ユニークの名前・モチーフ・説明・ストーリー・テクニック、コスメの名前
+function search(q) {
+  q = q.trim().toLowerCase(); const r = $('#res');
+  if (!q) { r.hidden = true; return; }
+  const hits = [];
+  for (const u of U()) { const w = W.uniques[u.id] ?? {}; const txt = [u.name, u.motif, u.desc, w.catch, w.lore, ...(w.tech ?? []), ...(w.counter ?? [])].join(' ').toLowerCase(); if (txt.includes(q)) hits.push(`<a href="#/u/${u.id}"><img class="px" src="${head(u.id)}" alt="">${esc(u.name)}<small>ユニーク</small></a>`); }
+  for (const [k, l] of [['titles', '称号'], ['pets', 'ペット'], ['emotes', 'エモート'], ['badges', 'バッジ']]) for (const x of G[k] ?? []) if (String(x.label).toLowerCase().includes(q)) hits.push(`<a href="#/cosmetics/${k}">${esc(x.label)}<small>${l}</small></a>`);
+  r.innerHTML = hits.slice(0, 20).join('') || '<a>見つからなかった</a>'; r.hidden = false;
+}
+$('#q').addEventListener('input', e => search(e.target.value));
+$('#res').addEventListener('click', () => { $('#res').hidden = true; $('#q').value = ''; });
+document.addEventListener('click', e => { if (!e.target.closest('.search')) $('#res').hidden = true; });
+$('#menu-btn').onclick = () => { const o = $('#hd').classList.toggle('open'); $('#menu-btn').setAttribute('aria-expanded', String(o)); };
+Promise.all([load('game'), load('uniques')]).then(([g, w]) => { G = g; W = w; addEventListener('hashchange', route); route(); });
+</script>
+</body>
+</html>
