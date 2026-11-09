@@ -208,10 +208,12 @@ footer .wrap{display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap}
 .mv dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:13px}
 .mv dt{color:var(--sub)} .mv dd{margin:0;font-weight:700}
 .ib{width:22px;height:22px}
-.rankrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.rankrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
 .rk{background:var(--bg2);border:1px solid var(--line);padding:12px;text-align:center;display:flex;flex-direction:column;align-items:center}
 .rk img{width:84px;height:84px}
 .rk b{font-weight:900;font-size:18px}
+.rk.champ{border-color:var(--gold);background:linear-gradient(180deg,rgba(255,196,70,.14),var(--bg2))}
+.rk.champ b{color:var(--gold)}
 .rk span{color:var(--sub);font-size:12.5px;font-variant-numeric:tabular-nums}
 .mbtable{display:grid;gap:6px}
 .mbr{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line);padding:6px 10px;overflow-x:auto}
@@ -389,7 +391,7 @@ const PAGES = {
     const R = G.ranks, L = G.levels ?? {}, rankB = G.badges.filter(b => b.cat === 'rank');
     set('ランク・熟練度', `${crumb('PROGRESS')}${T1('Level, Rank & <i>Mastery</i>', 'レベルは遊ぶほど上がる。ランクは試合の成績で上下する。熟練度はユニークごとに、当てた数で上がる。')}
       ${head2('レベル', 'Level')}<div class="basic-grid"><div class="card"><span class="k">MATCH</span><b>試合に参加 +${L.perMatch ?? '-'} XP</b><p>勝つとさらに +${L.winBonus ?? '-'} XP。</p></div><div class="card"><span class="k">MISSION</span><b>ミッション達成</b><p>ミッションごとの XP(<a href="#/missions">ミッション</a>)。</p></div><div class="card"><span class="k">LEVEL UP</span><b>${L.perLevel ?? '-'} XP で1レベル</b><p>どのレベルでも同じ。レベルで解放されるマントもある。</p></div></div>
-      ${head2('ランク', 'Rank')}<div class="rankrow">${R.map((r, i) => { const b = rankB[i]; return `<div class="rk">${b ? `<img class="px" src="${IMG('badges/' + b.id + '.png')}" alt="">` : ''}<b>${esc(r.label)}</b><span>${r.min.toLocaleString()} PT〜</span></div>`; }).join('')}</div>
+      ${head2('ランク', 'Rank')}<div class="rankrow">${R.map((r, i) => { const b = rankB[i]; return `<div class="rk">${b ? `<img class="px" src="${IMG('badges/' + b.id + '.png')}" alt="">` : ''}<b>${esc(r.label)}</b><span>${r.min.toLocaleString()} PT〜</span></div>`; }).join('')}${(() => { const c = G.badges.find(b => b.id === 'rank_champion'); return c ? `<div class="rk champ"><img class="px" src="${IMG('badges/' + c.id + '.png')}" alt=""><b>チャンピオン</b><span>${esc(c.how)}</span></div>` : ''; })()}</div>
       <p class="empty sm">試合の順位とキルでポイントが増減する。${esc(R[R.length - 1].label)}の中でワールド1位はチャンピオン。段に上がるとランクバッジとランクのマントがもらえる。</p>
       ${head2('熟練度', 'Mastery')}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>熟練度</th><th>必要(そのユニークで)</th><th>キルの雷</th></tr></thead><tbody>${G.grades.map((g, gi) => { const bt = [...(G.boltTiers ?? [])].reverse().find(t => gi >= t[0]); return `<tr><td class="num"><b>${esc(g.id)}</b></td><td>${g.min.toLocaleString()} ヒット${g.wins ? ` + ${g.wins.toLocaleString()} 勝` : ''}</td><td>${bt ? `<span class="dot" style="background:rgb(${bt[2].map(v => Math.round(v * 255)).join(",")})"></span>${esc(bt[1])}` : ''}</td></tr>`; }).join('')}</tbody></table></div>
       <p class="empty sm">熟練度 A でそのユニーク専用のマント。B・A・S・Z・Ω で熟練度バッジ(銅・銀・金・ダイヤ・オメガ)。</p>
