@@ -41,109 +41,133 @@
       "id": "pet_bee",
       "label": "ミツバチ",
       "price": 1000,
-      "rarity": "rare"
+      "rarity": "rare",
+      "icon": "textures/items/honeycomb"
     },
     {
       "id": "pet_parrot",
       "label": "インコ",
       "price": 1000,
-      "rarity": "rare"
+      "rarity": "rare",
+      "icon": "textures/items/feather"
     },
     {
       "id": "pet_pig",
       "label": "こぶた",
       "price": 1000,
-      "rarity": "rare"
+      "rarity": "rare",
+      "icon": "textures/items/porkchop_raw"
     },
     {
       "id": "pet_cat",
       "label": "子猫",
       "price": 1000,
-      "rarity": "rare"
+      "rarity": "rare",
+      "icon": "textures/items/fish_raw"
     },
     {
       "id": "pet_wolf",
       "label": "子狼",
       "price": 1000,
-      "rarity": "rare"
+      "rarity": "rare",
+      "icon": "textures/items/bone"
     },
     {
       "id": "pet_fox",
       "label": "キツネ",
       "price": 2000,
-      "rarity": "epic"
+      "rarity": "epic",
+      "icon": "textures/items/sweet_berries"
     },
     {
       "id": "pet_allay",
       "label": "アレイ",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/amethyst_shard"
     },
     {
       "id": "pet_panda",
       "label": "パンダ",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/bamboo"
     },
     {
       "id": "pet_ender_dragon",
       "label": "ちびエンダードラゴン",
       "price": 5000,
-      "rarity": "mythic"
+      "rarity": "mythic",
+      "icon": "textures/items/dragons_breath",
+      "flying": true
     },
     {
       "id": "pet_red_panda",
       "label": "守護霊レッサーパンダ",
       "price": 5000,
-      "rarity": "mythic"
+      "rarity": "mythic",
+      "icon": "textures/items/bamboo",
+      "attach": "feet"
     },
     {
       "id": "pet_dolphin",
       "label": "イルカ",
       "price": 2000,
-      "rarity": "epic"
+      "rarity": "epic",
+      "icon": "textures/items/fish_clownfish_raw",
+      "flying": true
     },
     {
       "id": "pet_tropical_fish",
       "label": "熱帯魚の群れ",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/fish_clownfish_raw",
+      "flying": true
     },
     {
       "id": "pet_squid",
       "label": "浮いてるイカ",
       "price": 1000,
-      "rarity": "rare"
+      "rarity": "rare",
+      "icon": "textures/items/dye_powder_black",
+      "flying": true
     },
     {
       "id": "pet_goldfish",
       "label": "テラい金魚",
       "price": 2000,
-      "rarity": "epic"
+      "rarity": "epic",
+      "icon": "textures/items/fish_clownfish_raw"
     },
     {
       "id": "pet_roi",
       "label": "ろい",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/egg"
     },
     {
       "id": "pet_rate",
       "label": "らて",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/carrot_golden"
     },
     {
       "id": "pet_pom",
       "label": "ぽむ",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/cookie"
     },
     {
       "id": "pet_megami",
       "label": "めがみ",
       "price": 3000,
-      "rarity": "legend"
+      "rarity": "legend",
+      "icon": "textures/items/feather",
+      "flying": true
     },
     {
       "id": "pet_golden_pig",
@@ -151,7 +175,8 @@
       "price": null,
       "rarity": "mythic",
       "obtain": "mission",
-      "obtainNote": "ミッション【節約家】"
+      "obtainNote": "ミッション【節約家】",
+      "icon": "textures/items/gold_ingot"
     },
     {
       "id": "pet_silver_chicken",
@@ -159,7 +184,8 @@
       "price": null,
       "rarity": "legend",
       "obtain": "mission",
-      "obtainNote": "ミッション【新規客】"
+      "obtainNote": "ミッション【新規客】",
+      "icon": "textures/items/egg"
     },
     {
       "id": "pet_golden_chicken",
@@ -167,7 +193,8 @@
       "price": null,
       "rarity": "legend",
       "obtain": "mission",
-      "obtainNote": "ミッション【常連さん】"
+      "obtainNote": "ミッション【常連さん】",
+      "icon": "textures/items/egg"
     },
     {
       "id": "pet_rainbow_chicken",
@@ -175,7 +202,8 @@
       "price": null,
       "rarity": "mythic",
       "obtain": "mission",
-      "obtainNote": "ミッション【太客】"
+      "obtainNote": "ミッション【太客】",
+      "icon": "textures/items/egg"
     },
     {
       "id": "pet_red_allay",
@@ -183,7 +211,9 @@
       "price": null,
       "rarity": "mythic",
       "obtain": "mission",
-      "obtainNote": "ミッション【真バーサーカー】"
+      "obtainNote": "ミッション【真バーサーカー】",
+      "icon": "textures/items/amethyst_shard",
+      "flying": true
     }
   ],
   "symbols": [
@@ -192,28 +222,32 @@
       "label": "矢印 (>)",
       "price": 0,
       "rarity": "common",
-      "symbol": ">"
+      "symbol": ">",
+      "icon": "textures/items/arrow"
     },
     {
       "id": "symbol_chevron",
       "label": "シェブロン",
       "price": 500,
       "rarity": "rare",
-      "symbol": ""
+      "symbol": "",
+      "icon": "textures/items/arrow"
     },
     {
       "id": "symbol_skull",
       "label": "ドクロ",
       "price": 500,
       "rarity": "epic",
-      "symbol": ""
+      "symbol": "",
+      "icon": "textures/items/bone"
     },
     {
       "id": "symbol_cross",
       "label": "バツ",
       "price": 500,
       "rarity": "epic",
-      "symbol": ""
+      "symbol": "",
+      "icon": "textures/items/redstone_dust"
     }
   ],
   "hitfx": [
@@ -222,21 +256,121 @@
       "label": "照準が赤く",
       "price": 0,
       "rarity": "common",
-      "desc": "当てた瞬間、照準が赤くなって少し大きくなる"
+      "desc": "当てた瞬間、照準が赤くなって少し大きくなる",
+      "icon": "textures/items/redstone_dust"
     },
     {
       "id": "hit_x",
       "label": "×マーク",
       "price": 800,
       "rarity": "rare",
-      "desc": "当てた瞬間、照準のまわりに白い ×(FPS でおなじみ)"
+      "desc": "当てた瞬間、照準のまわりに白い ×(FPS でおなじみ)",
+      "icon": "textures/items/iron_sword"
     },
     {
       "id": "hit_text",
       "label": "HIT の字",
       "price": 800,
       "rarity": "rare",
-      "desc": "照準の右上に小さく HIT が浮いて消える"
+      "desc": "照準の右上に小さく HIT が浮いて消える",
+      "icon": "textures/items/paper"
+    }
+  ],
+  "killicons": [
+    {
+      "id": "ki_skull",
+      "label": "ドクロ",
+      "price": 0,
+      "rarity": "common",
+      "desc": "倒した時に照準の下に出る(はじめから使える)",
+      "icon": "textures/ui/bowflit_pixel/skull"
+    },
+    {
+      "id": "ki_ghost_white",
+      "label": "白いおばけ",
+      "price": 800,
+      "rarity": "rare",
+      "desc": "倒した時に、照準の下に白いおばけ",
+      "icon": "textures/ui/bowflit_pixel/ghost_white"
+    },
+    {
+      "id": "ki_ghost_black",
+      "label": "黒いおばけ",
+      "price": 800,
+      "rarity": "rare",
+      "desc": "倒した時に、照準の下に黒いおばけ",
+      "icon": "textures/ui/bowflit_pixel/ghost_black"
+    },
+    {
+      "id": "ki_hood",
+      "label": "死神",
+      "price": 800,
+      "rarity": "rare",
+      "desc": "倒した時に、照準の下にフードの死神",
+      "icon": "textures/ui/bowflit_pixel/hood"
+    },
+    {
+      "id": "ki_dragon_red",
+      "label": "赤いドラゴン",
+      "price": 1200,
+      "rarity": "epic",
+      "desc": "倒した時に、赤いドラゴンが照準の下で小さく8の字に飛ぶ",
+      "icon": "textures/ui/bowflit_pixel/dragon_red"
+    },
+    {
+      "id": "ki_angel",
+      "label": "天使",
+      "price": 1200,
+      "rarity": "epic",
+      "desc": "倒した時に、天使が照準の下で小さく8の字に飛ぶ",
+      "icon": "textures/ui/bowflit_pixel/angel"
+    },
+    {
+      "id": "ki_cookie",
+      "label": "クッキー",
+      "price": 800,
+      "rarity": "rare",
+      "desc": "倒した時に、照準の下にジンジャーブレッドのクッキー",
+      "icon": "textures/ui/bowflit_pixel/gingerbread",
+      "from": 1796050800000
+    }
+  ],
+  "trails": [
+    {
+      "id": "tr_fire",
+      "label": "炎",
+      "price": 600,
+      "icon": "textures/ui/bowflit_pixel/fire"
+    },
+    {
+      "id": "tr_bolt",
+      "label": "稲妻",
+      "price": 600,
+      "icon": "textures/ui/bowflit_pixel/bolt"
+    },
+    {
+      "id": "tr_orbs_purple",
+      "label": "紫の玉",
+      "price": 600,
+      "icon": "textures/ui/bowflit_pixel/orbs_purple"
+    },
+    {
+      "id": "tr_orbs_green",
+      "label": "緑の玉",
+      "price": 600,
+      "icon": "textures/ui/bowflit_pixel/orbs_green"
+    },
+    {
+      "id": "tr_heart",
+      "label": "ハート",
+      "price": 600,
+      "icon": "textures/ui/bowflit_pixel/heart"
+    },
+    {
+      "id": "tr_bone",
+      "label": "骨",
+      "price": 600,
+      "icon": "textures/ui/bowflit_pixel/bone"
     }
   ],
   "titles": [
@@ -594,26 +728,335 @@
       "rarity": "legend"
     }
   ],
+  "titleFront": [
+    {
+      "id": "f_legend",
+      "label": "伝説の",
+      "price": 300
+    },
+    {
+      "id": "f_sleep",
+      "label": "眠れる",
+      "price": 100
+    },
+    {
+      "id": "f_fire",
+      "label": "炎の",
+      "price": 150
+    },
+    {
+      "id": "f_ice",
+      "label": "氷の",
+      "price": 150
+    },
+    {
+      "id": "f_strong",
+      "label": "最強の",
+      "price": 300
+    },
+    {
+      "id": "f_lost",
+      "label": "迷子の",
+      "price": 80
+    },
+    {
+      "id": "f_hungry",
+      "label": "腹ペコの",
+      "price": 80
+    },
+    {
+      "id": "f_invincible",
+      "label": "無敵の",
+      "price": 300
+    },
+    {
+      "id": "f_lone",
+      "label": "孤高の",
+      "price": 200
+    },
+    {
+      "id": "f_gale",
+      "label": "疾風の",
+      "price": 200
+    },
+    {
+      "id": "f_violet",
+      "label": "紫電の",
+      "price": 250
+    },
+    {
+      "id": "f_gold",
+      "label": "黄金の",
+      "price": 250
+    },
+    {
+      "id": "f_dark",
+      "label": "闇の",
+      "price": 150
+    },
+    {
+      "id": "f_light",
+      "label": "光の",
+      "price": 150
+    },
+    {
+      "id": "f_rampage",
+      "label": "暴走する",
+      "price": 120
+    },
+    {
+      "id": "f_genius",
+      "label": "天才",
+      "price": 200
+    },
+    {
+      "id": "f_trainee",
+      "label": "見習い",
+      "price": 50
+    },
+    {
+      "id": "f_whim",
+      "label": "気まぐれな",
+      "price": 80
+    },
+    {
+      "id": "f_night",
+      "label": "夜ふかしの",
+      "price": 80
+    },
+    {
+      "id": "f_cry",
+      "label": "泣き虫の",
+      "price": 50
+    },
+    {
+      "id": "f_perfect",
+      "label": "百発百中の",
+      "price": 300
+    },
+    {
+      "id": "f_fly",
+      "label": "空飛ぶ",
+      "price": 150
+    },
+    {
+      "id": "f_rumor",
+      "label": "噂の",
+      "price": 100
+    },
+    {
+      "id": "f_mystery",
+      "label": "謎の",
+      "price": 120
+    },
+    {
+      "id": "f_quiet",
+      "label": "静かなる",
+      "price": 150
+    },
+    {
+      "id": "f_angry",
+      "label": "怒れる",
+      "price": 100
+    },
+    {
+      "id": "f_lucky",
+      "label": "幸運の",
+      "price": 120
+    },
+    {
+      "id": "f_unlucky",
+      "label": "不運な",
+      "price": 50
+    },
+    {
+      "id": "f_second",
+      "label": "二代目",
+      "price": 150
+    },
+    {
+      "id": "f_origin",
+      "label": "元祖",
+      "price": 200
+    }
+  ],
+  "titleBack": [
+    {
+      "id": "b_archer",
+      "label": "弓使い",
+      "price": 100
+    },
+    {
+      "id": "b_sniper",
+      "label": "狙撃手",
+      "price": 200
+    },
+    {
+      "id": "b_shooter",
+      "label": "射手",
+      "price": 100
+    },
+    {
+      "id": "b_hero",
+      "label": "勇者",
+      "price": 250
+    },
+    {
+      "id": "b_demon",
+      "label": "魔王",
+      "price": 300
+    },
+    {
+      "id": "b_boss",
+      "label": "番長",
+      "price": 150
+    },
+    {
+      "id": "b_prince",
+      "label": "王子",
+      "price": 200
+    },
+    {
+      "id": "b_princess",
+      "label": "姫",
+      "price": 200
+    },
+    {
+      "id": "b_ninja",
+      "label": "忍者",
+      "price": 200
+    },
+    {
+      "id": "b_crafter",
+      "label": "職人",
+      "price": 120
+    },
+    {
+      "id": "b_teacher",
+      "label": "先生",
+      "price": 120
+    },
+    {
+      "id": "b_newbie",
+      "label": "新人",
+      "price": 50
+    },
+    {
+      "id": "b_master",
+      "label": "名人",
+      "price": 250
+    },
+    {
+      "id": "b_traveler",
+      "label": "旅人",
+      "price": 80
+    },
+    {
+      "id": "b_thief",
+      "label": "怪盗",
+      "price": 200
+    },
+    {
+      "id": "b_guard",
+      "label": "番人",
+      "price": 120
+    },
+    {
+      "id": "b_reaper",
+      "label": "死神",
+      "price": 300
+    },
+    {
+      "id": "b_angel",
+      "label": "天使",
+      "price": 250
+    },
+    {
+      "id": "b_dragon",
+      "label": "ドラゴン",
+      "price": 300
+    },
+    {
+      "id": "b_frog",
+      "label": "カエル",
+      "price": 50
+    },
+    {
+      "id": "b_mimic",
+      "label": "ミミック",
+      "price": 120
+    },
+    {
+      "id": "b_slime",
+      "label": "スライム",
+      "price": 50
+    },
+    {
+      "id": "b_fortune",
+      "label": "占い師",
+      "price": 150
+    },
+    {
+      "id": "b_chef",
+      "label": "料理人",
+      "price": 100
+    },
+    {
+      "id": "b_scholar",
+      "label": "学者",
+      "price": 120
+    },
+    {
+      "id": "b_watch",
+      "label": "見張り番",
+      "price": 80
+    },
+    {
+      "id": "b_wander",
+      "label": "風来坊",
+      "price": 100
+    },
+    {
+      "id": "b_general",
+      "label": "大将",
+      "price": 200
+    },
+    {
+      "id": "b_emperor",
+      "label": "帝王",
+      "price": 300
+    },
+    {
+      "id": "b_main",
+      "label": "主人公",
+      "price": 250
+    }
+  ],
   "badgeCats": [
     {
       "id": "rank",
-      "label": "ランクバッジ"
+      "label": "ランクバッジ",
+      "icon": "textures/icebow_badges/badge_rank_champion"
     },
     {
       "id": "challenge",
-      "label": "チャレンジバッジ"
+      "label": "チャレンジバッジ",
+      "icon": "textures/icebow_badges/badge_veteran"
     },
     {
       "id": "special",
-      "label": "おもしろバッジ"
+      "label": "おもしろバッジ",
+      "icon": "textures/icebow_badges/badge_zako"
     },
     {
       "id": "elite",
-      "label": "エリートバッジ"
+      "label": "エリートバッジ",
+      "icon": "textures/icebow_badges/badge_perfect_game"
     },
     {
       "id": "mastery",
-      "label": "熟練度バッジ"
+      "label": "熟練度バッジ",
+      "icon": "textures/icebow_badges/badge_m_jack_s"
     }
   ],
   "badges": [
@@ -622,175 +1065,2133 @@
       "label": "壱段バッジ",
       "how": "ランク「壱段」に到達",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_t1"
     },
     {
       "id": "rank_t2",
       "label": "弐段バッジ",
       "how": "ランク「弐段」に到達",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_t2"
     },
     {
       "id": "rank_t3",
       "label": "参段バッジ",
       "how": "ランク「参段」に到達",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_t3"
     },
     {
       "id": "rank_t4",
       "label": "肆段バッジ",
       "how": "ランク「肆段」に到達",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_t4"
     },
     {
       "id": "rank_t5",
       "label": "伍段バッジ",
       "how": "ランク「伍段」に到達",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_t5"
     },
     {
       "id": "rank_top",
       "label": "陸段バッジ",
       "how": "ランク「陸段」に到達",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_top"
     },
     {
       "id": "rank_champion",
       "label": "最高峰バッジ",
       "how": "陸段のワールド1位",
       "cat": "rank",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rank_champion"
     },
     {
       "id": "mvp",
       "label": "MVPバッジ",
       "how": "BOWFLITでMVPを累計10回",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_mvp"
     },
     {
       "id": "veteran",
       "label": "ベテランバッジ",
       "how": "BOWFLITに100試合参加",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_veteran"
     },
     {
       "id": "win100",
       "label": "30勝バッジ",
       "how": "BOWFLITで通算30勝",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_win100"
     },
     {
       "id": "mvp50",
       "label": "MVPレジェンドバッジ",
       "how": "BOWFLITでMVPを累計30回",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_mvp50"
     },
     {
       "id": "untouchable",
       "label": "無傷バッジ",
       "how": "鎧を1回も割られずに試合に勝つのを累計20回",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_untouchable"
     },
     {
       "id": "sniper",
       "label": "スナイパーバッジ",
       "how": "40m以上離れた相手を倒すのを累計30回",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_sniper"
     },
     {
       "id": "first_blood",
       "label": "先制の鬼バッジ",
       "how": "試合で最初のキルを取るのを累計20回",
       "cat": "special",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_first_blood"
     },
     {
       "id": "zako",
       "label": "雑魚乙バッジ",
       "how": "0ヒットのまま最初に脱落する",
       "cat": "special",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_zako"
     },
     {
       "id": "perfect_game",
       "label": "パーフェクトゲームバッジ",
       "how": "プレイヤー4人以上の試合で、鎧を割られず他の全員を倒して勝つ",
       "cat": "elite",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_perfect_game"
     },
     {
       "id": "snowman",
       "label": "割れ物バッジ",
       "how": "通算200回鎧を割られる(割られるのも才能)",
       "cat": "special",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_snowman"
     },
     {
       "id": "iron_will",
       "label": "鉄の意志バッジ",
       "how": "鎧を割られてから生き残って試合に勝つのを累計30回",
       "cat": "elite",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_iron_will"
     },
     {
       "id": "hawkeye",
       "label": "ホークアイバッジ",
       "how": "1試合で40m以上のキルを3回",
       "cat": "elite",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_hawkeye"
     },
     {
       "id": "early_bird",
       "label": "早起きバッジ",
       "how": "朝5時〜8時(日本時間)に試合をやり切る",
       "cat": "special",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_early_bird"
     },
     {
       "id": "marathon",
       "label": "耐久王バッジ",
       "how": "1日(日本時間)に試合を30回やり切る",
       "cat": "special",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_marathon"
     },
     {
       "id": "login",
       "label": "皆勤賞バッジ",
       "how": "30日ログインする",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_login"
     },
     {
       "id": "login100",
       "label": "50日ログインバッジ",
       "how": "50日ログインする",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_login100"
     },
     {
       "id": "playtime",
       "label": "住人バッジ",
       "how": "合計100時間プレイ",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_playtime"
     },
     {
       "id": "rich",
       "label": "大富豪バッジ",
       "how": "手持ちのコインを5000枚貯める",
       "cat": "challenge",
-      "glyph": ""
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_rich"
+    },
+    {
+      "id": "m_jack_b",
+      "label": "Jack 銅バッジ",
+      "how": "Jack の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jack_b"
+    },
+    {
+      "id": "m_jack_a",
+      "label": "Jack 銀バッジ",
+      "how": "Jack の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jack_a"
+    },
+    {
+      "id": "m_jack_s",
+      "label": "Jack 金バッジ",
+      "how": "Jack の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jack_s"
+    },
+    {
+      "id": "m_jack_z",
+      "label": "Jack ダイヤバッジ",
+      "how": "Jack の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jack_z"
+    },
+    {
+      "id": "m_jack_o",
+      "label": "Jack オメガバッジ",
+      "how": "Jack の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jack_o"
+    },
+    {
+      "id": "m_humming_b",
+      "label": "Humming 銅バッジ",
+      "how": "Humming の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_humming_b"
+    },
+    {
+      "id": "m_humming_a",
+      "label": "Humming 銀バッジ",
+      "how": "Humming の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_humming_a"
+    },
+    {
+      "id": "m_humming_s",
+      "label": "Humming 金バッジ",
+      "how": "Humming の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_humming_s"
+    },
+    {
+      "id": "m_humming_z",
+      "label": "Humming ダイヤバッジ",
+      "how": "Humming の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_humming_z"
+    },
+    {
+      "id": "m_humming_o",
+      "label": "Humming オメガバッジ",
+      "how": "Humming の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_humming_o"
+    },
+    {
+      "id": "m_jester_b",
+      "label": "Jester 銅バッジ",
+      "how": "Jester の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jester_b"
+    },
+    {
+      "id": "m_jester_a",
+      "label": "Jester 銀バッジ",
+      "how": "Jester の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jester_a"
+    },
+    {
+      "id": "m_jester_s",
+      "label": "Jester 金バッジ",
+      "how": "Jester の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jester_s"
+    },
+    {
+      "id": "m_jester_z",
+      "label": "Jester ダイヤバッジ",
+      "how": "Jester の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jester_z"
+    },
+    {
+      "id": "m_jester_o",
+      "label": "Jester オメガバッジ",
+      "how": "Jester の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_jester_o"
+    },
+    {
+      "id": "m_shade_b",
+      "label": "Shade 銅バッジ",
+      "how": "Shade の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_shade_b"
+    },
+    {
+      "id": "m_shade_a",
+      "label": "Shade 銀バッジ",
+      "how": "Shade の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_shade_a"
+    },
+    {
+      "id": "m_shade_s",
+      "label": "Shade 金バッジ",
+      "how": "Shade の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_shade_s"
+    },
+    {
+      "id": "m_shade_z",
+      "label": "Shade ダイヤバッジ",
+      "how": "Shade の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_shade_z"
+    },
+    {
+      "id": "m_shade_o",
+      "label": "Shade オメガバッジ",
+      "how": "Shade の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_shade_o"
+    },
+    {
+      "id": "m_rampart_b",
+      "label": "Rampart 銅バッジ",
+      "how": "Rampart の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_rampart_b"
+    },
+    {
+      "id": "m_rampart_a",
+      "label": "Rampart 銀バッジ",
+      "how": "Rampart の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_rampart_a"
+    },
+    {
+      "id": "m_rampart_s",
+      "label": "Rampart 金バッジ",
+      "how": "Rampart の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_rampart_s"
+    },
+    {
+      "id": "m_rampart_z",
+      "label": "Rampart ダイヤバッジ",
+      "how": "Rampart の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_rampart_z"
+    },
+    {
+      "id": "m_rampart_o",
+      "label": "Rampart オメガバッジ",
+      "how": "Rampart の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_rampart_o"
+    },
+    {
+      "id": "m_widow_b",
+      "label": "Widow 銅バッジ",
+      "how": "Widow の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_widow_b"
+    },
+    {
+      "id": "m_widow_a",
+      "label": "Widow 銀バッジ",
+      "how": "Widow の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_widow_a"
+    },
+    {
+      "id": "m_widow_s",
+      "label": "Widow 金バッジ",
+      "how": "Widow の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_widow_s"
+    },
+    {
+      "id": "m_widow_z",
+      "label": "Widow ダイヤバッジ",
+      "how": "Widow の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_widow_z"
+    },
+    {
+      "id": "m_widow_o",
+      "label": "Widow オメガバッジ",
+      "how": "Widow の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_widow_o"
+    },
+    {
+      "id": "m_beaver_b",
+      "label": "Beaver 銅バッジ",
+      "how": "Beaver の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_beaver_b"
+    },
+    {
+      "id": "m_beaver_a",
+      "label": "Beaver 銀バッジ",
+      "how": "Beaver の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_beaver_a"
+    },
+    {
+      "id": "m_beaver_s",
+      "label": "Beaver 金バッジ",
+      "how": "Beaver の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_beaver_s"
+    },
+    {
+      "id": "m_beaver_z",
+      "label": "Beaver ダイヤバッジ",
+      "how": "Beaver の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_beaver_z"
+    },
+    {
+      "id": "m_beaver_o",
+      "label": "Beaver オメガバッジ",
+      "how": "Beaver の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_beaver_o"
+    },
+    {
+      "id": "m_pierce_b",
+      "label": "Pierce 銅バッジ",
+      "how": "Pierce の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_pierce_b"
+    },
+    {
+      "id": "m_pierce_a",
+      "label": "Pierce 銀バッジ",
+      "how": "Pierce の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_pierce_a"
+    },
+    {
+      "id": "m_pierce_s",
+      "label": "Pierce 金バッジ",
+      "how": "Pierce の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_pierce_s"
+    },
+    {
+      "id": "m_pierce_z",
+      "label": "Pierce ダイヤバッジ",
+      "how": "Pierce の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_pierce_z"
+    },
+    {
+      "id": "m_pierce_o",
+      "label": "Pierce オメガバッジ",
+      "how": "Pierce の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_pierce_o"
+    },
+    {
+      "id": "m_bruno_b",
+      "label": "Bruno 銅バッジ",
+      "how": "Bruno の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_bruno_b"
+    },
+    {
+      "id": "m_bruno_a",
+      "label": "Bruno 銀バッジ",
+      "how": "Bruno の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_bruno_a"
+    },
+    {
+      "id": "m_bruno_s",
+      "label": "Bruno 金バッジ",
+      "how": "Bruno の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_bruno_s"
+    },
+    {
+      "id": "m_bruno_z",
+      "label": "Bruno ダイヤバッジ",
+      "how": "Bruno の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_bruno_z"
+    },
+    {
+      "id": "m_bruno_o",
+      "label": "Bruno オメガバッジ",
+      "how": "Bruno の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_bruno_o"
+    },
+    {
+      "id": "m_echo_b",
+      "label": "Echo 銅バッジ",
+      "how": "Echo の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_echo_b"
+    },
+    {
+      "id": "m_echo_a",
+      "label": "Echo 銀バッジ",
+      "how": "Echo の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_echo_a"
+    },
+    {
+      "id": "m_echo_s",
+      "label": "Echo 金バッジ",
+      "how": "Echo の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_echo_s"
+    },
+    {
+      "id": "m_echo_z",
+      "label": "Echo ダイヤバッジ",
+      "how": "Echo の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_echo_z"
+    },
+    {
+      "id": "m_echo_o",
+      "label": "Echo オメガバッジ",
+      "how": "Echo の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_echo_o"
+    },
+    {
+      "id": "m_meteor_b",
+      "label": "Meteor 銅バッジ",
+      "how": "Meteor の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_meteor_b"
+    },
+    {
+      "id": "m_meteor_a",
+      "label": "Meteor 銀バッジ",
+      "how": "Meteor の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_meteor_a"
+    },
+    {
+      "id": "m_meteor_s",
+      "label": "Meteor 金バッジ",
+      "how": "Meteor の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_meteor_s"
+    },
+    {
+      "id": "m_meteor_z",
+      "label": "Meteor ダイヤバッジ",
+      "how": "Meteor の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_meteor_z"
+    },
+    {
+      "id": "m_meteor_o",
+      "label": "Meteor オメガバッジ",
+      "how": "Meteor の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_meteor_o"
+    },
+    {
+      "id": "m_oracle_b",
+      "label": "Oracle 銅バッジ",
+      "how": "Oracle の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_oracle_b"
+    },
+    {
+      "id": "m_oracle_a",
+      "label": "Oracle 銀バッジ",
+      "how": "Oracle の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_oracle_a"
+    },
+    {
+      "id": "m_oracle_s",
+      "label": "Oracle 金バッジ",
+      "how": "Oracle の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_oracle_s"
+    },
+    {
+      "id": "m_oracle_z",
+      "label": "Oracle ダイヤバッジ",
+      "how": "Oracle の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_oracle_z"
+    },
+    {
+      "id": "m_oracle_o",
+      "label": "Oracle オメガバッジ",
+      "how": "Oracle の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_oracle_o"
+    },
+    {
+      "id": "m_replica_b",
+      "label": "Replica 銅バッジ",
+      "how": "Replica の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_replica_b"
+    },
+    {
+      "id": "m_replica_a",
+      "label": "Replica 銀バッジ",
+      "how": "Replica の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_replica_a"
+    },
+    {
+      "id": "m_replica_s",
+      "label": "Replica 金バッジ",
+      "how": "Replica の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_replica_s"
+    },
+    {
+      "id": "m_replica_z",
+      "label": "Replica ダイヤバッジ",
+      "how": "Replica の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_replica_z"
+    },
+    {
+      "id": "m_replica_o",
+      "label": "Replica オメガバッジ",
+      "how": "Replica の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_replica_o"
+    },
+    {
+      "id": "m_diver_b",
+      "label": "Diver 銅バッジ",
+      "how": "Diver の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_diver_b"
+    },
+    {
+      "id": "m_diver_a",
+      "label": "Diver 銀バッジ",
+      "how": "Diver の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_diver_a"
+    },
+    {
+      "id": "m_diver_s",
+      "label": "Diver 金バッジ",
+      "how": "Diver の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_diver_s"
+    },
+    {
+      "id": "m_diver_z",
+      "label": "Diver ダイヤバッジ",
+      "how": "Diver の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_diver_z"
+    },
+    {
+      "id": "m_diver_o",
+      "label": "Diver オメガバッジ",
+      "how": "Diver の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_diver_o"
+    },
+    {
+      "id": "m_splash_b",
+      "label": "Splash 銅バッジ",
+      "how": "Splash の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_splash_b"
+    },
+    {
+      "id": "m_splash_a",
+      "label": "Splash 銀バッジ",
+      "how": "Splash の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_splash_a"
+    },
+    {
+      "id": "m_splash_s",
+      "label": "Splash 金バッジ",
+      "how": "Splash の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_splash_s"
+    },
+    {
+      "id": "m_splash_z",
+      "label": "Splash ダイヤバッジ",
+      "how": "Splash の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_splash_z"
+    },
+    {
+      "id": "m_splash_o",
+      "label": "Splash オメガバッジ",
+      "how": "Splash の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_splash_o"
+    },
+    {
+      "id": "m_moth_b",
+      "label": "Moth 銅バッジ",
+      "how": "Moth の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_moth_b"
+    },
+    {
+      "id": "m_moth_a",
+      "label": "Moth 銀バッジ",
+      "how": "Moth の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_moth_a"
+    },
+    {
+      "id": "m_moth_s",
+      "label": "Moth 金バッジ",
+      "how": "Moth の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_moth_s"
+    },
+    {
+      "id": "m_moth_z",
+      "label": "Moth ダイヤバッジ",
+      "how": "Moth の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_moth_z"
+    },
+    {
+      "id": "m_moth_o",
+      "label": "Moth オメガバッジ",
+      "how": "Moth の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_moth_o"
+    },
+    {
+      "id": "m_groove_b",
+      "label": "Groove 銅バッジ",
+      "how": "Groove の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_groove_b"
+    },
+    {
+      "id": "m_groove_a",
+      "label": "Groove 銀バッジ",
+      "how": "Groove の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_groove_a"
+    },
+    {
+      "id": "m_groove_s",
+      "label": "Groove 金バッジ",
+      "how": "Groove の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_groove_s"
+    },
+    {
+      "id": "m_groove_z",
+      "label": "Groove ダイヤバッジ",
+      "how": "Groove の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_groove_z"
+    },
+    {
+      "id": "m_groove_o",
+      "label": "Groove オメガバッジ",
+      "how": "Groove の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_groove_o"
+    },
+    {
+      "id": "m_byte_b",
+      "label": "Byte 銅バッジ",
+      "how": "Byte の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_byte_b"
+    },
+    {
+      "id": "m_byte_a",
+      "label": "Byte 銀バッジ",
+      "how": "Byte の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_byte_a"
+    },
+    {
+      "id": "m_byte_s",
+      "label": "Byte 金バッジ",
+      "how": "Byte の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_byte_s"
+    },
+    {
+      "id": "m_byte_z",
+      "label": "Byte ダイヤバッジ",
+      "how": "Byte の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_byte_z"
+    },
+    {
+      "id": "m_byte_o",
+      "label": "Byte オメガバッジ",
+      "how": "Byte の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_byte_o"
+    },
+    {
+      "id": "m_angler_b",
+      "label": "Angler 銅バッジ",
+      "how": "Angler の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_angler_b"
+    },
+    {
+      "id": "m_angler_a",
+      "label": "Angler 銀バッジ",
+      "how": "Angler の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_angler_a"
+    },
+    {
+      "id": "m_angler_s",
+      "label": "Angler 金バッジ",
+      "how": "Angler の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_angler_s"
+    },
+    {
+      "id": "m_angler_z",
+      "label": "Angler ダイヤバッジ",
+      "how": "Angler の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_angler_z"
+    },
+    {
+      "id": "m_angler_o",
+      "label": "Angler オメガバッジ",
+      "how": "Angler の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_angler_o"
+    },
+    {
+      "id": "m_frenzy_b",
+      "label": "Frenzy 銅バッジ",
+      "how": "Frenzy の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_frenzy_b"
+    },
+    {
+      "id": "m_frenzy_a",
+      "label": "Frenzy 銀バッジ",
+      "how": "Frenzy の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_frenzy_a"
+    },
+    {
+      "id": "m_frenzy_s",
+      "label": "Frenzy 金バッジ",
+      "how": "Frenzy の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_frenzy_s"
+    },
+    {
+      "id": "m_frenzy_z",
+      "label": "Frenzy ダイヤバッジ",
+      "how": "Frenzy の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_frenzy_z"
+    },
+    {
+      "id": "m_frenzy_o",
+      "label": "Frenzy オメガバッジ",
+      "how": "Frenzy の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_frenzy_o"
+    },
+    {
+      "id": "m_wormhole_b",
+      "label": "Astro 銅バッジ",
+      "how": "Astro の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_wormhole_b"
+    },
+    {
+      "id": "m_wormhole_a",
+      "label": "Astro 銀バッジ",
+      "how": "Astro の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_wormhole_a"
+    },
+    {
+      "id": "m_wormhole_s",
+      "label": "Astro 金バッジ",
+      "how": "Astro の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_wormhole_s"
+    },
+    {
+      "id": "m_wormhole_z",
+      "label": "Astro ダイヤバッジ",
+      "how": "Astro の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_wormhole_z"
+    },
+    {
+      "id": "m_wormhole_o",
+      "label": "Astro オメガバッジ",
+      "how": "Astro の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_wormhole_o"
+    },
+    {
+      "id": "m_perfume_b",
+      "label": "Perfume 銅バッジ",
+      "how": "Perfume の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_perfume_b"
+    },
+    {
+      "id": "m_perfume_a",
+      "label": "Perfume 銀バッジ",
+      "how": "Perfume の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_perfume_a"
+    },
+    {
+      "id": "m_perfume_s",
+      "label": "Perfume 金バッジ",
+      "how": "Perfume の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_perfume_s"
+    },
+    {
+      "id": "m_perfume_z",
+      "label": "Perfume ダイヤバッジ",
+      "how": "Perfume の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_perfume_z"
+    },
+    {
+      "id": "m_perfume_o",
+      "label": "Perfume オメガバッジ",
+      "how": "Perfume の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_perfume_o"
+    },
+    {
+      "id": "m_mason_b",
+      "label": "Sprout 銅バッジ",
+      "how": "Sprout の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_mason_b"
+    },
+    {
+      "id": "m_mason_a",
+      "label": "Sprout 銀バッジ",
+      "how": "Sprout の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_mason_a"
+    },
+    {
+      "id": "m_mason_s",
+      "label": "Sprout 金バッジ",
+      "how": "Sprout の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_mason_s"
+    },
+    {
+      "id": "m_mason_z",
+      "label": "Sprout ダイヤバッジ",
+      "how": "Sprout の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_mason_z"
+    },
+    {
+      "id": "m_mason_o",
+      "label": "Sprout オメガバッジ",
+      "how": "Sprout の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_mason_o"
+    },
+    {
+      "id": "m_puppet_b",
+      "label": "Phantom 銅バッジ",
+      "how": "Phantom の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_puppet_b"
+    },
+    {
+      "id": "m_puppet_a",
+      "label": "Phantom 銀バッジ",
+      "how": "Phantom の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_puppet_a"
+    },
+    {
+      "id": "m_puppet_s",
+      "label": "Phantom 金バッジ",
+      "how": "Phantom の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_puppet_s"
+    },
+    {
+      "id": "m_puppet_z",
+      "label": "Phantom ダイヤバッジ",
+      "how": "Phantom の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_puppet_z"
+    },
+    {
+      "id": "m_puppet_o",
+      "label": "Phantom オメガバッジ",
+      "how": "Phantom の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_puppet_o"
+    },
+    {
+      "id": "m_butterfly_b",
+      "label": "Grace 銅バッジ",
+      "how": "Grace の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_butterfly_b"
+    },
+    {
+      "id": "m_butterfly_a",
+      "label": "Grace 銀バッジ",
+      "how": "Grace の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_butterfly_a"
+    },
+    {
+      "id": "m_butterfly_s",
+      "label": "Grace 金バッジ",
+      "how": "Grace の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_butterfly_s"
+    },
+    {
+      "id": "m_butterfly_z",
+      "label": "Grace ダイヤバッジ",
+      "how": "Grace の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_butterfly_z"
+    },
+    {
+      "id": "m_butterfly_o",
+      "label": "Grace オメガバッジ",
+      "how": "Grace の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_butterfly_o"
+    },
+    {
+      "id": "m_chef_b",
+      "label": "Olive 銅バッジ",
+      "how": "Olive の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_chef_b"
+    },
+    {
+      "id": "m_chef_a",
+      "label": "Olive 銀バッジ",
+      "how": "Olive の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_chef_a"
+    },
+    {
+      "id": "m_chef_s",
+      "label": "Olive 金バッジ",
+      "how": "Olive の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_chef_s"
+    },
+    {
+      "id": "m_chef_z",
+      "label": "Olive ダイヤバッジ",
+      "how": "Olive の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_chef_z"
+    },
+    {
+      "id": "m_chef_o",
+      "label": "Olive オメガバッジ",
+      "how": "Olive の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_chef_o"
+    },
+    {
+      "id": "m_comet_b",
+      "label": "Comet 銅バッジ",
+      "how": "Comet の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_comet_b"
+    },
+    {
+      "id": "m_comet_a",
+      "label": "Comet 銀バッジ",
+      "how": "Comet の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_comet_a"
+    },
+    {
+      "id": "m_comet_s",
+      "label": "Comet 金バッジ",
+      "how": "Comet の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_comet_s"
+    },
+    {
+      "id": "m_comet_z",
+      "label": "Comet ダイヤバッジ",
+      "how": "Comet の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_comet_z"
+    },
+    {
+      "id": "m_comet_o",
+      "label": "Comet オメガバッジ",
+      "how": "Comet の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_comet_o"
+    },
+    {
+      "id": "m_recall_b",
+      "label": "Wanda 銅バッジ",
+      "how": "Wanda の熟練度 B に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_recall_b"
+    },
+    {
+      "id": "m_recall_a",
+      "label": "Wanda 銀バッジ",
+      "how": "Wanda の熟練度 A に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_recall_a"
+    },
+    {
+      "id": "m_recall_s",
+      "label": "Wanda 金バッジ",
+      "how": "Wanda の熟練度 S に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_recall_s"
+    },
+    {
+      "id": "m_recall_z",
+      "label": "Wanda ダイヤバッジ",
+      "how": "Wanda の熟練度 Z に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_recall_z"
+    },
+    {
+      "id": "m_recall_o",
+      "label": "Wanda オメガバッジ",
+      "how": "Wanda の熟練度 Ω に到達",
+      "cat": "mastery",
+      "glyph": "",
+      "icon": "textures/icebow_badges/badge_m_recall_o"
+    }
+  ],
+  "masteryTiers": [
+    [
+      "b",
+      "B",
+      "銅"
+    ],
+    [
+      "a",
+      "A",
+      "銀"
+    ],
+    [
+      "s",
+      "S",
+      "金"
+    ],
+    [
+      "z",
+      "Z",
+      "ダイヤ"
+    ],
+    [
+      "o",
+      "Ω",
+      "オメガ"
+    ]
+  ],
+  "boltTiers": [
+    [
+      0,
+      "白",
+      [
+        0.9,
+        0.95,
+        1
+      ]
+    ],
+    [
+      2,
+      "黄",
+      [
+        1,
+        0.9,
+        0.2
+      ]
+    ],
+    [
+      4,
+      "水色",
+      [
+        0.35,
+        0.85,
+        1
+      ]
+    ],
+    [
+      6,
+      "紫",
+      [
+        0.76,
+        0.42,
+        1
+      ]
+    ],
+    [
+      8,
+      "緑",
+      [
+        0.35,
+        1,
+        0.4
+      ]
+    ],
+    [
+      9,
+      "紅",
+      [
+        1,
+        0.24,
+        0.3
+      ]
+    ]
+  ],
+  "capes": [
+    {
+      "id": "c1_stripe",
+      "name": "ストライプ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_mono",
+      "name": "モノクロ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_jack",
+      "name": "Jack",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_diver",
+      "name": "Diver",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_meteor",
+      "name": "Meteor",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_flame",
+      "name": "炎",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_camo",
+      "name": "迷彩",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c1_aurora",
+      "name": "オーロラ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c2_nebula",
+      "name": "星雲",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c2_deepsea",
+      "name": "深海",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c2_circuit",
+      "name": "回路",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c2_checkerflag",
+      "name": "チェッカー",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_obsidian",
+      "name": "泣く黒曜石",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_tnt",
+      "name": "TNT",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_bookshelf",
+      "name": "本棚",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_lava",
+      "name": "溶岩",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_water",
+      "name": "水",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_slimeb",
+      "name": "スライムブロック",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_portal",
+      "name": "ネザーポータル",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_magma",
+      "name": "マグマ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_quartz",
+      "name": "クォーツの柱",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_cherry",
+      "name": "桜の葉",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_enderman",
+      "name": "エンダーマン",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_creeper",
+      "name": "クリーパー",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_zombie",
+      "name": "ゾンビ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c3_wither",
+      "name": "ウィザー",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c9_pumpkin",
+      "name": "ジャック・オ・ランタン",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c9_snowman",
+      "name": "雪だるま",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c9_g_t1",
+      "name": "光るドクロ(白)",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c9_g_t4",
+      "name": "光るドクロ(水色)",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c9_g_t5",
+      "name": "光るドクロ(紫)",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c10_hero_red",
+      "name": "赤いヒーロー",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c10_hero_white",
+      "name": "白いヒーロー",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c10_hero_blue",
+      "name": "青いヒーロー",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c10_ghost",
+      "name": "おばけ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c10_cat",
+      "name": "月と黒ネコ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c10_mushroom",
+      "name": "キノコ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c11_galaxy",
+      "name": "銀河(高画質)",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c13_dragon_red",
+      "name": "赤いドラゴン",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c13_dragon_blue",
+      "name": "青いドラゴン",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c13_dragon_green",
+      "name": "緑のドラゴン",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c13_dragon_purple",
+      "name": "紫のドラゴン",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "c13_cards",
+      "name": "トランプ",
+      "anim": false,
+      "cat": "shop",
+      "how": 2000,
+      "howText": "2000コイン"
+    },
+    {
+      "id": "m7_lava",
+      "name": "流れる溶岩",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_portal",
+      "name": "ネザーポータル(動く)",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_soulfire",
+      "name": "たましいの火",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_water",
+      "name": "流れる水",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_sculk",
+      "name": "スカルクの鼓動",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_night",
+      "name": "星の夜空",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_aurora",
+      "name": "ゆれるオーロラ",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_coderain",
+      "name": "コードの雨",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m7_sonar",
+      "name": "音の輪",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_firefly",
+      "name": "ホタル",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_snow",
+      "name": "雪",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_sakura",
+      "name": "桜吹雪",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_fire",
+      "name": "燃える炎",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_redstone",
+      "name": "レッドストーンの信号",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_rain",
+      "name": "雨の窓",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_ender",
+      "name": "エンダーの粒",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "m8_checkrun",
+      "name": "流れるチェッカー",
+      "anim": true,
+      "cat": "shop",
+      "how": 4000,
+      "howText": "4000コイン (動くマントは倍)"
+    },
+    {
+      "id": "u_jack",
+      "name": "Jackの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "jack",
+      "howText": "Jack の熟練度Aで解放"
+    },
+    {
+      "id": "u_humming",
+      "name": "Hummingの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "humming",
+      "howText": "Humming の熟練度Aで解放"
+    },
+    {
+      "id": "u_widow",
+      "name": "Widowの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "widow",
+      "howText": "Widow の熟練度Aで解放"
+    },
+    {
+      "id": "u_splash",
+      "name": "Splashの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "splash",
+      "howText": "Splash の熟練度Aで解放"
+    },
+    {
+      "id": "u_shade",
+      "name": "Shadeの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "shade",
+      "howText": "Shade の熟練度Aで解放"
+    },
+    {
+      "id": "u_jester",
+      "name": "Jesterの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "jester",
+      "howText": "Jester の熟練度Aで解放"
+    },
+    {
+      "id": "u_replica",
+      "name": "Replicaの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "replica",
+      "howText": "Replica の熟練度Aで解放"
+    },
+    {
+      "id": "u_meteor",
+      "name": "Meteorの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "meteor",
+      "howText": "Meteor の熟練度Aで解放"
+    },
+    {
+      "id": "u_oracle",
+      "name": "Oracleの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "oracle",
+      "howText": "Oracle の熟練度Aで解放"
+    },
+    {
+      "id": "u_echo",
+      "name": "Echoの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "echo",
+      "howText": "Echo の熟練度Aで解放"
+    },
+    {
+      "id": "u_pierce",
+      "name": "Pierceの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "pierce",
+      "howText": "Pierce の熟練度Aで解放"
+    },
+    {
+      "id": "u_wormhole",
+      "name": "Wormholeの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "wormhole",
+      "howText": "Wormhole の熟練度Aで解放"
+    },
+    {
+      "id": "u_rampart",
+      "name": "Rampartの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "rampart",
+      "howText": "Rampart の熟練度Aで解放"
+    },
+    {
+      "id": "u_mason",
+      "name": "Masonの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "mason",
+      "howText": "Mason の熟練度Aで解放"
+    },
+    {
+      "id": "u_byte",
+      "name": "Byteの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "byte",
+      "howText": "Byte の熟練度Aで解放"
+    },
+    {
+      "id": "u_chef",
+      "name": "Chefの顔",
+      "anim": false,
+      "cat": "unique",
+      "how": "chef",
+      "howText": "Chef の熟練度Aで解放"
+    },
+    {
+      "id": "lv10",
+      "name": "Lv10",
+      "anim": false,
+      "cat": "level",
+      "how": 10,
+      "howText": "レベル10で解放"
+    },
+    {
+      "id": "lv25",
+      "name": "Lv25",
+      "anim": false,
+      "cat": "level",
+      "how": 25,
+      "howText": "レベル25で解放"
+    },
+    {
+      "id": "lv50",
+      "name": "Lv50",
+      "anim": false,
+      "cat": "level",
+      "how": 50,
+      "howText": "レベル50で解放"
+    },
+    {
+      "id": "a_streak10",
+      "name": "10連勝",
+      "anim": false,
+      "cat": "ach",
+      "how": "streak10",
+      "howText": "通常マッチで10連勝"
+    },
+    {
+      "id": "a_flawless",
+      "name": "無傷",
+      "anim": false,
+      "cat": "ach",
+      "how": "untouchable",
+      "howText": "無傷バッジを取る(鎧を割られずに勝つのを20回)"
+    },
+    {
+      "id": "a_aim3000",
+      "name": "スナイパー",
+      "anim": false,
+      "cat": "ach",
+      "how": "aim3000",
+      "howText": "AIM練習で3000点"
+    },
+    {
+      "id": "r_t1",
+      "name": "壱段のマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_t1",
+      "howText": "ランクのバッジ「壱段」で解放"
+    },
+    {
+      "id": "r_t2",
+      "name": "弐段のマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_t2",
+      "howText": "ランクのバッジ「弐段」で解放"
+    },
+    {
+      "id": "r_t3",
+      "name": "参段のマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_t3",
+      "howText": "ランクのバッジ「参段」で解放"
+    },
+    {
+      "id": "r_t4",
+      "name": "肆段のマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_t4",
+      "howText": "ランクのバッジ「肆段」で解放"
+    },
+    {
+      "id": "r_t5",
+      "name": "伍段のマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_t5",
+      "howText": "ランクのバッジ「伍段」で解放"
+    },
+    {
+      "id": "r_top",
+      "name": "陸段のマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_top",
+      "howText": "ランクのバッジ「陸段」で解放"
+    },
+    {
+      "id": "r_champion",
+      "name": "チャンピオンのマント",
+      "anim": false,
+      "cat": "rank",
+      "how": "rank_champion",
+      "howText": "ランクのバッジ「チャンピオン」で解放"
+    },
+    {
+      "id": "a_wipe",
+      "name": "全滅",
+      "anim": false,
+      "cat": "ach",
+      "how": "perfect_game",
+      "howText": "パーフェクトゲームバッジを取る(4人以上の試合で全員を倒す)"
+    },
+    {
+      "id": "a_allA",
+      "name": "全ユニーク熟練度A",
+      "anim": true,
+      "cat": "ach",
+      "how": "allA",
+      "howText": "全部のユニークを熟練度Aに"
     }
   ],
   "grades": [
@@ -842,128 +3243,579 @@
       "name": "Jack",
       "motif": "スライム",
       "ct": 8,
-      "desc": "大ジャンプができる。スニークしながらだと低く横へ跳ぶ。着地の瞬間にしゃがんでいると、もう一度跳ねる(横跳びは同じ長さ・大ジャンプは半分の高さ)。奈落に落ちかけても跳んで戻れる"
+      "desc": "大ジャンプができる。スニークしながらだと低く横へ跳ぶ。着地の瞬間にしゃがんでいると、もう一度跳ねる(横跳びは同じ長さ・大ジャンプは半分の高さ)。奈落に落ちかけても跳んで戻れる",
+      "price": 0
     },
     {
       "id": "humming",
       "name": "Humming",
       "motif": "ハチ",
       "ct": 12,
-      "desc": "使うたびに小爆発で跳ぶ。最初に使ってから5秒間・5回まで。跳んだ回数が少ないほど、次のクールタイムが短い(4〜12秒)。持ってスニークで羽ばたいてゆっくり落ちる"
+      "desc": "使うたびに小爆発で跳ぶ。最初に使ってから5秒間・5回まで。跳んだ回数が少ないほど、次のクールタイムが短い(4〜12秒)。持ってスニークで羽ばたいてゆっくり落ちる",
+      "price": 300
     },
     {
       "id": "jester",
       "name": "Jester",
       "motif": "ピエロ",
       "ct": 12,
-      "desc": "見ている相手と位置を入れ替える。入れ替えられた相手は後ろを向く"
+      "desc": "見ている相手と位置を入れ替える。入れ替えられた相手は後ろを向く",
+      "price": 300
     },
     {
       "id": "shade",
       "name": "Shade",
       "motif": "小悪魔",
       "ct": 13,
-      "desc": "鎧を外して8秒間透明になる。使うと全員に知らせが出る。透明中は視界が暗い。終わると鎧が戻る"
+      "desc": "鎧を外して8秒間透明になる。使うと全員に知らせが出る。透明中は視界が暗い。終わると鎧が戻る",
+      "price": 300
     },
     {
       "id": "rampart",
       "name": "Rampart",
       "motif": "カメ",
       "ct": 0,
-      "desc": "敵を倒すと鎧がもらえる。金ブロックの上で使うと、5秒ためて1回だけ鎧を作れる(試合ごと)"
+      "desc": "敵を倒すと鎧がもらえる。金ブロックの上で使うと、5秒ためて1回だけ鎧を作れる(試合ごと)",
+      "price": 300
     },
     {
       "id": "widow",
       "name": "Widow",
       "motif": "クモ",
       "ct": 0,
-      "desc": "見ている所(40マスまで)に糸を刺して、振り子のようにぶら下がって移動する。しゃがむと糸を巻き取る(合計3秒で焼き切れる)。糸は10秒、もう一度使うと外せる。クールタイムなし。使うたびに食料ゲージを少し使う。糸が出ている間はウォールキックしない"
+      "desc": "見ている所(40マスまで)に糸を刺して、振り子のようにぶら下がって移動する。しゃがむと糸を巻き取る(合計3秒で焼き切れる)。糸は10秒、もう一度使うと外せる。クールタイムなし。使うたびに食料ゲージを少し使う。糸が出ている間はウォールキックしない",
+      "price": 300
     },
     {
       "id": "pierce",
       "name": "Pierce",
       "motif": "ハリネズミ",
       "ct": 15,
-      "desc": "まわりを3匹のハリネズミが走り回る。使うたびに1匹が丸まって飛んでいく。当たった相手はノックバック、鎧を着ていたら鎧が壊れる(鎧がなければ一瞬遅くなる)。3匹投げると15秒後に全員帰ってくる"
+      "desc": "まわりを3匹のハリネズミが走り回る。使うたびに1匹が丸まって飛んでいく。当たった相手はノックバック、鎧を着ていたら鎧が壊れる(鎧がなければ一瞬遅くなる)。3匹投げると15秒後に全員帰ってくる",
+      "price": 300
     },
     {
       "id": "echo",
       "name": "Echo",
       "motif": "コウモリ",
       "ct": 18,
-      "desc": "前後左右の4方向にシュルカーを飛ばす。どれかを見ながらもう一度使うとそこへ転移し、まわりの相手を盲目にする。時間内なら残りのシュルカーにも続けて転移できる。アイテムを持って殴ると残りを回収して、残した数が多いほどクールタイムが短い(3〜18秒)"
+      "desc": "前後左右の4方向にシュルカーを飛ばす。どれかを見ながらもう一度使うとそこへ転移し、まわりの相手を盲目にする。時間内なら残りのシュルカーにも続けて転移できる。アイテムを持って殴ると残りを回収して、残した数が多いほどクールタイムが短い(3〜18秒)",
+      "price": 300
     },
     {
       "id": "meteor",
       "name": "Meteor",
       "motif": "宇宙人",
       "ct": 12,
-      "desc": "見ている所に巨大なブロック(約7.5×7.5×7.5)を10秒置く。自分には見えない(ふちだけ見える)。中にいる相手は盲目になり、ユニークが使えない"
+      "desc": "見ている所に巨大なブロック(約7.5×7.5×7.5)を10秒置く。自分には見えない(ふちだけ見える)。中にいる相手は盲目になり、ユニークが使えない",
+      "price": 300
     },
     {
       "id": "oracle",
       "name": "Oracle",
       "motif": "スケルトン",
       "ct": 15,
-      "desc": "見ている所のまわり(半径7)の壁を8秒間 透明にする(ぶつかるのはそのまま)。範囲の中の相手が自分にだけ光って見え、自分の矢は範囲の中のブロックを通り抜けて飛び続ける"
+      "desc": "見ている所のまわり(半径7)の壁を8秒間 透明にする(ぶつかるのはそのまま)。範囲の中の相手が自分にだけ光って見え、自分の矢は範囲の中のブロックを通り抜けて飛び続ける",
+      "price": 300
     },
     {
       "id": "replica",
       "name": "Replica",
       "motif": "キツネ",
       "ct": 10,
-      "desc": "自分と同じ姿の分身を20秒出す。分身は2秒まっすぐ歩き、そのあとは自分と同じ動きをする。分身が出ている間に使うと、分身を自分のところへ呼び戻せる。分身を撃った相手は3秒盲目になる。分身が倒されるとクールタイム3秒、20秒倒されなければクールタイム10秒"
+      "desc": "自分と同じ姿の分身を20秒出す。分身は2秒まっすぐ歩き、そのあとは自分と同じ動きをする。分身が出ている間に使うと、分身を自分のところへ呼び戻せる。分身を撃った相手は3秒盲目になる。分身が倒されるとクールタイム3秒、20秒倒されなければクールタイム10秒",
+      "price": 300
     },
     {
       "id": "splash",
       "name": "Splash",
       "motif": "カエル",
       "ct": 18,
-      "desc": "8秒間 足が速くなりジャンプ力が上がる。その間はダイヤブロックのブリンクも強くなる。クールタイム中に空中で使うと、見ている方向の斜め下へ加速する(着地するまで1回)"
+      "desc": "8秒間 足が速くなりジャンプ力が上がる。その間はダイヤブロックのブリンクも強くなる。クールタイム中に空中で使うと、見ている方向の斜め下へ加速する(着地するまで1回)",
+      "price": 300
     },
     {
       "id": "byte",
       "name": "Byte",
       "motif": "テレビ",
       "ct": 20,
-      "desc": "まわり(半径16)のダイヤブロック・エメラルドブロックを8秒ハッキングする。ハッキング中は見た目が変わり、自分が乗るとブリンク・アップドラフトが強くなる。他の人が乗っても反応しない"
+      "desc": "まわり(半径16)のダイヤブロック・エメラルドブロックを8秒ハッキングする。ハッキング中は見た目が変わり、自分が乗るとブリンク・アップドラフトが強くなる。他の人が乗っても反応しない",
+      "price": 300
     },
     {
       "id": "wormhole",
       "name": "Astro",
       "motif": "ポータルガン",
       "ct": 20,
-      "desc": "使うたびに見ている所(40マスまで)へゲートを置く(2つ)。2つのゲートはつながっていて、くぐると向きと勢いを保ったまま反対のゲートから出る。矢もくぐる。敵も使える。ゲートは12秒"
+      "desc": "使うたびに見ている所(40マスまで)へゲートを置く(2つ)。2つのゲートはつながっていて、くぐると向きと勢いを保ったまま反対のゲートから出る。矢もくぐる。敵も使える。ゲートは12秒",
+      "price": 300
     },
     {
       "id": "mason",
       "name": "Sprout",
       "motif": "パンダ",
       "ct": 10,
-      "desc": "見ている所(40マスまで)に柱(2×2・高さ6)を地面からせり上げる。しゃがんで使うか足元を見て使うと、自分の真下から生えて高い所へ持ち上がる。足場にも、矢をふせぐ盾にもなる。柱でのウォールキックなどのキャラコンは、Sprout なら食料ゲージが減らない。3本までためておけて、10秒ごとに1本もどる。4本目を立てると一番古い柱が消える"
+      "desc": "見ている所(40マスまで)に柱(2×2・高さ6)を地面からせり上げる。しゃがんで使うか足元を見て使うと、自分の真下から生えて高い所へ持ち上がる。足場にも、矢をふせぐ盾にもなる。柱でのウォールキックなどのキャラコンは、Sprout なら食料ゲージが減らない。3本までためておけて、10秒ごとに1本もどる。4本目を立てると一番古い柱が消える",
+      "price": 300
     },
     {
       "id": "chef",
       "name": "Olive",
       "motif": "シェフ",
       "ct": 6,
-      "desc": "見ている方へピザ生地を投げる。生地は12マス飛ぶか壁の手前で止まり、空中で5秒回り続ける。自分が上から乗ると大きく跳ねる(勢いはそのまま)。3枚まで置けて、4枚目で一番古い生地が消える。3枚までためておけて、6秒ごとに1枚もどる"
+      "desc": "見ている方へピザ生地を投げる。生地は12マス飛ぶか壁の手前で止まり、空中で5秒回り続ける。自分が上から乗ると大きく跳ねる(勢いはそのまま)。3枚まで置けて、4枚目で一番古い生地が消える。3枚までためておけて、6秒ごとに1枚もどる",
+      "price": 300
     },
     {
       "id": "comet",
       "name": "Comet",
       "motif": "ボクサー",
       "ct": 0,
-      "desc": "グローブでパンチをためて、前へダッシュ。長押しするほど遠くへ(5段階)。ダッシュ中にぶつかった相手は吹っ飛ぶ。クールタイムなし。使うたびに食料ゲージを少し使う"
+      "desc": "グローブでパンチをためて、前へダッシュ。長押しするほど遠くへ(5段階)。ダッシュ中にぶつかった相手は吹っ飛ぶ。クールタイムなし。使うたびに食料ゲージを少し使う",
+      "price": 300
     },
     {
       "id": "recall",
       "name": "Wanda",
       "motif": "時計",
       "ct": 8,
-      "desc": "3秒前にいた場所へ戻る。戻る時は、通ってきた道を逆向きにたどってなめらかに戻る。崖から落ちかけた時や、前に出すぎた時に。クールタイム8秒"
+      "desc": "3秒前にいた場所へ戻る。戻る時は、通ってきた道を逆向きにたどってなめらかに戻る。崖から落ちかけた時や、前に出すぎた時に。クールタイム8秒",
+      "price": 300
     }
   ],
+  "uniqueType": {
+    "jack": "move",
+    "humming": "move",
+    "widow": "move",
+    "bruno": "move",
+    "splash": "move",
+    "echo": "special",
+    "frenzy": "move",
+    "butterfly": "special",
+    "jester": "mind",
+    "shade": "mind",
+    "replica": "mind",
+    "perfume": "mind",
+    "puppet": "mind",
+    "moth": "place",
+    "beaver": "place",
+    "meteor": "place",
+    "mason": "place",
+    "chef": "move",
+    "wormhole": "place",
+    "rampart": "special",
+    "pierce": "special",
+    "diver": "special",
+    "oracle": "special",
+    "byte": "special",
+    "angler": "special",
+    "groove": "special",
+    "comet": "move",
+    "recall": "move"
+  },
+  "missions": [
+    {
+      "id": "pet_new_customer",
+      "title": "新規客",
+      "desc": "コインを累計3,000枚使おう",
+      "target": 3000,
+      "xp": 300,
+      "petReward": "pet_silver_chicken"
+    },
+    {
+      "id": "pet_regular",
+      "title": "常連さん",
+      "desc": "コインを累計15,000枚使おう",
+      "target": 15000,
+      "xp": 300,
+      "petReward": "pet_golden_chicken"
+    },
+    {
+      "id": "pet_big_spender",
+      "title": "太客",
+      "desc": "コインを累計40,000枚使おう",
+      "target": 40000,
+      "xp": 300,
+      "petReward": "pet_rainbow_chicken"
+    },
+    {
+      "id": "pet_saver",
+      "title": "節約家",
+      "desc": "コインを10,000枚持とう",
+      "target": 10000,
+      "xp": 300,
+      "petReward": "pet_golden_pig"
+    },
+    {
+      "id": "win_1",
+      "title": "1勝",
+      "desc": "通算1勝",
+      "target": 1,
+      "xp": 30
+    },
+    {
+      "id": "win_10",
+      "title": "10勝",
+      "desc": "通算10勝",
+      "target": 10,
+      "xp": 60
+    },
+    {
+      "id": "win_50",
+      "title": "50勝",
+      "desc": "通算50勝",
+      "target": 50,
+      "xp": 120
+    },
+    {
+      "id": "win_100",
+      "title": "100勝",
+      "desc": "通算100勝",
+      "target": 100,
+      "xp": 200
+    },
+    {
+      "id": "win_300",
+      "title": "300勝",
+      "desc": "通算300勝",
+      "target": 300,
+      "xp": 300
+    },
+    {
+      "id": "kill_50",
+      "title": "50キル",
+      "desc": "累計50キル",
+      "target": 50,
+      "xp": 40
+    },
+    {
+      "id": "kill_200",
+      "title": "200キル",
+      "desc": "累計200キル",
+      "target": 200,
+      "xp": 80
+    },
+    {
+      "id": "kill_500",
+      "title": "500キル",
+      "desc": "累計500キル",
+      "target": 500,
+      "xp": 150
+    },
+    {
+      "id": "kill_1000",
+      "title": "1000キル",
+      "desc": "累計1000キル",
+      "target": 1000,
+      "xp": 250
+    },
+    {
+      "id": "play_10",
+      "title": "10試合",
+      "desc": "10試合に参加",
+      "target": 10,
+      "xp": 30
+    },
+    {
+      "id": "play_50",
+      "title": "50試合",
+      "desc": "50試合に参加",
+      "target": 50,
+      "xp": 60
+    },
+    {
+      "id": "play_200",
+      "title": "200試合",
+      "desc": "200試合に参加",
+      "target": 200,
+      "xp": 120
+    },
+    {
+      "id": "play_500",
+      "title": "500試合",
+      "desc": "500試合に参加",
+      "target": 500,
+      "xp": 200
+    },
+    {
+      "id": "rank_700",
+      "title": "参段到達",
+      "desc": "ランク「参段」に到達(ランク700pt)",
+      "target": 700,
+      "xp": 50
+    },
+    {
+      "id": "rank_1200",
+      "title": "肆段到達",
+      "desc": "ランク「肆段」に到達(ランク1200pt)",
+      "target": 1200,
+      "xp": 100
+    },
+    {
+      "id": "rank_1700",
+      "title": "伍段到達",
+      "desc": "ランク「伍段」に到達(ランク1700pt)",
+      "target": 1700,
+      "xp": 150
+    },
+    {
+      "id": "rank_2100",
+      "title": "陸段到達",
+      "desc": "ランク「陸段」に到達(ランク2100pt)",
+      "target": 2100,
+      "xp": 250
+    },
+    {
+      "id": "mastery_B",
+      "title": "熟練度B",
+      "desc": "どれかのユニークで熟練度B(250ヒット)にする",
+      "target": 250,
+      "xp": 50
+    },
+    {
+      "id": "mastery_A",
+      "title": "熟練度A",
+      "desc": "どれかのユニークで熟練度A(500ヒット)にする",
+      "target": 500,
+      "xp": 100
+    },
+    {
+      "id": "mastery_S",
+      "title": "熟練度S",
+      "desc": "どれかのユニークで熟練度S(1200ヒット)にする",
+      "target": 1200,
+      "xp": 200
+    },
+    {
+      "id": "pet_true_berserker",
+      "title": "真バーサーカー",
+      "desc": "累計2,000キル",
+      "target": 2000,
+      "xp": 300,
+      "petReward": "pet_red_allay"
+    }
+  ],
+  "daily": [
+    {
+      "id": "daily_play3",
+      "title": "今日の3試合",
+      "desc": "今日3試合やり切ろう",
+      "target": 3,
+      "xp": 15
+    },
+    {
+      "id": "daily_kill5",
+      "title": "今日の5キル",
+      "desc": "今日5キル",
+      "target": 5,
+      "xp": 20
+    },
+    {
+      "id": "daily_win1",
+      "title": "今日の1勝",
+      "desc": "今日1回勝とう",
+      "target": 1,
+      "xp": 25
+    }
+  ],
+  "bots": [
+    {
+      "name": "Kaito_07",
+      "tier": "S",
+      "type": "hot",
+      "fav": "jack",
+      "word": "全員まとめてかかってこい"
+    },
+    {
+      "name": "riku2413",
+      "tier": "A",
+      "type": "calm",
+      "fav": "echo",
+      "word": "動きは全部読んでる"
+    },
+    {
+      "name": "Haru_mc",
+      "tier": "B",
+      "type": "fun",
+      "fav": "humming",
+      "word": "空を飛ぶのが一番たのしい"
+    },
+    {
+      "name": "yuzupon",
+      "tier": "C",
+      "type": "shy",
+      "fav": "shade",
+      "word": "見つからないように…"
+    },
+    {
+      "name": "NatsuBOW",
+      "tier": "A",
+      "type": "hot",
+      "fav": "splash",
+      "word": "夏は弓の季節"
+    },
+    {
+      "name": "sora0811",
+      "tier": "B",
+      "type": "calm",
+      "fav": "widow",
+      "word": "高い所から失礼"
+    },
+    {
+      "name": "mochi_kun",
+      "tier": "D",
+      "type": "fun",
+      "fav": "mason",
+      "word": "竹、生やしすぎた"
+    },
+    {
+      "name": "Ren1029",
+      "tier": "B",
+      "type": "polite",
+      "fav": "jester",
+      "word": "入れ替わりは礼儀正しく"
+    },
+    {
+      "name": "hinata_pvp",
+      "tier": "S",
+      "type": "hot",
+      "fav": "pierce",
+      "word": "前に出るのが仕事"
+    },
+    {
+      "name": "TakuGamer",
+      "tier": "C",
+      "type": "fun",
+      "fav": "meteor",
+      "word": "でかいブロック置きたいだけ"
+    },
+    {
+      "name": "kuu_xx",
+      "tier": "D",
+      "type": "shy",
+      "fav": "shade",
+      "word": "…"
+    },
+    {
+      "name": "AoiArrow",
+      "tier": "A",
+      "type": "calm",
+      "fav": "jack",
+      "word": "一発で決める"
+    },
+    {
+      "name": "shun_bf",
+      "tier": "B",
+      "type": "polite",
+      "fav": "echo",
+      "word": "よろしくお願いします"
+    },
+    {
+      "name": "meruru",
+      "tier": "C",
+      "type": "fun",
+      "fav": "humming",
+      "word": "ぶーん"
+    },
+    {
+      "name": "Yamato77",
+      "tier": "A",
+      "type": "hot",
+      "fav": "widow",
+      "word": "糸で空を取る"
+    },
+    {
+      "name": "koharu_ch",
+      "tier": "D",
+      "type": "shy",
+      "fav": "mason",
+      "word": "はじめたばかり"
+    },
+    {
+      "name": "Zen_Arrow",
+      "tier": "S",
+      "type": "calm",
+      "fav": "pierce",
+      "word": "無駄な矢は撃たない"
+    },
+    {
+      "name": "nagi0303",
+      "tier": "B",
+      "type": "polite",
+      "fav": "splash",
+      "word": "お手やわらかに"
+    },
+    {
+      "name": "tsubasa_x",
+      "tier": "C",
+      "type": "fun",
+      "fav": "jester",
+      "word": "いたずら担当"
+    },
+    {
+      "name": "Kou_pvp",
+      "tier": "A",
+      "type": "hot",
+      "fav": "meteor",
+      "word": "正面から勝つ"
+    },
+    {
+      "name": "mikan_bow",
+      "tier": "D",
+      "type": "shy",
+      "fav": "splash",
+      "word": "みかん好き"
+    },
+    {
+      "name": "Rin_shot",
+      "tier": "B",
+      "type": "calm",
+      "fav": "shade",
+      "word": "気づいた時には終わってる"
+    },
+    {
+      "name": "hayate77",
+      "tier": "A",
+      "type": "hot",
+      "fav": "humming",
+      "word": "速さがすべて"
+    },
+    {
+      "name": "popo_mc",
+      "tier": "C",
+      "type": "fun",
+      "fav": "mason",
+      "word": "ぽぽぽ"
+    }
+  ],
+  "personaJa": {
+    "hot": "熱血",
+    "calm": "クール",
+    "fun": "お調子者",
+    "polite": "ていねい",
+    "shy": "ひかえめ"
+  },
+  "tierSkill": {
+    "S": 1.35,
+    "A": 1.15,
+    "B": 1,
+    "C": 0.85,
+    "D": 0.7
+  },
+  "gacha": {
+    "price": 1500,
+    "refund": 300,
+    "newBoost": 5,
+    "weight": {
+      "common": 40,
+      "uncommon": 25,
+      "rare": 18,
+      "epic": 10,
+      "legend": 5,
+      "mythic": 2,
+      "super_legend": 1
+    }
+  },
   "ranks": [
     {
       "label": "壱段",
@@ -989,5 +3841,58 @@
       "label": "陸段",
       "min": 2100
     }
-  ]
+  ],
+  "levels": {
+    "perLevel": 200,
+    "perMatch": 15,
+    "winBonus": 15
+  },
+  "dailyShop": {
+    "count": 4,
+    "discount": 0.25
+  },
+  "kyaracon": {
+    "WALL_BOUNCE.ENABLED": "true",
+    "WALL_BOUNCE.COST_FOOD": 12.0,
+    "WALL_BOUNCE.RECOVERY_FOOD": 0.25,
+    "WALL_BOUNCE.HORIZONTAL_MULTIPLIER": 1.825,
+    "WALL_BOUNCE.VERTICAL_MULTIPLIER": 0.775,
+    "WALL_BOUNCE.WAIT_TICKS": 5.0,
+    "WALL_BOUNCE.IGNORE_EFFECT_TYPE": "",
+    "FAST_STRAIGHT.ENABLED": "true",
+    "FAST_STRAIGHT.COST_FOOD": 12.0,
+    "FAST_STRAIGHT.RECOVERY_FOOD": 0.25,
+    "FAST_STRAIGHT.HORIZONTAL_MULTIPLIER": 2.575,
+    "FAST_STRAIGHT.VERTICAL_MULTIPLIER": 0.585,
+    "AIR_REFRACTION.ENABLED": "false",
+    "AIR_REFRACTION.MULTIPLIER": 1.45,
+    "AIR_REFRACTION.ANGLE": 85.0,
+    "AIR_REFRACTION.WAIT_TICKS": 7.0,
+    "UPDRAFT.ENABLED": "true",
+    "UPDRAFT.BLOCK": "minecraft:emerald_block",
+    "UPDRAFT.HORIZONTAL_MULTIPLIER": 0.65,
+    "UPDRAFT.VERTICAL_MULTIPLIER": 1.6,
+    "AIR_CURVE.ENABLED": "true",
+    "AIR_CURVE.BLOCK": "minecraft:diamond_block",
+    "AIR_CURVE.HORIZONTAL_MULTIPLIER": 1.2,
+    "AIR_CURVE.VERTICAL_MULTIPLIER": 0.15,
+    "AIR_CURVE.RESPONSE_COUNT": 10.0,
+    "ARMOR.ENABLED": "true",
+    "ARMOR.TOLERANCE.LEATHER": 1.0,
+    "ARMOR.TOLERANCE.GOLDEN": 1.0,
+    "ARMOR.TOLERANCE.COPPER": 1.0,
+    "ARMOR.TOLERANCE.CHAINMAIL": 1.0,
+    "ARMOR.TOLERANCE.IRON": 1.0,
+    "ARMOR.TOLERANCE.DIAMOND": 1.0,
+    "ARMOR.TOLERANCE.NETHERITE": 1.0,
+    "ARMOR.SOUND.ENABLED": "true",
+    "ARMOR.SOUND.TYPE_EQUIP": "random.anvil_use",
+    "ARMOR.SOUND.TYPE_BURST": "mob.wither.break_block",
+    "ARMOR.SOUND.SEND_TO_EQUIP": "true",
+    "ARMOR.SOUND.SEND_TO_ATTACKER": "true",
+    "ARMOR.SOUND.SEND_TO_VICTIM": "true",
+    "GLASS_PANE.ENABLED": "true",
+    "GLASS_PANE.TYPE": "minecraft:glass_pane",
+    "GLASS_PANE.RECOVERY_TICKS": 1200.0
+  }
 }
