@@ -287,7 +287,7 @@ const openIds = () => new Set(U().map(u => u.id));
 const head2 = (title, en, id = '') => `<h2 class="s"${id ? ` id="${id}"` : ''}>${title} <small>${en}</small></h2>`;
 const crumb = (...a) => `<p class="crumb"><a href="#/">WIKI</a> / ${a.join(' / ')}</p>`;
 const T1 = (en, jp) => `<h1 class="t">${en}</h1>${jp ? `<p class="lead">${jp}</p>` : ''}`;
-const CAPE_CATS = [['shop', 'ショップ', 'コインで買える'], ['anim', '動くマント', 'コインで買える(ふつうの倍)'], ['unique', 'ユニーク', 'そのユニークの熟練度Aで解放'], ['rank', 'ランク', 'ランクのバッジで解放'], ['level', 'レベル', 'レベルで解放'], ['ach', '実績', 'むずかしい実績で解放']];
+const CAPE_CATS = [['shop', 'ショップ', 'コインで買える'], ['anim', 'アニメ', '動くマント。コインで買える(ふつうの倍)'], ['unique', 'ユニーク', 'そのユニークの熟練度Aで解放'], ['rank', 'ランク', 'ランクのバッジで解放'], ['level', 'レベル', 'レベルで解放'], ['ach', '実績', 'むずかしい実績で解放']];
 const capeCat = c => c.cat === 'shop' && c.anim ? 'anim' : c.cat;
 const TIER_C = { S: '#ff5a6a', A: '#ffc446', B: '#54d6ff', C: '#8cf078', D: '#aab0c8' };
 const PERSONA_C = { hot: '#ff6b5a', calm: '#54d6ff', fun: '#ffc446', polite: '#8cf078', shy: '#ff9ad8' };
@@ -308,7 +308,7 @@ const PAGES = {
       <div class="cast"><img class="px" src="${hero('widow')}" alt=""><img class="px" src="${hero('jack')}" alt=""><img class="px" src="${hero('shade')}" alt=""></div></div>
       <div class="quick">${[['uniques', 'Uniques', `${U().length}体のユニーク`], ['basics', 'How to play', 'ルール・試合の流れ'], ['movement', 'Movement', 'キャラコンのすべて'], ['progress', 'Rank', 'レベル・ランク・熟練度'], ['capes', 'Capes', `${G.capes.length}枚のマント`], ['badges', 'Badges', `${badges.length}個のバッジ`], ['cosmetics', 'Cosmetics', 'ペット・二つ名・エモート'], ['shop', 'Coins & Shop', 'コイン・ガチャ・ショップ'], ['missions', 'Missions', '実績とデイリー']].map(([r, en, jp]) => `<a href="#/${r}"><b>${en}</b><span>${jp}</span></a>`).join('')}</div></section>
       ${head2('ユニーク', 'Uniques')}<div class="ugrid">${U().map(ucard).join('')}</div>
-      ${head2('動くマント', 'Animated capes')}<div class="capegrid small">${G.capes.filter(c => c.anim).slice(0, 12).map(capeCard).join('')}</div><p><a href="#/capes">マントをぜんぶ見る ›</a></p>`);
+      ${head2('アニメのマント', 'Animated capes')}<div class="capegrid small">${G.capes.filter(c => c.anim).slice(0, 12).map(capeCard).join('')}</div><p><a href="#/capes">マントをぜんぶ見る ›</a></p>`);
   },
   uniques: () => {
     const roles = [...new Set(U().map(u => W.uniques[u.id]?.role).filter(Boolean))];
@@ -442,7 +442,7 @@ const PAGES = {
     ${head2('デイリー', 'Daily')}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>ミッション</th><th>内容</th><th>報酬</th></tr></thead><tbody>${G.daily.map(m => `<tr><td><b>${esc(m.title)}</b></td><td>${esc(m.desc)}</td><td>${m.xp ? `${m.xp} XP` : ''}${m.coinReward ? ` ${m.coinReward} コイン` : ''}</td></tr>`).join('')}</tbody></table></div>
     ${head2('実績', 'Achievements')}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>ミッション</th><th>内容</th><th>報酬</th></tr></thead><tbody>${G.missions.map(m => { const pet = G.pets.find(p => p.id === m.petReward); return `<tr><td><b>${esc(m.title)}</b></td><td>${esc(m.desc)}</td><td>${m.xp ? `${m.xp} XP` : ''}${pet ? ` <span class="petr"><img class="px" src="${icon(pet.icon)}" alt="">${esc(pet.label)}</span>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`),
 };
-function capeCard(c) { return `<div class="cape"><div class="cpic"><img class="px" src="${IMG('capes/' + c.id + '.webp')}" alt="" loading="lazy">${c.anim ? '<em>動く</em>' : ''}</div><b>${esc(c.name)}</b><span>${esc(c.howText ?? '')}</span></div>`; }
+function capeCard(c) { return `<div class="cape"><div class="cpic"><img class="px" src="${IMG('capes/' + c.id + '.webp')}" alt="" loading="lazy">${c.anim ? '<em>アニメ</em>' : ''}</div><b>${esc(c.anim ? c.name.replace(/[(（]動く[)）]/, '') + ' [アニメ]' : c.name)}</b><span>${esc(c.howText ?? '')}</span></div>`; }
 
 
 function route() {
@@ -457,7 +457,7 @@ function search(q) {
   if (!q) { r.hidden = true; return; }
   const hits = [], has = (...t) => t.join(' ').toLowerCase().includes(q);
   for (const u of U()) { const w = W.uniques[u.id] ?? {}; if (has(u.name, u.motif, u.desc, w.catch, w.lore, w.role, ...(w.tech ?? []), ...(w.counter ?? []))) hits.push(`<a href="#/u/${u.id}"><img class="px" src="${head(u.id)}" alt="">${esc(u.name)}<small>ユニーク</small></a>`); }
-  for (const c of G.capes) if (has(c.name, c.howText)) hits.push(`<a href="#/capes"><img class="px" src="${IMG('capes/' + c.id + '.webp')}" alt="">${esc(c.name)}<small>マント</small></a>`);
+  for (const c of G.capes) if (has(c.name, c.howText, c.anim ? 'アニメ 動く' : '')) hits.push(`<a href="#/capes"><img class="px" src="${IMG('capes/' + c.id + '.webp')}" alt="">${esc(c.name)}<small>マント</small></a>`);
   for (const b of G.badges) if (has(b.label, b.how)) hits.push(`<a href="#/badges"><img class="px" src="${IMG('badges/' + b.id + '.png')}" alt="">${esc(b.label)}<small>バッジ</small></a>`);
   for (const [k, l] of COS_TABS) for (const x of G[k] ?? []) if (has(x.label)) hits.push(`<a href="#/cosmetics/${k}">${esc(x.label)}<small>${l}</small></a>`);
   for (const m of [...G.missions, ...G.daily]) if (has(m.title, m.desc)) hits.push(`<a href="#/missions">${esc(m.title)}<small>ミッション</small></a>`);
