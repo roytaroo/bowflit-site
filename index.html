@@ -215,6 +215,16 @@ body.ready #loader{opacity:0;visibility:hidden}
 .rk span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rk em{font-style:normal;font-family:var(--en);font-size:26px;letter-spacing:.04em}
 .rk-note{color:var(--sub);font-size:13px;margin-top:12px}
+.st{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:32px;align-items:center}
+.st svg{width:100%;height:auto}
+.st-leg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 18px;font-size:14px}
+.st-leg span{display:flex;align-items:center;gap:8px;min-width:0}.st-leg i{flex:none;width:12px;height:12px;border-radius:3px}.st-leg em{font-style:normal;color:var(--sub);margin-left:auto;font-variant-numeric:tabular-nums}
+.st-tab{margin-top:28px;display:grid;gap:8px}
+.st-tab div{display:grid;grid-template-columns:110px minmax(0,1fr) 52px 74px;gap:12px;align-items:center;font-size:14px}
+.st-tab b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-tab u{display:block;height:10px;border-radius:5px;background:var(--line);overflow:hidden;text-decoration:none}.st-tab u i{display:block;height:100%;border-radius:5px}
+.st-tab em{font-style:normal;font-variant-numeric:tabular-nums;text-align:right}.st-tab small{color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
+.st-tab .hd{color:var(--sub);font-size:12px}
+@media (max-width:640px){.st{grid-template-columns:1fr}.st svg{max-width:220px;margin:0 auto}.st-tab div{grid-template-columns:84px minmax(0,1fr) 44px 60px;gap:8px}}
 /* ルール・FAQ・開発日記 */
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px}
 @media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
@@ -367,6 +377,11 @@ footer img{height:22px;width:auto;opacity:.7}
     <div class="sh rv"><p class="en">Ran<i>king</i></p><h2>ランキング</h2><p id="rk-date">サーバーの上位5人。</p></div>
     <div class="rk-tabs rv" id="rk-tabs"></div>
     <div class="rk rv" id="rk-list"></div>
+    <div id="st-box" hidden>
+      <div class="sh rv" style="margin-top:56px"><p class="en">St<i>ats</i></p><h2>ユニークの使用率</h2><p>このサーバーの全員の合計。</p></div>
+      <div class="st rv"><svg id="st-pie" viewBox="0 0 200 200" role="img" aria-label="ユニークの使用率の円グラフ"></svg><div class="st-leg" id="st-leg"></div></div>
+      <div class="st-tab rv" id="st-tab"></div>
+    </div>
   </div>
 </section>
 
@@ -463,6 +478,17 @@ load('ranking').then(d => {
   $('rk-tabs').innerHTML = RK.map(([k, en]) => `<button data-k="${k}" aria-pressed="false">${en}</button>`).join('');
   document.querySelectorAll('#rk-tabs button').forEach(b => b.onclick = () => draw(b.dataset.k));
   draw('rank');
+  // ユニークの使用率(ワールドの「サイトへ書き出す」で入る): 円グラフ + 勝率の棒
+  const us = (d?.usage ?? []).filter(u => u[1] > 0);
+  if (us.length) {
+    const COL = ['#54d6ff', '#ff5cc8', '#ffc446', '#8cf078', '#ff6b6b', '#a78bfa', '#ffa94d', '#4dd4ac', '#f783ac', '#74c0fc', '#d0bfff', '#b2f2bb'], tot = us.reduce((a, u) => a + u[1], 0);
+    const top = us.slice(0, 11), rest = us.slice(11).reduce((a, u) => a + u[1], 0), parts = top.map((u, i) => [u[0], u[1], COL[i]]); if (rest) parts.push(['その他', rest, '#868e96']);
+    let acc = 0; const arc = f => { const a = f * Math.PI * 2; return [100 + 86 * Math.sin(a), 100 - 86 * Math.cos(a)]; };
+    $('st-pie').innerHTML = parts.map(([n, v, c]) => { const f0 = acc, f1 = acc + v / tot; acc = f1; if (f1 - f0 > 0.9999) return `<circle cx="100" cy="100" r="86" fill="${c}"/>`; const [x0, y0] = arc(f0), [x1, y1] = arc(f1); return `<path d="M100 100L${x0.toFixed(2)} ${y0.toFixed(2)}A86 86 0 ${f1 - f0 > 0.5 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${c}" stroke="var(--bg,#10142b)" stroke-width="1.5"><title>${esc(n)} ${Math.round(v / tot * 100)}%</title></path>`; }).join('') + '<circle cx="100" cy="100" r="44" fill="var(--bg,#10142b)"/>';
+    $('st-leg').innerHTML = parts.map(([n, v, c]) => `<span><i style="background:${c}"></i>${esc(n)}<em>${Math.round(v / tot * 100)}%</em></span>`).join('');
+    $('st-tab').innerHTML = '<div class="hd"><b>ユニーク</b><span>勝率</span><em></em><small>キル/試合</small></div>' + us.map((u, i) => `<div><b>${esc(u[0])}</b><u><i style="width:${Math.round(u[2] / u[1] * 100)}%;background:${COL[i] ?? '#868e96'}"></i></u><em>${Math.round(u[2] / u[1] * 100)}%</em><small>${(u[3] / u[1]).toFixed(1)}</small></div>`).join('');
+    $('st-box').hidden = false;
+  }
 });
 load('faq').then(d => { $('faq-list').innerHTML = (d?.items ?? []).map(f => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join(''); });
 load('rules').then(d => { $('rule-list').innerHTML = (d?.items ?? []).map(r => `<div><p style="margin:0"><b>${esc(r.title)}</b><span>${esc(r.body)}</span></p></div>`).join(''); });
