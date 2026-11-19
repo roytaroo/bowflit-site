@@ -1,7 +1,7 @@
 // 起動スクリプト。
 //   node src/main.js                 … settings.json の設定で起動 (enabled:true のキャラ)
 //   node src/main.js --mock          … LLMなし (ダミー) で流れだけ確認
-//   node src/main.js --agents Haru,Rin,Popo,Kaede
+//   node src/main.js --agents Zundamon,Metan,Kiritan,Reimu
 //   node src/main.js --minutes 10    … 指定分数で自動終了 (計測用)
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -9,7 +9,8 @@ import { loadConfig, loadCharacters } from './config.js'
 import { Store } from './memory/db.js'
 import { LLMClient } from './llm/client.js'
 import { MockProvider } from './llm/mock.js'
-import { VoiceVox } from './voice/voicevox.js'
+import { TTS } from './voice/tts.js'
+import { startInputServer } from './voice/inputServer.js'
 import { Society } from './society/society.js'
 import { Agent } from './agent/agent.js'
 import { log, sleep } from './util/log.js'
@@ -50,6 +51,9 @@ export async function main (argv = process.argv.slice(2)) {
   if (args.agents) overrides.agents = String(args.agents).split(',').map(s => s.trim())
   if (args.db) overrides.database = args.db
   if (args.voice) overrides.voice = { enabled: true }
+  if (args['voice-in']) overrides.voice_input = { enabled: true }
+  if (args['no-voice-in']) overrides.voice_input = { enabled: false }
+  if (args.player) overrides.player = { name: args.player }
   const cfg = loadConfig(ROOT, overrides)
   const { selected } = loadCharacters(ROOT, cfg)
   if (!selected.length) throw new Error('参加するキャラクターがいません (characters/*.json の enabled か --agents を確認)')
@@ -57,11 +61,16 @@ export async function main (argv = process.argv.slice(2)) {
   const store = new Store(path.resolve(ROOT, cfg.database))
   const llm = new LLMClient(cfg.llm, { mockProvider: new MockProvider() })
   await checkOllama(cfg.llm)
-  const voice = new VoiceVox({ ...cfg.voice, out_dir: path.resolve(ROOT, cfg.voice.out_dir || 'data/voice') })
+  const voice = new TTS({ ...cfg.voice, out_dir: path.resolve(ROOT, cfg.voice.out_dir || 'data/voice') })
   if (voice.enabled) {
     const v = await voice.check()
-    if (v) log.info('main', `VOICEVOX OK (version ${v})`)
-    else { log.warn('main', 'VOICEVOXに接続できないため音声はOFFにします'); voice.enabled = false }
+    if (v) {
+      log.info('main', `VOICEVOX OK (version ${v})`)
+      for (const c of selected) {
+        if ((c.voice?.engine || 'voicevox') === 'voicevox' && voice.resolveSpeaker(c.voice || {}) == null) log.warn('main', `${c.display_name}: VOICEVOXに話者「${c.voice?.speaker_name}」が見つからない (npm run voices で確認して characters/*.json を直す)`)
+        if (c.voice?.engine === 'aquestalk' && !cfg.voice.aquestalk?.command) log.warn('main', `${c.display_name}: ゆっくり音声のコマンドが未設定なので代わりの声で話します (voice.aquestalk.command)`)
+      }
+    } else { log.warn('main', 'VOICEVOXに接続できないため音声はOFFにします'); voice.enabled = false }
   }
 
   const society = new Society({ store, llm, config: cfg, voice })
@@ -84,6 +93,8 @@ export async function main (argv = process.argv.slice(2)) {
     for (const a of agents.filter(x => x.alive)) await a.writeDiary(d).catch(e => log.warn(a.name, e.message))
   }, fallbackMin * 60000)
 
+  const inputServer = cfg.voice_input?.enabled ? startInputServer({ society, tts: voice, config: cfg }) : null
+
   const stats = setInterval(() => log.info('stats', llm.summary()), 5 * 60000)
 
   let stopping = false
@@ -92,6 +103,7 @@ export async function main (argv = process.argv.slice(2)) {
     stopping = true
     log.info('main', '終了します… ' + llm.summary())
     clearInterval(fallback); clearInterval(stats)
+    inputServer?.close()
     for (const a of agents) a.stop()
     await sleep(500)
     store.close()
@@ -99,7 +111,7 @@ export async function main (argv = process.argv.slice(2)) {
   process.on('SIGINT', () => shutdown().then(() => process.exit(0)))
   process.on('SIGTERM', () => shutdown().then(() => process.exit(0)))
   if (args.minutes) setTimeout(() => shutdown().then(() => process.exit(0)), Number(args.minutes) * 60000)
-  return { society, agents, store, llm, shutdown }
+  return { society, agents, store, llm, voice, shutdown }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

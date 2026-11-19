@@ -9,7 +9,7 @@ import { AgentMemory } from '../memory/memory.js'
 import { Relationships } from '../society/relationships.js'
 import { findAddressed, splitChat } from '../society/conversation.js'
 import { PRIORITY } from '../llm/client.js'
-import { buildDecidePrompt, buildReplyPrompt, buildDiaryPrompt, buildDeathReactionPrompt, buildSummarizePrompt } from './prompts.js'
+import { REQUEST_ACTIONS, buildDecidePrompt, buildReplyPrompt, buildDiaryPrompt, buildDeathReactionPrompt, buildSummarizePrompt } from './prompts.js'
 import { log, sleep, withTimeout } from '../util/log.js'
 
 const require = createRequire(import.meta.url)
@@ -187,7 +187,7 @@ export class Agent {
       character: this.character,
       agentRow: row,
       stateText,
-      memories: this.memory.recall(stateText + ' ' + (row.current_goal || ''), 6),
+      memories: this._decideMemories(s, stateText, row),
       lessons: this.memory.lessons(3),
       relations: this.society.relations.describe(this.name, null, { withEvents: true }).split('\n').slice(0, 6).join('\n'),
       shared: this.society.shared.recent(4),
@@ -199,6 +199,16 @@ export class Agent {
     })
     this.rejected = null
     return this.society.llm.requestJson(messages, { priority: PRIORITY.DECIDE, tag: `${this.name}:decide` })
+  }
+
+  // 状況に関係する記憶 + 近くにいる人間と前に話したこと (後日その話題を持ち出せるように)
+  _decideMemories (s, stateText, row) {
+    const mems = this.memory.recall(stateText + ' ' + (row.current_goal || ''), 6)
+    const humans = s.players.filter(p => !p.isAgent && p.dist <= 24).map(p => p.name)
+    for (const h of humans) {
+      for (const m of this.memory.about(h, 2)) if (!mems.some(x => x.id === m.id)) mems.push({ ...m, content: `(${this.society.displayName(h)}について) ${m.content}` })
+    }
+    return mems.slice(0, 9)
   }
 
   async _handleDecision (d) {
@@ -214,7 +224,8 @@ export class Agent {
       this.society.shared.add('goal', `${this.display}が新しい目標を持った: ${d.long_goal}`, { importance: 4, participants: [this.name], day })
     }
     if (d.promise?.to && d.promise?.content) this._makePromise(d.promise.to, d.promise.content)
-    if (d.say) await this.say(d.say, d.say_to || null)
+    // プレイヤーとの会話中は、関係ない独り言・雑談を控える (行動はそのまま)
+    if (d.say && !this.society.conversation.humanThreadActive()) await this.say(d.say, d.say_to || null)
     if (d.action) await this._execute(d.action, 'decide')
   }
 
@@ -291,7 +302,7 @@ export class Agent {
   }
 
   // ------------------------------------------------------------------ 会話
-  async say (text, to = null) {
+  async say (text, to = null, { voicePriority = 1 } = {}) {
     text = String(text || '').trim()
     if (!text || !this.bot) return
     for (const chunk of splitChat(text)) {
@@ -304,7 +315,7 @@ export class Agent {
     this.heard = this.heard.slice(-20)
     this.memory.add('chat', `${to ? this.society.displayName(to) + 'に' : ''}「${text}」と言った`, { importance: 2, about: to, day: this.day() })
     log.info(this.name, `💬 ${this.display}: ${text}`)
-    this.society.voice?.speak(this.character, text)
+    this.society.voice?.speak(this.character, text, { priority: voicePriority })
     this.society.bus.emit('say', { id, from: this.name, to, text, pos })
   }
 
@@ -322,11 +333,17 @@ export class Agent {
 
   _onGameChat (username, message) {
     if (username === this.name || this.society.isAgent(username)) return // AIの発言はバスで受け取る
-    const addressed = this._resolveAliases(findAddressed(message, this._allAliases()))
-    const id = `h:${username}:${message}:${Math.floor(Date.now() / 2000)}`
-    const p = this.bot.players[username]?.entity?.position
-    const distance = p && this.bot.entity ? p.distanceTo(this.bot.entity.position) : null
-    this._hear({ id, from: username, fromIsBot: false, text: message, addressed, distance })
+    // 人間の発言は「進行役」が一度だけ処理する (同じ発言が全ボットから届くので重複は進行役が除く)
+    this.society.floor.handleHuman(username, message, { source: 'chat' }).catch(e => log.warn('floor', e.message))
+  }
+
+  // 人間の発言を聞いた (進行役から呼ばれる)。返事するかどうかは進行役が決める
+  hearHuman (from, text, { toMe = false, isGroup = false, source = 'chat' } = {}) {
+    const fromDisplay = this.society.displayName(from)
+    this.heard.push({ from, fromDisplay, text, t: Date.now() })
+    this.heard = this.heard.slice(-20)
+    const how = toMe ? 'が自分に' : isGroup ? 'がみんなに' : 'が'
+    this.memory.add('chat', `${fromDisplay}${how}${source === 'voice' ? '声で' : ''}「${text}」と言った`, { importance: toMe || isGroup ? 4 : 2, about: from, day: this.day() })
   }
 
   _allAliases () {
@@ -364,41 +381,63 @@ export class Agent {
   }
 
   async _reply (msg) {
-    const speakerDisplay = this.society.displayName(msg.from)
+    return this._replyCore({ from: msg.from, text: msg.text, isHuman: !msg.fromIsBot })
+  }
+
+  // プレイヤーとの会話の中で返事する (進行役から順番に呼ばれる)
+  async respondInThread (thread, { stance = null, why = '', isGroup = false } = {}) {
+    return this._replyCore({ from: thread.from, text: thread.text, isHuman: true, thread: thread.lines, stance, why, isGroup, voicePriority: 0 })
+  }
+
+  async _replyCore ({ from, text, isHuman, thread = null, stance = null, why = '', isGroup = false, voicePriority = 1 }) {
+    const speakerDisplay = this.society.displayName(from)
     const s = this.state()
-    const isHuman = !msg.fromIsBot
-    if (isHuman) this.society.relations.init(this.name, msg.from, { label: '人間の仲間' })
-    const relRow = this.society.relations.get(this.name, msg.from)
-    const relationText = relRow ? this.society.relations.describe(this.name, [msg.from]) : ''
+    if (isHuman) this.society.relations.init(this.name, from, { label: '人間の仲間' })
+    const relRow = this.society.relations.get(this.name, from)
+    const relationText = relRow ? this.society.relations.describe(this.name, [from]) : ''
+    const others = s.players.filter(p => p.isAgent && p.dist <= 32).map(p => `${p.name}(${this.society.displayName(p.name)})`)
     const messages = buildReplyPrompt({
       character: this.character,
       agentRow: this.store.getAgent(this.name),
-      speaker: msg.from,
       speakerDisplay,
-      text: msg.text,
+      text,
       isHuman,
       relationText,
-      aboutMemories: this.memory.about(msg.from, 4),
+      aboutMemories: this.memory.recall(`${speakerDisplay} ${text}`, 5).filter(m => m.about === from || m.importance >= 5).slice(0, 4).concat(this.memory.about(from, 2)).slice(0, 5),
       recentChat: this._recentChatText(6),
-      stateText: describeState(s).split('\n').slice(0, 3).join('\n')
+      stateText: describeState(s).split('\n').slice(0, 3).join('\n'),
+      thread,
+      stance,
+      why,
+      isGroup,
+      others
     })
     const r = await this.society.llm.requestJson(messages, { priority: PRIORITY.CHAT, tag: `${this.name}:reply` })
     const gap = this.cfg.conversation?.reply_delay_ms ?? 800
     await sleep(gap)
+    const day = this.day()
     if (r.relationship_event?.type) {
-      this.society.relations.record(this.name, msg.from, `${speakerDisplay}「${msg.text.slice(0, 30)}」→${r.relationship_event.note || r.relationship_event.type}`, r.relationship_event.type, { day: this.day() })
+      this.society.relations.record(this.name, from, `${speakerDisplay}「${text.slice(0, 30)}」→${r.relationship_event.note || r.relationship_event.type}`, r.relationship_event.type, { day })
       if (['insulted', 'quarrel'].includes(r.relationship_event.type)) {
-        this.memory.add('event', `${speakerDisplay}と気まずくなった: ${r.relationship_event.note || ''}`, { importance: 6, about: msg.from, day: this.day() })
+        this.memory.add('event', `${speakerDisplay}と気まずくなった: ${r.relationship_event.note || ''}`, { importance: 6, about: from, day })
       }
       if (['apology', 'reconciled', 'mediated'].includes(r.relationship_event.type)) {
-        this.memory.add('event', `${speakerDisplay}と仲直りした: ${r.relationship_event.note || ''}`, { importance: 6, about: msg.from, day: this.day() })
+        this.memory.add('event', `${speakerDisplay}と仲直りした: ${r.relationship_event.note || ''}`, { importance: 6, about: from, day })
       }
     }
     if (r.promise?.to && r.promise?.content) this._makePromise(r.promise.to, r.promise.content)
-    if (r.say) await this.say(r.say, msg.from)
-    if (r.action?.name && ['go_to_player', 'follow', 'give', 'rest'].includes(r.action.name) && !this.pendingAction) {
-      this.pendingAction = { name: r.action.name, args: r.action.args || {} }
+    if (r.goal) {
+      this.store.updateAgent(this.name, { current_goal: String(r.goal).slice(0, 80) })
+      this.memory.add('goal', `${speakerDisplay}との話で目標を「${r.goal}」にした`, { importance: 5, about: from, day })
     }
+    if (r.say) await this.say(r.say, from, { voicePriority })
+    const allowed = isHuman ? REQUEST_ACTIONS : ['go_to_player', 'follow', 'give', 'rest']
+    if (r.action?.name && allowed.includes(r.action.name) && !this.pendingAction?.reflex) {
+      this.pendingAction = { name: r.action.name, args: r.action.args || {} }
+      if (isHuman) this.memory.add('goal', `${speakerDisplay}に頼まれて${r.action.name}をすることにした`, { importance: 4, about: from, day })
+      if (this.busy) { this.interruptFlag = true; try { this.bot.pathfinder.stop() } catch {} } // 頼みごとを優先
+    }
+    return r
   }
 
   _makePromise (to, content) {

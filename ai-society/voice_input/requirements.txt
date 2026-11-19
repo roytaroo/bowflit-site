@@ -1,0 +1,6 @@
+# マイク入力 + ローカル音声認識 (Whisper)。すべて無料・ローカル動作
+faster-whisper>=1.1     # Whisper の高速実装 (CTranslate2)。初回にモデルを自動ダウンロード
+sounddevice>=0.5        # マイク録音
+numpy>=1.26
+pynput>=1.7             # プッシュ・トゥ・トーク用のキー検出
+webrtcvad-wheels>=2.0.14 # 常時会話モードの発話区間検出 (無ければ音量で判定)

@@ -37,9 +37,9 @@ class OllamaProvider {
     this.timeoutMs = cfg.timeout_ms ?? 120000
   }
 
-  async chat (messages, { json = true, temperature } = {}) {
+  async chat (messages, { json = true, temperature, model } = {}) {
     const body = {
-      model: this.model,
+      model: model || this.model,
       messages,
       stream: false,
       keep_alive: this.keepAlive,
@@ -51,7 +51,7 @@ class OllamaProvider {
     if (!res.ok) {
       const t = await res.text()
       // 古いOllamaは think パラメータを知らないことがあるので1回だけ外して再試行
-      if (body.think === false && /think/i.test(t)) { this.think = null; return this.chat(messages, { json, temperature }) }
+      if (body.think === false && /think/i.test(t)) { this.think = null; return this.chat(messages, { json, temperature, model }) }
       throw new Error(`Ollama HTTP ${res.status}: ${t.slice(0, 200)}`)
     }
     const data = await res.json()
@@ -68,8 +68,8 @@ class OpenAICompatProvider {
     this.timeoutMs = cfg.timeout_ms ?? 120000
   }
 
-  async chat (messages, { json = true, temperature } = {}) {
-    const body = { model: this.model, messages, temperature: temperature ?? this.options.temperature ?? 0.8 }
+  async chat (messages, { json = true, temperature, model } = {}) {
+    const body = { model: model || this.model, messages, temperature: temperature ?? this.options.temperature ?? 0.8 }
     if (json) body.response_format = { type: 'json_object' }
     const res = await fetchWithTimeout(this.url + '/chat/completions', body, this.timeoutMs)
     if (!res.ok) throw new Error(`OpenAI-compat HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`)
@@ -103,9 +103,9 @@ export class LLMClient {
   }
 
   // 優先度付きキュー。会話の返事 (0) を計画 (1) や日記 (2) より先に処理する。
-  request (messages, { priority = PRIORITY.DECIDE, json = true, temperature, tag = '' } = {}) {
+  request (messages, { priority = PRIORITY.DECIDE, json = true, temperature, tag = '', model } = {}) {
     return new Promise((resolve, reject) => {
-      this.queue.push({ messages, priority, json, temperature, tag, resolve, reject, seq: this.seq++, enq: Date.now() })
+      this.queue.push({ messages, priority, json, temperature, tag, model, resolve, reject, seq: this.seq++, enq: Date.now() })
       this.queue.sort((a, b) => a.priority - b.priority || a.seq - b.seq)
       this.stats.maxQueue = Math.max(this.stats.maxQueue, this.queue.length)
       this._pump()
@@ -134,7 +134,7 @@ export class LLMClient {
       this.running++
       const start = Date.now()
       this.stats.totalWaitMs += start - job.enq
-      this.provider.chat(job.messages, { json: job.json, temperature: job.temperature })
+      this.provider.chat(job.messages, { json: job.json, temperature: job.temperature, model: job.model })
         .then(r => {
           this.stats.calls++
           this.stats.totalMs += Date.now() - start

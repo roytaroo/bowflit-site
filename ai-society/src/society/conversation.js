@@ -19,7 +19,11 @@ export class ConversationManager {
     this.recentBotMsgs = []
     this.claims = new Map()    // msgId -> agent
     this.msgSeq = 0
+    this.humanHoldUntil = 0   // プレイヤーとの会話中は、AI同士の自動返事を止める (進行役が順番を管理)
   }
+
+  holdForHuman (ms, now = Date.now()) { this.humanHoldUntil = Math.max(this.humanHoldUntil, now + ms) }
+  humanThreadActive (now = Date.now()) { return now < this.humanHoldUntil }
 
   newMessageId () { return ++this.msgSeq }
 
@@ -54,6 +58,7 @@ export class ConversationManager {
     if (msg.from === listener) return false
     const addressed = (msg.addressed || []).includes(listener)
     if (msg.distance != null && msg.distance > this.hearingRange && !addressed && msg.fromIsBot) return false
+    if (msg.fromIsBot && this.humanThreadActive(now)) return false
     if (msg.fromIsBot) {
       const p = this._pair(msg.from, listener)
       if (now < p.cooldownUntil) return false

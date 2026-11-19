@@ -13,13 +13,20 @@ export class MockProvider {
     const user = messages[messages.length - 1]?.content || ''
     this.calls.push({ sys: sys.slice(0, 60), user: user.slice(0, 60) })
     let out
-    if (sys.includes('記憶を整理する係')) out = { summary: '昔のことをまとめた記憶' }
+    if (sys.includes('進行役')) {
+      const names = [...user.matchAll(/^- ([A-Za-z0-9_]+)\(/gm)].map(m => m[1])
+      const stances = ['賛成', '反対', '面倒', '他人に振る', '心配']
+      const n = sys.includes('全員への呼びかけ') ? Math.min(3, names.length) : (Math.random() < 0.6 ? 1 : 0)
+      out = { responders: names.sort(() => Math.random() - 0.5).slice(0, n).map((name, i) => ({ name, stance: stances[i % stances.length], why: 'ダミー' })) }
+    } else if (sys.includes('記憶を整理する係')) out = { summary: '昔のことをまとめた記憶' }
     else if (sys.includes('日記を書く')) {
       out = { diary: '今日は木を集めて、仲間と少し話した。明日はもっと頑張りたい。', tomorrow: '家を建てる材料を集める', impressions: [], growth: '', lesson: '' }
     } else if (sys.includes('が亡くなった') || sys.includes('死んでしまった')) {
       out = { say: 'そんな…', feeling: 'とても悲しい', propose_grave: true, new_goal: '' }
     } else if (sys.includes('話しかけた')) {
-      out = { say: pick(['うん、いいね!', 'そうだね。', 'ちょっと忙しいけど、後でね', 'わかった!']), relationship_event: { type: 'good_talk', note: '楽しい会話' }, action: null }
+      const stance = (user.match(/反応の方向性の目安: ([^—。)]+)/) || [])[1]?.trim()
+      const byStance = { 賛成: 'いいね、行こう!', 反対: '危ないからやめておこうよ', 面倒: 'えー、めんどくさいなあ', 他人に振る: 'どう思う?', 心配: '気をつけてね' }
+      out = { say: byStance[stance] || pick(['うん、いいね!', 'そうだね。', 'ちょっと忙しいけど、後でね', 'わかった!']), ask: null, action: null, goal: null, relationship_event: { type: 'good_talk', note: '楽しい会話' } }
     } else {
       out = this._decide(user)
     }

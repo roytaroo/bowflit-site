@@ -4,3 +4,5 @@ data/*.db-*
 data/voice/
 *.log
 config/settings.local.json
+voice_input/.venv/
+__pycache__/

@@ -2,6 +2,7 @@
 import { SharedMemory } from '../memory/memory.js'
 import { Relationships } from './relationships.js'
 import { ConversationManager, SocietyBus } from './conversation.js'
+import { Floor } from './floor.js'
 import { log } from '../util/log.js'
 
 export class Society {
@@ -17,6 +18,7 @@ export class Society {
     this.agents = new Map() // username -> Agent
     this.characters = new Map()
     this.pairDaily = new Map()
+    this.floor = new Floor(this)
   }
 
   register (agent) {
@@ -27,6 +29,8 @@ export class Society {
   names () { return [...this.characters.keys()] }
 
   displayName (username) {
+    const p = this.config.player
+    if (p && username === p.name && p.display_name) return p.display_name
     return this.characters.get(username)?.display_name || username
   }
 

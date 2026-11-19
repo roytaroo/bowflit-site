@@ -59,21 +59,33 @@ ${projects || '- なし'}
 
 【最近の会話】
 ${recentChat || '- なし'}
+(近くにいる人と前に話した話題があれば、自分から持ち出してもよい)
 
 仲間の名前: ${names.join(', ')}
 次の行動をJSONで答えて。`
   return [{ role: 'system', content: system }, { role: 'user', content: user }]
 }
 
+// プレイヤーの発言に返事を求めるときに使える行動 (安全管理の審査は通常どおり受ける)
+export const REQUEST_ACTIONS = ['go_to_player', 'follow', 'give', 'rest', 'collect', 'explore', 'go_home', 'fish', 'plant_and_harvest', 'build_house', 'store_items', 'wander', 'sleep', 'set_home', 'craft', 'eat']
+
 export function buildReplyPrompt (ctx) {
-  const { character, agentRow, speaker, speakerDisplay, text, relationText, aboutMemories, recentChat, stateText, isHuman } = ctx
+  const { character, agentRow, speakerDisplay, text, relationText, aboutMemories, recentChat, stateText, isHuman, thread, stance, why, isGroup, others = [] } = ctx
   const types = Object.keys(EVENT_EFFECTS).filter(k => k !== 'died').join('|')
+  const threadText = thread && thread.length > 1
+    ? thread.slice(1).map(l => `- ${l.display}「${l.text}」`).join('\n')
+    : ''
   const system = personaBlock(character, agentRow) + `
 
-${speakerDisplay}があなたに話しかけた(または近くで話した)。自分の性格・口調・相手との関係に合わせて自然に返事をする。
-返事は短く(60字以内)、会話を無理に続けなくてよい。気が向かなければ say を空にして黙ってもよい。
+${speakerDisplay}が${isGroup ? 'みんなに' : 'あなたに(または近くで)'}話しかけた。自分の性格・口調・相手との関係・記憶に合わせて、自然に返事をする。
+- 返事は短く、話し言葉で(60字以内)。音声で読み上げられるので記号や絵文字は使わない
+- 他の人と同じことを繰り返さない。賛成でも反対でも、自分らしい理由を一言添える
+- 気が乗らなければ断ったり、say を空にして黙ってもよい
+- 他の住人に意見を聞きたいときは "ask" にその人の名前を入れる
+- 頼みごとを引き受けるなら "action" に行動を入れる (${REQUEST_ACTIONS.join('|')})。引き受けないなら null
+- 以前その人と話した内容を覚えていれば、自然に触れてよい
 必ず次のJSONだけで答える:
-{"say":"返事","relationship_event":null または {"type":"${types}","note":"相手の発言をどう受け取ったか(20字)"},"action":null または {"name":"go_to_player|follow|give|rest","args":{}}}
+{"say":"返事","ask":null または "住人の名前","action":null または {"name":"行動名","args":{}},"goal":null または "新しい短期目標","relationship_event":null または {"type":"${types}","note":"相手の発言をどう受け取ったか(20字)"}}
 任意で "promise":{"to":"名前","content":"約束"} も追加できる。`
   const user = `【状況】
 ${stateText}
@@ -81,12 +93,12 @@ ${stateText}
 【${speakerDisplay}${isHuman ? '(人間のプレイヤー)' : ''}との関係】
 ${relationText || '特になし'}
 
-【${speakerDisplay}についての記憶】
+【${speakerDisplay}についての記憶・前に話したこと】
 ${memoryLines(aboutMemories)}
 
 【最近の会話】
 ${recentChat || '- なし'}
-
+${threadText ? `\n【この話題で他の人がすでに言ったこと】\n${threadText}\n` : ''}${others.length ? `\n近くにいる住人: ${others.join(', ')}\n` : ''}${stance ? `\n(あなたの反応の方向性の目安: ${stance}${why ? ` — ${why}` : ''}。ただし性格に合わなければ従わなくてよい)\n` : ''}
 ${speakerDisplay}「${text}」
 返事をJSONで答えて。`
   return [{ role: 'system', content: system }, { role: 'user', content: user }]

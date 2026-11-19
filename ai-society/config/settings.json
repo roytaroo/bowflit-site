@@ -6,6 +6,10 @@
     "auth": "offline",
     "join_interval_ms": 4000
   },
+  "player": {
+    "name": "Daiki",
+    "display_name": "だいき"
+  },
   "llm": {
     "provider": "ollama",
     "url": "http://127.0.0.1:11434",
@@ -32,6 +36,15 @@
     "max_bot_messages_per_min": 14,
     "reply_delay_ms": 800
   },
+  "floor": {
+    "use_director": true,
+    "group_max_responders": 4,
+    "single_max_responders": 2,
+    "interject_chance": 0.25,
+    "max_ask_chain": 2,
+    "thread_hold_sec": 20,
+    "director_model": null
+  },
   "memory": {
     "maxActive": 400,
     "consolidateBatch": 40
@@ -54,9 +67,18 @@
   "voice": {
     "enabled": false,
     "url": "http://127.0.0.1:50021",
-    "gap_ms": 400,
-    "max_queue": 6,
-    "max_chars": 80
+    "gap_ms": 300,
+    "max_queue": 8,
+    "max_chars": 120,
+    "aquestalk": {
+      "command": null,
+      "fallback_speaker_name": "ずんだもん"
+    }
+  },
+  "voice_input": {
+    "enabled": true,
+    "port": 8765,
+    "echo_to_chat": false
   },
   "database": "data/society.db",
   "characters_dir": "characters",
