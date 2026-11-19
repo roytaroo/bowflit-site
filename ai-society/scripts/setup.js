@@ -1,10 +1,12 @@
 // 初回セットアップ (何度実行しても大丈夫)。
-//   node scripts/setup.js            対話式 (名前などを聞く)
-//   node scripts/setup.js --yes      聞かずに既定値で進める
+//   node scripts/setup.js              Java版で全自動 (名前はランチャーから読み取る。見つからない時だけ聞く)
+//   node scripts/setup.js --bedrock    統合版からも入れるようにする (Geyser + Floodgate + ViaVersion)
+//   node scripts/setup.js --yes        一切聞かずに既定値で進める
 // やること:
 //   1. PCのGPU(VRAM)・メモリを調べて、LLMのモデルとサーバーのメモリを決める
-//   2. 自分の名前 (Java版 / 統合版) を聞いて config/settings.local.json を作る
-//   3. Minecraftサーバー (Paper) と Geyser・Floodgate・ViaVersion を server/ にダウンロードし、設定を書く
+//   2. 自分の名前を調べて config/settings.local.json を作る
+//   3. Minecraftサーバー (Paper) を server/ にダウンロードし、設定を書く
+//   3b. ランチャーに 1.21.4 の起動構成、マルチプレイ一覧にこのサーバーを追加
 //   4. ollama pull でモデルをダウンロード
 //   5. マイク会話用の Python 環境 (voice_input/.venv) を作る
 import fs from 'node:fs'
@@ -13,6 +15,7 @@ import path from 'node:path'
 import readline from 'node:readline/promises'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { detectPlayerName, addLauncherProfile, addServerEntry, minecraftDir } from './client-setup.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 export const MC_VERSION = '1.21.4'
@@ -148,28 +151,31 @@ async function main () {
   ok(`GPU VRAM: ${vram ? Math.round(vram / 1024) + 'GB' : '不明 (NVIDIA以外かドライバ未導入)'} / メモリ ${Math.round(os.totalmem() / 1024 ** 3)}GB / CPU ${os.cpus()[0]?.model || '?'} (${os.cpus().length}スレッド)`)
   ok(`LLM: ${pick.model} — ${pick.note}`)
   ok(`Minecraftサーバーのメモリ: ${memGB}GB`)
+  if (vram && vram < 10000) say('  ※ 同じPCでMinecraftも遊ぶと、ゲームもGPUのメモリを使うので住人の反応が遅くなることがある。\n    遅すぎたら config/settings.local.json の llm.model を "qwen2.5:3b" に変えて (ollama pull qwen2.5:3b)')
 
   say('\n■ 2. 自分の設定')
   const localFile = path.join(ROOT, 'config/settings.local.json')
   const local = readJson(localFile)
-  const edition = (await ask('どっちで遊ぶ? 統合版なら b / Java版なら j', local.player?.edition === 'java' ? 'j' : 'b')).toLowerCase().startsWith('j') ? 'java' : 'bedrock'
+  const edition = process.argv.includes('--bedrock') ? 'bedrock' : (local.player?.edition === 'bedrock' && !process.argv.includes('--java') ? 'bedrock' : 'java')
   let name
   if (edition === 'bedrock') {
     const tag = await ask('統合版のゲーマータグ (Xboxの名前)', local.player?.gamertag || 'Daiki')
     name = bedrockJavaName(tag)
     local.player = { ...(local.player || {}), edition, gamertag: tag, name }
   } else {
-    name = await ask('Java版のプレイヤー名', local.player?.name || 'Daiki')
+    const detected = detectPlayerName()
+    if (detected) ok(`ランチャーからプレイヤー名を読み取った: ${detected}`)
+    name = detected || local.player?.name || await ask('Java版のプレイヤー名 (ランチャーの右上に出ている名前)', 'Daiki')
     local.player = { ...(local.player || {}), edition, name }
   }
-  local.player.display_name = await ask('住人からの呼ばれ方', local.player.display_name || 'だいき')
+  local.player.display_name = local.player.display_name || 'だいき' // 住人からの呼ばれ方 (settings.local.json で変更可)
   local.llm = { ...(local.llm || {}), model: pick.model, concurrency: pick.concurrency }
   local.minecraft = { ...(local.minecraft || {}), version: MC_VERSION, server_memory_gb: memGB }
   local.voice = { ...(local.voice || {}), enabled: true }
   fs.writeFileSync(localFile, JSON.stringify(local, null, 2) + '\n')
   ok(`config/settings.local.json を保存 (サーバー上の名前: ${name})`)
 
-  say('\n■ 3. Minecraftサーバー (Paper ' + MC_VERSION + ' + Geyser + Floodgate + ViaVersion)')
+  say('\n■ 3. Minecraftサーバー (Paper ' + MC_VERSION + (edition === 'bedrock' ? ' + Geyser + Floodgate + ViaVersion' : '') + ')')
   const java = has('java', ['-version'])
   if (!java) ng('Java が見つからない → Java 21 を入れてから、もう一度実行して')
   else {
@@ -188,7 +194,7 @@ async function main () {
       ok(`Paper ${MC_VERSION} build ${p.build} (${Math.round(size / 1e6)}MB)`)
     } catch (e) { ng(`Paper のダウンロード失敗: ${e.message}\n     → https://papermc.io/downloads/paper から ${MC_VERSION} を手で落として server/paper.jar に置いて`) }
   }
-  for (const pl of PLUGINS) {
+  for (const pl of edition === 'bedrock' ? PLUGINS : []) {
     const f = path.join(srv, 'plugins', pl.file)
     if (fs.existsSync(f)) { ok(`${pl.name} はダウンロード済み`); continue }
     try {
@@ -200,7 +206,18 @@ async function main () {
   fs.writeFileSync(path.join(srv, 'eula.txt'), '# https://aka.ms/MinecraftEULA\neula=true\n')
   const propFile = path.join(srv, 'server.properties')
   fs.writeFileSync(propFile, patchProperties(fs.existsSync(propFile) ? fs.readFileSync(propFile, 'utf8') : '', SERVER_PROPERTIES))
-  ok('eula.txt / server.properties を設定 (Java版の入口はこのPC内だけ。統合版は Geyser 経由で port 19132)')
+  ok(`eula.txt / server.properties を設定 (このPCの中からだけ入れる${edition === 'bedrock' ? '。統合版は Geyser 経由で port 19132' : ''})`)
+
+  if (edition === 'java') {
+    say('\n■ 3b. Minecraft (Java版) 側の設定')
+    say(`  (${minecraftDir()} を設定します。ランチャーとゲームは閉じておいて)`)
+    const prof = addLauncherProfile(MC_VERSION)
+    prof.ok ? ok(`ランチャーに起動構成「AI Society ${MC_VERSION}」${prof.already ? 'は追加済み' : 'を追加'}`) : ng(prof.reason)
+    try {
+      const sv = await addServerEntry('AI Society', '127.0.0.1')
+      sv.ok ? ok(`マルチプレイに「AI Society」${sv.already ? 'は追加済み' : 'を追加'}`) : ng(sv.reason)
+    } catch (e) { ng('サーバー一覧に追加できなかった: ' + e.message) }
+  }
 
   say('\n■ 4. LLM のモデル')
   if (!has('ollama', ['--version'])) ng('Ollama が見つからない → Ollama を入れてから、もう一度実行して')
@@ -226,6 +243,7 @@ async function main () {
   vv ? ok(`見つかった: ${vv}`) : ng('VOICEVOX が見つからない → https://voicevox.hiroshiba.jp/ から入れると声で話す (無くても文字で動く)')
 
   say('\n完了! 次は start.bat (Mac/Linux は npm run launch) で全部起動できる。')
+  if (edition === 'java') say(`起動したら、ランチャーで「AI Society ${MC_VERSION}」を選んでプレイ → マルチプレイ → 「AI Society」に入ってね。`)
   if (edition === 'bedrock') say(`統合版の「サーバー」タブで、アドレス ${lanAddress() || 'このPCのIPアドレス'} / ポート 19132 を追加して入ってね。\n初回に Windows のファイアウォールの確認が出たら「許可」を押して。`)
   rl?.close()
 }

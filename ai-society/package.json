@@ -2,7 +2,7 @@
   "name": "minecraft-ai-society",
   "version": "0.1.0",
   "private": true,
-  "description": "Minecraft \u81ea\u5f8b\u578bAI\u793e\u4f1a\u30b7\u30df\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3 (Mineflayer + Ollama + SQLite + VOICEVOX)",
+  "description": "Minecraft 自律型AI社会シミュレーション (Mineflayer + Ollama + SQLite + VOICEVOX)",
   "type": "module",
   "engines": {
     "node": ">=22.13"
@@ -27,6 +27,7 @@
     "mineflayer-collectblock": "^1.6.0",
     "mineflayer-pathfinder": "^2.4.5",
     "mineflayer-pvp": "^1.3.2",
+    "prismarine-nbt": "^2.8.0",
     "vec3": "^0.2.0"
   },
   "devDependencies": {

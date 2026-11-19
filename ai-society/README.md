@@ -35,7 +35,7 @@ Minecraft のサバイバルワールドに、人格・記憶・人間関係を�
 
 ---
 
-## 全自動セットアップ (Windows)
+## 全自動セットアップ (Windows・Java版)
 
 **PowerShell を開いて、次の1行を貼り付けて Enter** するだけ:
 
@@ -44,20 +44,23 @@ iex ([Text.Encoding]::UTF8.GetString((iwr -UseBasicParsing 'https://raw.githubus
 ```
 
 自動でやること:
-1. winget で Git / Node.js / Java 21 / Ollama / Python / VOICEVOX をインストール (確認画面が出たら「はい」)
+1. winget で Git / Node.js / Java 21 / Ollama / Python / VOICEVOX をインストール (確認画面が出たら「はい」)。Minecraft Launcher が無ければそれも入れる
 2. コードを `%USERPROFILE%\ai-minecraft` にダウンロード
-3. `setup.bat` を実行
+3. `setup.bat` を実行 (質問なし)
    - GPU の VRAM を調べて LLM のモデルを選んでダウンロード (6GB なら qwen2.5:7b-instruct)
-   - 統合版かJava版か・名前を聞いて設定を保存
-   - Minecraft サーバー (Paper 1.21.4) と Geyser・Floodgate・ViaVersion をダウンロードして設定
+   - ランチャーからプレイヤー名を読み取って設定
+   - Minecraft サーバー (Paper 1.21.4) をダウンロードして設定
+   - ランチャーに起動構成「AI Society 1.21.4」、マルチプレイに「AI Society」を追加
    - マイク会話用の Python 環境を作る
 4. デスクトップに「AI Society 起動」を作る
 
-あとは **「AI Society 起動」をダブルクリック** → Ollama・VOICEVOX・サーバー・住人・マイク入力が全部立ち上がる。
-止めるときはそのウィンドウで Ctrl+C (ワールドを保存してから止まる)。
+遊び方:
+1. **「AI Society 起動」をダブルクリック** → Ollama・VOICEVOX・サーバー・住人・マイク入力が全部立ち上がる
+2. ランチャーで「AI Society 1.21.4」を選んでプレイ → マルチプレイ → 「AI Society」
+3. 止めるときは起動したウィンドウで Ctrl+C (ワールドを保存してから止まる)
 
-統合版から入るとき: 「サーバー」タブで「サーバーを追加」→ アドレスに setup の最後に表示される IP (例 192.168.x.x)、ポート 19132。
-初回に Windows のファイアウォールの確認が出たら「許可」。Switch / PS は外部サーバーを直接追加できないので、別の手順が必要 (PC・スマホ・タブレットの統合版なら上の方法でOK)。
+ランチャーにまだ一度もログインしていない場合は、ログインして閉じてから `setup.bat` をもう一度ダブルクリックすると、名前と起動構成が設定される。
+統合版からも入りたくなったら `setup.bat --bedrock` (Geyser + Floodgate を追加)。
 
 手動でやる場合は下の「必要なもの」から。
 
@@ -65,7 +68,7 @@ iex ([Text.Encoding]::UTF8.GetString((iwr -UseBasicParsing 'https://raw.githubus
 
 1. **Node.js 22.13 以上** (24 LTS 推奨)
 2. **Ollama** — https://ollama.com/download
-3. **Minecraft Java Edition サーバー** (Paper 推奨) バージョン **1.21.4**。統合版から入るなら Geyser + Floodgate
+3. **Minecraft Java Edition** (クライアント 1.21.4) と サーバー (Paper 1.21.4)
 4. **VOICEVOX** — https://voicevox.hiroshiba.jp/ (音声を使う場合)
 5. **Python 3.10 以上** (マイク会話を使う場合)
 

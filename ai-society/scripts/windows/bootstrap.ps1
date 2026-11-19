@@ -2,7 +2,7 @@
 # PowerShell に次の1行を貼り付けて実行 (日本語が文字化けしないよう UTF-8 で読み込む):
 #   iex ([Text.Encoding]::UTF8.GetString((iwr -UseBasicParsing 'https://raw.githubusercontent.com/roytaroo/bowflit-site/claude/minecraft-9-ai-society-fdttk2/ai-society/scripts/windows/bootstrap.ps1').RawContentStream.ToArray()))
 #
-# やること: winget で Git / Node.js / Java 21 / Ollama / Python / VOICEVOX を入れる
+# やること: winget で Git / Node.js / Java 21 / Ollama / Python / VOICEVOX (/ Minecraft Launcher) を入れる
 #           → コードを %USERPROFILE%\ai-minecraft にダウンロード → setup.bat を実行
 $ErrorActionPreference = 'Continue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -33,6 +33,11 @@ Install-Winget 'OpenJS.NodeJS.LTS' 'node'
 Install-Winget 'EclipseAdoptium.Temurin.21.JDK' 'java'
 Install-Winget 'Ollama.Ollama' 'ollama'
 Install-Winget 'Python.Python.3.12' 'py'
+if (-not (Test-Path (Join-Path $env:APPDATA '.minecraft'))) {
+  Write-Host '  ... Minecraft Launcher をインストール中'
+  winget install --id Mojang.MinecraftLauncher -e --silent --accept-package-agreements --accept-source-agreements | Out-Host
+  Write-Host '  ランチャーを起動して Microsoft アカウントでログインし、一度閉じてから setup.bat をもう一度実行すると、名前と起動構成が自動で設定されます' -ForegroundColor Yellow
+} else { Write-Host '  OK  Minecraft (インストール済み)' }
 $vv = Join-Path $env:LOCALAPPDATA 'Programs\VOICEVOX\VOICEVOX.exe'
 if (Test-Path $vv) { Write-Host '  OK  VOICEVOX (インストール済み)' }
 else {
