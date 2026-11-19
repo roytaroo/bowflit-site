@@ -1,0 +1,64 @@
+{
+  "minecraft": {
+    "host": "127.0.0.1",
+    "port": 25565,
+    "version": "1.21.4",
+    "auth": "offline",
+    "join_interval_ms": 4000
+  },
+  "llm": {
+    "provider": "ollama",
+    "url": "http://127.0.0.1:11434",
+    "model": "qwen2.5:7b-instruct",
+    "concurrency": 1,
+    "keep_alive": "30m",
+    "think": false,
+    "timeout_ms": 120000,
+    "options": {
+      "temperature": 0.8,
+      "num_ctx": 6144,
+      "num_predict": 300
+    }
+  },
+  "agent": {
+    "decide_interval_ms": 6000,
+    "action_timeout_sec": 240
+  },
+  "conversation": {
+    "hearing_range": 32,
+    "max_bot_exchanges": 6,
+    "exchange_window_sec": 120,
+    "pair_cooldown_sec": 180,
+    "max_bot_messages_per_min": 14,
+    "reply_delay_ms": 800
+  },
+  "memory": {
+    "maxActive": 400,
+    "consolidateBatch": 40
+  },
+  "safety": {
+    "flee_health": 8,
+    "no_combat_health": 12,
+    "eat_food_level": 14,
+    "allow_deadly_bosses": false,
+    "night_explore": false
+  },
+  "death": {
+    "permanent": false,
+    "grave_mode": "llm_decides",
+    "grave_on_permanent_death": true
+  },
+  "diary": {
+    "fallback_interval_min": 20
+  },
+  "voice": {
+    "enabled": false,
+    "url": "http://127.0.0.1:50021",
+    "gap_ms": 400,
+    "max_queue": 6,
+    "max_chars": 80
+  },
+  "database": "data/society.db",
+  "characters_dir": "characters",
+  "agents": null
+}
