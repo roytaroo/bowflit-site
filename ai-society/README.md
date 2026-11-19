@@ -30,9 +30,36 @@ Minecraft のサバイバルワールドに、人格・記憶・人間関係を�
 | 本物の LLM (Ollama + Qwen) での判断・会話の質・速度 | ⚠ **未確認** (この開発環境では Ollama を動かせなかった) |
 | Whisper の音声認識、マイク録音、VOICEVOX・ゆっくりの実際の再生 | ⚠ **未確認** (モデルのダウンロードとマイク・音声エンジンが使えなかった) |
 | クラフト・睡眠・釣り・農業・戦闘・チェスト整理 | ⚠ 実装済み・**未確認** (簡易サーバーが未対応) |
+| 全自動セットアップ (bootstrap.ps1 / setup.bat / start.bat) | ⚠ 起動の流れは簡易サーバーで確認。**Windows 実機・ダウンロード部分は未確認** |
 | ゲーム内の位置から声が聞こえる立体音響、声のクローン | ❌ 未実装 (将来) |
 
 ---
+
+## 全自動セットアップ (Windows)
+
+**PowerShell を開いて、次の1行を貼り付けて Enter** するだけ:
+
+```powershell
+iex ([Text.Encoding]::UTF8.GetString((iwr -UseBasicParsing 'https://raw.githubusercontent.com/roytaroo/bowflit-site/claude/minecraft-9-ai-society-fdttk2/ai-society/scripts/windows/bootstrap.ps1').RawContentStream.ToArray()))
+```
+
+自動でやること:
+1. winget で Git / Node.js / Java 21 / Ollama / Python / VOICEVOX をインストール (確認画面が出たら「はい」)
+2. コードを `%USERPROFILE%\ai-minecraft` にダウンロード
+3. `setup.bat` を実行
+   - GPU の VRAM を調べて LLM のモデルを選んでダウンロード (6GB なら qwen2.5:7b-instruct)
+   - 統合版かJava版か・名前を聞いて設定を保存
+   - Minecraft サーバー (Paper 1.21.4) と Geyser・Floodgate・ViaVersion をダウンロードして設定
+   - マイク会話用の Python 環境を作る
+4. デスクトップに「AI Society 起動」を作る
+
+あとは **「AI Society 起動」をダブルクリック** → Ollama・VOICEVOX・サーバー・住人・マイク入力が全部立ち上がる。
+止めるときはそのウィンドウで Ctrl+C (ワールドを保存してから止まる)。
+
+統合版から入るとき: 「サーバー」タブで「サーバーを追加」→ アドレスに setup の最後に表示される IP (例 192.168.x.x)、ポート 19132。
+初回に Windows のファイアウォールの確認が出たら「許可」。Switch / PS は外部サーバーを直接追加できないので、別の手順が必要 (PC・スマホ・タブレットの統合版なら上の方法でOK)。
+
+手動でやる場合は下の「必要なもの」から。
 
 ## 必要なもの (すべて無料)
 

@@ -51,6 +51,7 @@ export async function main (argv = process.argv.slice(2)) {
   if (args.agents) overrides.agents = String(args.agents).split(',').map(s => s.trim())
   if (args.db) overrides.database = args.db
   if (args.voice) overrides.voice = { enabled: true }
+  if (args['no-voice']) overrides.voice = { enabled: false }
   if (args['voice-in']) overrides.voice_input = { enabled: true }
   if (args['no-voice-in']) overrides.voice_input = { enabled: false }
   if (args.player) overrides.player = { name: args.player }

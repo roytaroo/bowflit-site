@@ -2,7 +2,7 @@
   "name": "minecraft-ai-society",
   "version": "0.1.0",
   "private": true,
-  "description": "Minecraft 自律型AI社会シミュレーション (Mineflayer + Ollama + SQLite + VOICEVOX)",
+  "description": "Minecraft \u81ea\u5f8b\u578bAI\u793e\u4f1a\u30b7\u30df\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3 (Mineflayer + Ollama + SQLite + VOICEVOX)",
   "type": "module",
   "engines": {
     "node": ">=22.13"
@@ -15,7 +15,9 @@
     "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke-actions.js",
     "check": "node --disable-warning=ExperimentalWarning scripts/check-env.js",
     "voices": "node --disable-warning=ExperimentalWarning scripts/list-voices.js",
-    "history": "node --disable-warning=ExperimentalWarning scripts/history.js"
+    "history": "node --disable-warning=ExperimentalWarning scripts/history.js",
+    "setup": "node --disable-warning=ExperimentalWarning scripts/setup.js",
+    "launch": "node --disable-warning=ExperimentalWarning scripts/launch.js"
   },
   "license": "MIT",
   "dependencies": {
