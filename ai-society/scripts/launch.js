@@ -10,6 +10,7 @@ import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { loadConfig } from '../src/config.js'
 import { findVoicevox, patchGeyserConfig } from './setup.js'
+import { findJava } from './java.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -115,7 +116,11 @@ async function startServer () {
   if (custom) { [cmd, ...args] = custom.split(' ') } else {
     if (!fs.existsSync(path.join(srv, 'paper.jar'))) { log('server', 'server/paper.jar が無い → 先に setup.bat を実行して'); process.exit(1) }
     const mem = cfg.minecraft.server_memory_gb || 3
-    cmd = 'java'; args = [`-Xms1G`, `-Xmx${mem}G`, '-jar', 'paper.jar', 'nogui']
+    const java = findJava(21)
+    if (!java.major) { log('server', 'Java が見つからない → Java 21 を入れて (setup.bat かインストーラーの1行をもう一度)'); await sleep(1000); process.exit(1) }
+    if (java.major < 21) { log('server', `Java ${java.major} しか見つからない。Minecraft 1.21.4 のサーバーには Java 21 以上が必要 → インストーラーの1行をもう一度実行して`); await sleep(1000); process.exit(1) }
+    log('server', `Java ${java.major} を使う: ${java.cmd}`)
+    cmd = java.cmd; args = [`-Xms1G`, `-Xmx${mem}G`, '-jar', 'paper.jar', 'nogui']
   }
   log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})… 初回はワールド生成で数分かかる`)
   fs.mkdirSync(path.join(srv, 'logs'), { recursive: true })
@@ -123,8 +128,10 @@ async function startServer () {
   const p = spawn(cmd, args, { cwd: custom ? ROOT : srv, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, MC_PORT: String(cfg.minecraft.port) } })
   children.server = p
   let done = false
+  const tail = []
   const onLine = line => {
     out.write(line + '\n')
+    tail.push(line); if (tail.length > 40) tail.shift()
     if (/Done \(|listening on/.test(line)) done = true
     if (/Done \(|ERROR|Exception|Geyser.*(Started|started)|joined the game|left the game|Failed|FAILED/.test(line)) log('server', line.replace(/^\[[\d:]+ /, '').slice(0, 200))
   }
@@ -132,7 +139,24 @@ async function startServer () {
     let buf = ''
     s.on('data', d => { buf += d; const parts = buf.split(/\r?\n/); buf = parts.pop(); parts.forEach(onLine) })
   }
-  p.on('exit', code => { log('server', `サーバーが停止 (${code})`); children.server = null; if (!stopping) shutdown() })
+  p.on('error', e => log('server', `サーバーを起動できない: ${e.message}`))
+  p.on('exit', code => {
+    log('server', `サーバーが停止 (${code})`)
+    children.server = null
+    if (!stopping) {
+      console.log('\n---------- サーバーの最後の出力 (原因はここ) ----------')
+      for (const l of tail) console.log(l)
+      console.log('-------------------------------------------------------')
+      const all = tail.join('\n')
+      if (/UnsupportedClassVersionError|class file version/.test(all)) log('ヒント', 'Java が古い。Java 21 を入れて')
+      else if (/FAILED TO BIND|Address already in use|BindException/i.test(all)) log('ヒント', `ポート ${cfg.minecraft.port} を別のサーバーが使ってる。他のMinecraftサーバーを閉じて`)
+      else if (/eula/i.test(all)) log('ヒント', 'eula.txt の同意がない → setup.bat をもう一度')
+      else if (/Invalid or corrupt jarfile|Error: Unable to access jarfile|zip END header/i.test(all)) log('ヒント', 'paper.jar が壊れてる → server フォルダの paper.jar を消して setup.bat をもう一度')
+      else if (/OutOfMemory|Could not reserve enough space/i.test(all)) log('ヒント', 'メモリ不足 → config/settings.local.json の minecraft.server_memory_gb を 2 に')
+      log('launch', 'この画面をそのまま送ってくれれば原因を見るよ')
+      shutdown()
+    }
+  })
   const ready = await waitFor(async () => done && await portOpen(cfg.minecraft.port), 10 * 60000, 'Minecraftサーバー')
   if (!ready) { shutdown(); return }
   // 初回だけ: Geyser の設定を「統合版は Floodgate(Xbox認証)で入る」にして再読み込み
