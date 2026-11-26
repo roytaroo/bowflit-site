@@ -19,6 +19,22 @@ export class Society {
     this.characters = new Map()
     this.pairDaily = new Map()
     this.floor = new Floor(this)
+    this.lines = [] // 最近の住人の発言 (オウム返し防止)
+  }
+
+  noteLine (from, text, now = Date.now()) {
+    this.lines = this.lines.filter(l => now - l.t < 300000)
+    this.lines.push({ from, text, t: now })
+  }
+
+  // 5分以内に他の住人が言ったこととほぼ同じなら、その発言を返す
+  similarRecentLine (text, from, now = Date.now()) {
+    if (String(text).length < 8) return null // 「了解！」のような短い相づちはかぶってもよい
+    for (const l of this.lines) {
+      if (l.from === from || now - l.t > 300000) continue
+      if (similarity(l.text, text) >= 0.6) return l
+    }
+    return null
   }
 
   register (agent) {
@@ -107,11 +123,29 @@ export class Society {
   }
 
   // ---- 死亡 ----
+  // 誰が死に気づくか: 見える距離 (16ブロック) にいた人は「見た」、悲鳴が届く距離 (36ブロック) の人は「聞いた」。
+  // それより遠い人は知らない (あとで誰かから聞くまで)
+  witnesses (dead, pos) {
+    const see = this.config.conversation?.hearing_range ?? 16
+    const hear = this.config.conversation?.shout_range ?? 36
+    const out = []
+    for (const a of this.aliveAgents()) {
+      if (a.name === dead) continue
+      const p = a.bot?.entity?.position
+      if (!pos || !p) continue
+      const d = p.distanceTo(pos)
+      if (d <= see) out.push({ agent: a, how: 'saw' })
+      else if (d <= hear) out.push({ agent: a, how: 'heard' })
+    }
+    return out
+  }
+
   async onAgentDeath (dead, { cause, pos, day, permanent }) {
     const deadName = this.displayName(dead)
+    const known = this.witnesses(dead, pos)
     if (!permanent && !this.config.death?.react_on_respawn) {
-      this.shared.add('death', `${deadName}が${cause}で倒れた (復活)`, { importance: 3, participants: [dead], day })
-      await Promise.allSettled(this.aliveAgents().filter(a => a.name !== dead).map(a => a.reactToDeath(dead, { cause, pos, day, permanent })))
+      if (known.length) log.info('society', `${deadName}が倒れたのに気づいた: ${known.map(k => `${k.agent.display}(${k.how === 'saw' ? '見た' : '悲鳴'})`).join(', ')}`)
+      await Promise.allSettled(known.map(k => k.agent.reactToDeath(dead, { cause, pos, day, permanent, how: k.how })))
       return
     }
     this.shared.add('death', `${deadName}が${cause}で${permanent ? '亡くなった' : '死んでしまった'}${pos ? ` (場所 ${pos.x},${pos.y},${pos.z})` : ''}`, { importance: permanent ? 10 : 7, participants: [dead], day })
@@ -137,3 +171,15 @@ export class Society {
     this.shared.add('discovery', `${this.displayName(name)}が新しい土地(${Math.round(pos.x)},${Math.round(pos.z)}付近)を発見した`, { importance: 4, participants: [name], day })
   }
 }
+
+// 2つの文の似ている度合い (0〜1): 2文字ずつの組の重なり
+export function similarity (a, b) {
+  const norm = t => String(t || '').replace(/[\s、。！？!?…ー〜「」]/g, '')
+  const grams = t => { const g = new Set(); for (let i = 0; i < t.length - 1; i++) g.add(t.slice(i, i + 2)); return g }
+  const A = grams(norm(a)); const B = grams(norm(b))
+  if (!A.size || !B.size) return norm(a) === norm(b) ? 1 : 0
+  let inter = 0
+  for (const g of A) if (B.has(g)) inter++
+  return inter / Math.min(A.size, B.size)
+}
+

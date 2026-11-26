@@ -24,7 +24,7 @@
       "white_bed 1"
     ],
     "op_player": true,
-    "sleep_percentage": 1,
+    "sleep_percentage": 100,
     "auto_sleep": true
   },
   "llm": {
@@ -47,15 +47,17 @@
     "decide_interval_ms": 1500,
     "action_timeout_sec": 240,
     "path_search_radius": 40,
-    "spontaneous_say_interval_sec": 60
+    "spontaneous_say_interval_sec": 60,
+    "idle_motion": true
   },
   "conversation": {
-    "hearing_range": 32,
+    "hearing_range": 16,
     "max_bot_exchanges": 4,
     "exchange_window_sec": 120,
     "pair_cooldown_sec": 180,
     "max_bot_messages_per_min": 6,
-    "reply_delay_ms": 800
+    "reply_delay_ms": 800,
+    "shout_range": 36
   },
   "floor": {
     "use_director": false,
@@ -97,7 +99,7 @@
       "command": null,
       "fallback_speaker_name": "ずんだもん"
     },
-    "range": 24
+    "range": 16
   },
   "voice_input": {
     "enabled": true,
@@ -111,5 +113,8 @@
     "enabled": true,
     "name_offset": 0.25,
     "bubble_offset": 0.55
+  },
+  "skins": {
+    "enabled": true
   }
 }

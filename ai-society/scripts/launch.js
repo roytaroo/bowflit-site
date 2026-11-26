@@ -6,10 +6,10 @@
 import fs from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { loadConfig } from '../src/config.js'
-import { findVoicevox, patchGeyserConfig, patchProperties } from './setup.js'
+import { findVoicevox, patchGeyserConfig, patchProperties, download, modrinthUrl, MC_VERSION } from './setup.js'
 import { ensureJava } from './java.js'
 import { datapackFiles } from '../src/society/display.js'
 
@@ -150,6 +150,49 @@ function startAgents (pass) {
   })
 }
 
+// ---- スキン: skins/<キャラのファイル名>.png を、住人がワールドに入ったときに着せる ----
+// オフラインモードではスキンを直接持てないので SkinsRestorer (サーバーのプラグイン) に任せる。
+// 画像は GitHub に公開されているこのフォルダのURLから読み込まれる (MineSkin で署名されて Minecraft に表示される)
+function skinFiles () {
+  const dir = path.join(ROOT, 'skins')
+  const map = {}
+  if (cfg.skins?.enabled === false || !fs.existsSync(dir)) return map
+  const cdir = path.join(ROOT, cfg.characters_dir || 'characters')
+  for (const f of fs.readdirSync(cdir).filter(f => f.endsWith('.json'))) {
+    const base = f.replace(/\.json$/, '')
+    try {
+      const u = JSON.parse(fs.readFileSync(path.join(cdir, f), 'utf8')).username
+      if (fs.existsSync(path.join(dir, base + '.png'))) map[u] = base
+    } catch {}
+  }
+  return map
+}
+
+function skinBaseUrl () {
+  if (cfg.skins?.base_url) return cfg.skins.base_url.replace(/\/$/, '')
+  const git = args => { const r = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', shell: win }); return r.status === 0 ? r.stdout.trim() : '' }
+  const remote = git(['remote', 'get-url', 'origin'])
+  const m = remote.match(/github\.com[/:]([^/]+)\/([^/.]+?)(\.git)?$/)
+  const rev = git(['rev-parse', 'HEAD'])
+  if (!m || !rev) return null
+  return `https://raw.githubusercontent.com/${m[1]}/${m[2]}/${rev}/${git(['rev-parse', '--show-prefix'])}skins`
+}
+
+async function ensureSkinsRestorer (srv) {
+  const f = path.join(srv, 'plugins', 'SkinsRestorer.jar')
+  if (fs.existsSync(f)) return true
+  try {
+    fs.mkdirSync(path.dirname(f), { recursive: true })
+    log('server', 'スキン用のプラグイン SkinsRestorer をダウンロード中…')
+    const size = await download(await modrinthUrl('skinsrestorer', MC_VERSION), f)
+    log('server', `SkinsRestorer OK (${Math.round(size / 1e6)}MB)`)
+    return true
+  } catch (e) {
+    log('server', `SkinsRestorer のダウンロードに失敗 (スキンなしで続ける): ${e.message}`)
+    return false
+  }
+}
+
 async function startServer () {
   const srv = path.join(ROOT, 'server')
   const custom = opt('--server-cmd') // テスト用 (例: "node scripts/test-server.js")
@@ -188,6 +231,10 @@ async function startServer () {
     } catch (e) { log('server', 'server.properties を直せなかった: ' + e.message) }
   }
   const firstWorld = !fs.existsSync(path.join(srv, 'world', 'level.dat'))
+  const skins = !custom ? skinFiles() : {}
+  const skinUrl = Object.keys(skins).length && await ensureSkinsRestorer(srv) ? skinBaseUrl() : null
+  if (Object.keys(skins).length && !skinUrl) log('server', 'スキンの画像URLが作れなかった (git が無い?) → スキンなしで続ける')
+  const skinned = new Set()
   log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})…${firstWorld ? ' 初回はワールド生成で数分かかる' : ''}`)
   fs.mkdirSync(path.join(srv, 'logs'), { recursive: true })
   const out = fs.createWriteStream(path.join(srv, 'logs', 'launch.log'), { flags: 'a' })
@@ -211,6 +258,14 @@ async function startServer () {
         log('server', `${j[1]} にスターターキットを渡した`)
       }, 3000)
     }
+    // 住人が入ったら、その住人のスキンを着せる (起動ごとに1回)
+    if (j && skinUrl && skins[j[1]] && !skinned.has(j[1])) {
+      skinned.add(j[1])
+      const id = 'ais_' + skins[j[1]]
+      setTimeout(() => { try { p.stdin.write(`sr createcustom ${id} ${skinUrl}/${skins[j[1]]}.png classic\n`) } catch {} }, 4000)
+      setTimeout(() => { try { p.stdin.write(`skin set ${id} ${j[1]}\n`) } catch {} ; log('server', `${j[1]} にスキンを着せた`) }, 12000)
+    }
+    if (/SkinsRestorer|\[SR\]|MineSkin/i.test(line) && /error|fail|失敗|invalid|unknown|could not/i.test(line)) log('server', 'スキン: ' + line.replace(/^\[[\d:]+ /, '').slice(0, 200))
     tail.push(line); if (tail.length > 40) tail.shift()
     if (/Done \(|listening on/.test(line)) done = true
     if (/Done \(|ERROR|Exception|Geyser.*(Started|started)|joined the game|left the game|Failed|FAILED/.test(line)) log('server', line.replace(/^\[[\d:]+ /, '').slice(0, 200))

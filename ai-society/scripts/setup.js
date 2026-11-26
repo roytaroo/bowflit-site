@@ -85,7 +85,7 @@ async function getJson (url) {
   return r.json()
 }
 
-async function download (url, file) {
+export async function download (url, file) {
   const r = await fetch(url, { headers: { 'user-agent': UA }, redirect: 'follow' })
   if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`)
   const buf = Buffer.from(await r.arrayBuffer())
@@ -108,8 +108,9 @@ async function paperUrl (version) {
   return { url, build: b.id }
 }
 
-async function modrinthUrl (slug) {
-  const list = await getJson(`https://api.modrinth.com/v2/project/${slug}/version?loaders=${encodeURIComponent('["paper"]')}`)
+export async function modrinthUrl (slug, gameVersion = null) {
+  const gv = gameVersion ? `&game_versions=${encodeURIComponent(JSON.stringify([gameVersion]))}` : ''
+  const list = await getJson(`https://api.modrinth.com/v2/project/${slug}/version?loaders=${encodeURIComponent('["paper"]')}${gv}`)
   const v = list.find(x => x.version_type === 'release') || list[0]
   const f = v?.files?.find(x => x.primary) || v?.files?.[0]
   if (!f) throw new Error(`${slug} のファイルが見つからない`)

@@ -60,6 +60,7 @@ export class Agent {
     this._connect()
     this._decideLoop()
     this._replyLoop()
+    this._idleLoop()
   }
 
   _connect () {
@@ -182,6 +183,49 @@ export class Agent {
     return snapshot(this.bot, { home: this.home, knownAgents: this.society.names(), scanBlocks })
   }
 
+  // ------------------------------------------------------------------ 考え中の動き (LLMなし)
+  // AIが次の行動を考えている間・返事を考えている間に固まらないように、軽い動きをする:
+  // 話しかけてきた人の方を向く・近くに寄る・きょろきょろする・少し歩く
+  async _idleLoop () {
+    let n = 0
+    while (this.running) {
+      await sleep(1200)
+      try { this._idleStep(n++) } catch {}
+    }
+  }
+
+  _idleStep (n) {
+    const bot = this.bot
+    if (!this.ready() || !this.alive || this.busy || this.pendingAction || bot.isSleeping) { this._idling = false; return }
+    if (this.cfg.agent?.idle_motion === false) return
+    const me = bot.entity.position
+    const { goals } = require('mineflayer-pathfinder')
+    // 近くの人間 (話しかけてきた人を優先)
+    const humans = Object.values(bot.players).filter(p => p.entity && !this.society.isAgent(p.username))
+    const talker = humans.find(p => p.username === this.lastHumanSpeaker)
+    const target = talker || humans.sort((a, b) => a.entity.position.distanceTo(me) - b.entity.position.distanceTo(me))[0]
+    const dist = target ? target.entity.position.distanceTo(me) : Infinity
+    const recentlyTalked = this.lastHumanTalkAt && Date.now() - this.lastHumanTalkAt < 90000
+    if (target && recentlyTalked && dist > 5 && dist < 28) {
+      // 話しかけられたら、その人のそばへ寄っていく
+      bot.pathfinder.setGoal(new goals.GoalFollow(target.entity, 3), true)
+      this._idling = true
+      return
+    }
+    if (this._idling) { try { bot.pathfinder.setGoal(null) } catch {} ; this._idling = false }
+    if (target && dist < 10) { bot.lookAt(target.entity.position.offset(0, 1.6, 0)).catch(() => {}); return }
+    if (n % 5 === 4 && Math.random() < 0.5) {
+      // たまに少し歩く
+      const a = Math.random() * Math.PI * 2
+      bot.pathfinder.setGoal(new goals.GoalNear(Math.floor(me.x + Math.cos(a) * 4), Math.floor(me.y), Math.floor(me.z + Math.sin(a) * 4), 1))
+      this._idling = true
+      setTimeout(() => { if (this._idling && !this.busy) { try { bot.pathfinder.setGoal(null) } catch {} ; this._idling = false } }, 4000)
+      return
+    }
+    // きょろきょろ
+    bot.look(bot.entity.yaw + (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 0.4).catch(() => {})
+  }
+
   // ------------------------------------------------------------------ 意思決定ループ
   async _decideLoop () {
     const minGap = this.cfg.agent?.decide_interval_ms ?? 5000
@@ -297,6 +341,7 @@ export class Agent {
     const def = ACTIONS[a.name]
     if (!def) { this.lastResult = `「${a.name}」という行動はできない`; return false }
     this.busy = true
+    if (this._idling) { try { this.bot.pathfinder.setGoal(null) } catch {} ; this._idling = false }
     this.interruptFlag = false
     this.currentAction = { name: a.name, reflex: source === 'reflex' }
     const nearbyBefore = s.players.filter(p => p.isAgent && p.dist <= 8).map(p => p.name)
@@ -353,7 +398,7 @@ export class Agent {
   }
 
   // ------------------------------------------------------------------ 会話
-  async say (text, to = null, { voicePriority = 1 } = {}) {
+  async say (text, to = null, { voicePriority = 1, shout = null } = {}) {
     text = String(text || '').trim()
     // 小さいモデルが指示文をそのまま書き写したものは話さない
     if (/字以内|JSON|その場で口にする|返事をJSON|^\(.*\)$|null$/.test(text)) { log.debug(this.name, '指示文の書き写しを除外: ' + text); return }
@@ -364,7 +409,13 @@ export class Agent {
     // 同じことを短い間に繰り返さない
     this._said = (this._said || []).filter(x => Date.now() - x.t < 180000)
     if (this._said.some(x => x.text === text)) { log.debug(this.name, '同じ発言の繰り返しを除外: ' + text); return }
+    // 他の住人が少し前に言ったこととほぼ同じなら言わない (オウム返しの連鎖を防ぐ)
+    const parrot = this.society.similarRecentLine?.(text, this.name)
+    if (parrot) { log.info(this.name, `🦜 オウム返しなので言わない: ${text}`); return }
     this._said.push({ text, t: Date.now() })
+    this.society.noteLine?.(this.name, text)
+    // 叫び: 「おーい」「！！」や遠くの相手への呼びかけは遠くまで届く
+    if (shout == null) shout = /^(おーい|ねえ[ー〜]|助けて|たすけて)|[!！]{2,}/.test(text)
     const display = this.society.display
     if (display?.enabled) {
       display.chat(this.character, text)    // チャット欄: 日本語の名前(色付き)
@@ -382,30 +433,33 @@ export class Agent {
     this.memory.add('chat', `${to ? this.society.displayName(to) + 'に' : ''}「${text}」と言った`, { importance: 2, about: to, day: this.day() })
     log.info(this.name, `💬 ${this.display}: ${text}`)
     // 声は、プレイヤーの近くにいる住人のものだけ聞こえる (遠いほど小さく)
-    const vol = this._voiceVolumeForPlayer()
-    if (vol > 0) this.society.voice?.speak(this.character, text, { priority: voicePriority, volume: vol })
-    this.society.bus.emit('say', { id, from: this.name, to, text, pos })
+    const { volume: vol, pan } = this._voiceForPlayer(shout)
+    if (vol > 0) this.society.voice?.speak(this.character, text, { priority: voicePriority, volume: vol, pan })
+    this.society.bus.emit('say', { id, from: this.name, to, text, pos, shout })
   }
 
-  _voiceVolumeForPlayer () {
-    const range = this.cfg.voice?.range ?? 24
+  // プレイヤーに聞こえる声の大きさと左右 (ふつう16ブロック・叫ぶと36ブロックまで届く)
+  _voiceForPlayer (shout = false) {
+    const range = shout ? (this.cfg.conversation?.shout_range ?? 36) : (this.cfg.voice?.range ?? this.cfg.conversation?.hearing_range ?? 16)
     const pe = this.bot?.players?.[this.cfg.player?.name]?.entity
     const me = this.bot?.entity?.position
-    if (!pe || !me) return 0 // プレイヤーが近くにいない (または未ログイン) なら声は出さない
+    if (!pe || !me) return { volume: 0, pan: 0 } // プレイヤーが近くにいない (または未ログイン) なら声は出さない
     const d = pe.position.distanceTo(me)
-    if (d > range) return 0
-    return Math.max(0.3, 1 - d / range)
+    if (d > range) return { volume: 0, pan: 0 }
+    return { volume: Math.max(0.25, 1 - d / range), pan: panFor(pe, me) }
   }
+
+  _voiceVolumeForPlayer () { return this._voiceForPlayer().volume }
 
   // 他のAIの発言 (プロセス内バス経由で確実に受け取る)
   hearBot (msg) {
     if (msg.from === this.name || !this.alive) return
     const me = this.bot?.entity?.position
     const distance = me && msg.pos ? me.distanceTo(msg.pos) : null
-    const range = this.cfg.conversation?.hearing_range ?? 32
+    const range = msg.shout ? (this.cfg.conversation?.shout_range ?? 36) : (this.cfg.conversation?.hearing_range ?? 16)
     const addressedNames = msg.to ? [msg.to] : findAddressed(msg.text, this._allAliases())
     const addressed = this._resolveAliases(addressedNames)
-    if (distance != null && distance > range && !addressed.includes(this.name)) return // 聞こえない
+    if (distance != null && distance > range) return // 聞こえない (名前を呼ばれても、届かなければ聞こえない)
     this._hear({ id: msg.id, from: msg.from, fromIsBot: true, text: msg.text, addressed, distance })
   }
 
@@ -419,6 +473,7 @@ export class Agent {
   hearHuman (from, text, { toMe = false, isGroup = false, source = 'chat' } = {}) {
     const fromDisplay = this.society.displayName(from)
     this.lastHumanSpeaker = from
+    if (toMe || isGroup) this.lastHumanTalkAt = Date.now()
     this.heard.push({ from, fromDisplay, text, t: Date.now() })
     this.heard = this.heard.slice(-20)
     const how = toMe ? 'が自分に' : isGroup ? 'がみんなに' : 'が'
@@ -645,11 +700,12 @@ export class Agent {
     this.society.onAgentDeath(this.name, { cause, pos: p, day, permanent }).catch(e => log.warn('society', e.message))
   }
 
-  async reactToDeath (dead, { cause, permanent, day }) {
+  async reactToDeath (dead, { cause, permanent, day, how = 'saw' }) {
     if (!this.alive) return null
     if (!permanent && !this.cfg.death?.react_on_respawn) {
-      // 復活するモードでは、いちいち悲しまない。出来事として覚えるだけ
-      this.memory.add('event', `${this.society.displayName(dead)}が${cause}で倒れたが、復活した`, { importance: 3, about: dead, day })
+      // 復活するモードでは、いちいち悲しまない。見た/聞いた出来事として覚えるだけ
+      const d = this.society.displayName(dead)
+      this.memory.add('event', how === 'saw' ? `${d}が${cause}で倒れるのを見た (復活した)` : `どこかで${d}の悲鳴が聞こえた`, { importance: 3, about: dead, day })
       return null
     }
     const deadDisplay = this.society.displayName(dead)
@@ -681,9 +737,31 @@ export class Agent {
 
 export { Relationships }
 
+// プレイヤーの向きから見て、話し手が左右どちらにいるか (-1=左 〜 1=右)
+export function panFor (playerEntity, speakerPos) {
+  const p = playerEntity.position
+  const dx = speakerPos.x - p.x; const dz = speakerPos.z - p.z
+  const d = Math.hypot(dx, dz)
+  if (d < 1) return 0
+  const y = playerEntity.yaw || 0
+  // mineflayer の yaw: 向いている方向 = (-sin y, -cos y)、右手方向 = (cos y, -sin y)
+  return Math.max(-1, Math.min(1, (dx * Math.cos(y) - dz * Math.sin(y)) / d))
+}
+
 // 小さいモデルが日本語の後ろに付けてしまう英語のゴミ (例: 「探そう！startTime」) を取る
+const ITEM_JA = {
+  stone_pickaxe: '石のツルハシ', wooden_pickaxe: '木のツルハシ', iron_pickaxe: '鉄のツルハシ', diamond_pickaxe: 'ダイヤのツルハシ',
+  stone_sword: '石の剣', wooden_sword: '木の剣', iron_sword: '鉄の剣', stone_axe: '石の斧', wooden_axe: '木の斧', iron_axe: '鉄の斧',
+  oak_log: '原木', log: '原木', oak_planks: '板材', planks: '板材', crafting_table: '作業台', cobblestone: '丸石', stone: '石',
+  coal_ore: '石炭', coal: '石炭', iron_ore: '鉄鉱石', iron_ingot: '鉄', diamond_ore: 'ダイヤ', diamond: 'ダイヤ', bread: 'パン',
+  torch: '松明', white_bed: 'ベッド', bed: 'ベッド', chest: 'チェスト', wheat: '小麦', furnace: 'かまど', stick: '棒', dirt: '土', sand: '砂',
+  zombie: 'ゾンビ', skeleton: 'スケルトン', spider: 'クモ', creeper: 'クリーパー', cow: '牛', pig: '豚', sheep: '羊', chicken: 'ニワトリ'
+}
+
 export function cleanSpeech (text) {
   let t = String(text || '').trim()
+  // アイテムのIDを日本語に (stone_pickaxe → 石のツルハシ)
+  t = t.replace(/[a-z][a-z_]*[a-z]/g, w => ITEM_JA[w] || w)
   // 日本語の直後に続く英字だけの単語 (4文字以上・末尾) を削除
   t = t.replace(/([\u3000-\u9fff\uff00-\uffef！？。、]) ?[A-Za-z_]{4,}[.!?]*$/u, '$1')
   // 日本語の文中に混ざったプログラム用の単語 (camelCase)

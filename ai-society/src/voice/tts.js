@@ -35,6 +35,38 @@ export function cleanForSpeech (text, max = 120) {
     .slice(0, max)
 }
 
+// モノラルの WAV (16bit PCM) を、左右の音量を変えたステレオにする。pan: -1=左 〜 1=右
+export function panWav (buf, pan = 0) {
+  if (!buf || buf.length < 44 || buf.toString('ascii', 0, 4) !== 'RIFF') return buf
+  let off = 12; let fmt = null; let data = null
+  while (off + 8 <= buf.length) {
+    const id = buf.toString('ascii', off, off + 4); const size = buf.readUInt32LE(off + 4)
+    if (id === 'fmt ') fmt = { off: off + 8, size }
+    if (id === 'data') { data = { off: off + 8, size: Math.min(size, buf.length - off - 8) }; break }
+    off += 8 + size + (size % 2)
+  }
+  if (!fmt || !data) return buf
+  const format = buf.readUInt16LE(fmt.off); const channels = buf.readUInt16LE(fmt.off + 2)
+  const rate = buf.readUInt32LE(fmt.off + 4); const bits = buf.readUInt16LE(fmt.off + 14)
+  if (format !== 1 || channels !== 1 || bits !== 16) return buf
+  const p = Math.max(-1, Math.min(1, pan)) * 0.85 // 片耳だけにはしない
+  const a = (p + 1) * Math.PI / 4
+  const gl = Math.cos(a) * Math.SQRT2; const gr = Math.sin(a) * Math.SQRT2
+  const n = Math.floor(data.size / 2)
+  const out = Buffer.alloc(44 + n * 4)
+  out.write('RIFF', 0); out.writeUInt32LE(36 + n * 4, 4); out.write('WAVE', 8)
+  out.write('fmt ', 12); out.writeUInt32LE(16, 16); out.writeUInt16LE(1, 20); out.writeUInt16LE(2, 22)
+  out.writeUInt32LE(rate, 24); out.writeUInt32LE(rate * 4, 28); out.writeUInt16LE(4, 32); out.writeUInt16LE(16, 34)
+  out.write('data', 36); out.writeUInt32LE(n * 4, 40)
+  const clip = v => Math.max(-32768, Math.min(32767, Math.round(v)))
+  for (let i = 0; i < n; i++) {
+    const v = buf.readInt16LE(data.off + i * 2)
+    out.writeInt16LE(clip(v * Math.min(1, gl)), 44 + i * 4)
+    out.writeInt16LE(clip(v * Math.min(1, gr)), 46 + i * 4)
+  }
+  return out
+}
+
 export class TTS {
   constructor (cfg = {}) {
     this.enabled = !!cfg.enabled
@@ -123,8 +155,8 @@ export class TTS {
   }
 
   // priority: 0=プレイヤーとの会話 1=通常の発言。返り値は再生が終わると解決する Promise
-  // volume: 0〜1 の倍率 (遠くの住人の声は小さく)
-  speak (character, text, { priority = 1, volume = null } = {}) {
+  // volume: 0〜1 の倍率 (遠くの住人の声は小さく) / pan: 左右 (-1=左 〜 1=右。プレイヤーの向きから見た住人の方向)
+  speak (character, text, { priority = 1, volume = null, pan = 0 } = {}) {
     if (!this.enabled) return Promise.resolve(false)
     const t = cleanForSpeech(text, this.maxChars)
     if (!t) return Promise.resolve(false)
@@ -134,7 +166,7 @@ export class TTS {
     let done
     const finished = new Promise(resolve => { done = resolve })
     const job = { name: character.username, text: t, priority, seq: this.seq++, done }
-    job.wav = engine(t, voice).catch(e => { log.warn('voice', `合成失敗(${character.username}): ${e.message}`); return null })
+    job.wav = engine(t, voice).then(w => pan ? panWav(w, pan) : w).catch(e => { log.warn('voice', `合成失敗(${character.username}): ${e.message}`); return null })
     this.queue.push(job)
     this.queue.sort((a, b) => a.priority - b.priority || a.seq - b.seq)
     // 混雑時は優先度の低い古い発言から捨てる
