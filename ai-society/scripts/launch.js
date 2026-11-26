@@ -151,8 +151,22 @@ async function startServer () {
   children.server = p
   let done = false
   const tail = []
+  const kitFile = path.join(srv, 'starter-kit-given.json')
+  let kitGiven = []
+  try { kitGiven = JSON.parse(fs.readFileSync(kitFile, 'utf8')) } catch {}
+  const agentNames = new Set(fs.readdirSync(path.join(ROOT, cfg.characters_dir || 'characters')).filter(f => f.endsWith('.json')).map(f => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, cfg.characters_dir || 'characters', f), 'utf8')).username } catch { return null } }))
   const onLine = line => {
     out.write(line + '\n')
+    // 住人が初めて参加したら、スターターキット(食料・道具・ベッド)を渡す
+    const j = line.match(/: (\w+) joined the game/)
+    if (j && agentNames.has(j[1]) && !kitGiven.includes(j[1]) && cfg.world?.starter_kit?.length) {
+      kitGiven.push(j[1])
+      fs.writeFileSync(kitFile, JSON.stringify(kitGiven))
+      setTimeout(() => {
+        for (const item of cfg.world.starter_kit) { try { p.stdin.write(`give ${j[1]} ${item}\n`) } catch {} }
+        log('server', `${j[1]} にスターターキットを渡した`)
+      }, 3000)
+    }
     tail.push(line); if (tail.length > 40) tail.shift()
     if (/Done \(|listening on/.test(line)) done = true
     if (/Done \(|ERROR|Exception|Geyser.*(Started|started)|joined the game|left the game|Failed|FAILED/.test(line)) log('server', line.replace(/^\[[\d:]+ /, '').slice(0, 200))
@@ -181,6 +195,11 @@ async function startServer () {
   })
   const ready = await waitFor(async () => done && await portOpen(cfg.minecraft.port), 10 * 60000, 'Minecraftサーバー')
   if (!ready) { shutdown(); return }
+  // ワールドのルール: 死んでも持ち物を失わない / 初回は昼から始める
+  if (cfg.world?.keep_inventory !== false) p.stdin.write('gamerule keepInventory true\n')
+  if (cfg.world?.difficulty) p.stdin.write(`difficulty ${cfg.world.difficulty}\n`)
+  const firstFlag = path.join(srv, 'first-start-done')
+  if (cfg.world?.start_at_day !== false && !fs.existsSync(firstFlag)) { p.stdin.write('time set day\n'); fs.writeFileSync(firstFlag, String(Date.now())); log('server', '初回なので昼にした') }
   // 初回だけ: Geyser の設定を「統合版は Floodgate(Xbox認証)で入る」にして再読み込み
   const gcfg = path.join(srv, 'plugins', 'Geyser-Spigot', 'config.yml')
   if (fs.existsSync(gcfg)) {

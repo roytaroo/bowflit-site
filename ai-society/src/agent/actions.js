@@ -160,6 +160,17 @@ export function houseBlueprint (origin, size = 5) {
   return out
 }
 
+// LLMが引数の名前を間違えても読めるように、相手の名前を探す
+function targetName (ctx, a) {
+  const raw = a.name ?? a.player ?? a.target ?? a.to ?? a.who ?? a.with
+  if (!raw) return null
+  return ctx.agent.society.resolveName?.(String(raw)) || String(raw)
+}
+
+function playerEntity (bot, name) {
+  return name ? bot.players[name]?.entity : null
+}
+
 // ----- 行動の定義 -----
 // desc と args はそのままLLMへの説明に使う
 export const ACTIONS = {
@@ -182,22 +193,25 @@ export const ACTIONS = {
   go_to_player: {
     desc: '仲間や人間のところへ行く', args: '{"name":"名前"}',
     async run (ctx, a) {
-      const p = ctx.bot.players[a.name]?.entity
-      if (!p) return `${a.name}の居場所が分からない`
+      const name = targetName(ctx, a)
+      if (!name) return '誰のところへ行くか指定されていない (name に名前を入れること)'
+      const p = playerEntity(ctx.bot, name)
+      if (!p) return `${name}の居場所が分からない (遠くにいるか、ワールドにいない)`
       await goNear(ctx.bot, p.position, 2, 60000)
-      return `${a.name}のそばに来た`
+      return `${name}のそばに来た`
     }
   },
   follow: {
     desc: '誰かについて行く(秒数)', args: '{"name":"名前","seconds":数}',
     async run (ctx, a) {
-      const p = ctx.bot.players[a.name]?.entity
-      if (!p) return `${a.name}が見当たらない`
+      const name = targetName(ctx, a)
+      const p = playerEntity(ctx.bot, name)
+      if (!p) return `${name || '相手'}が見当たらない`
       ctx.bot.pathfinder.setGoal(new goals.GoalFollow(p, 2), true)
       const sec = Math.min(120, Number(a.seconds) || 30)
       for (let i = 0; i < sec && !ctx.interrupted(); i++) await sleep(1000)
       ctx.bot.pathfinder.setGoal(null)
-      return `${a.name}について行った`
+      return `${name}について行った`
     }
   },
   explore: {
@@ -235,9 +249,12 @@ export const ACTIONS = {
       })
       const me = bot.entity.position
       const positions = bot.findBlocks({ matching: b => b && match(b.name), maxDistance: 32, count: Math.min(200, want * 6) })
-        .filter(p => !inProtectedZone(ctx.store, p, ctx.agent.name) && exposed(p))
-        .sort((a, b) => a.distanceTo(me) - b.distanceTo(me))
-        .slice(0, want * 2)
+        .filter(p => !inProtectedZone(ctx.store, p, ctx.agent.name))
+        .sort((a, b) => (exposed(a) ? 0 : 1000) + a.distanceTo(me) - ((exposed(b) ? 0 : 1000) + b.distanceTo(me)))
+      // 見えているブロックを優先。無ければ地面のすぐ下 (上から掘れる浅い所) を少しだけ狙う
+      let targets = positions.filter(exposed).slice(0, want * 2)
+      if (!targets.length) targets = positions.filter(p => p.y >= me.y - 6).slice(0, Math.min(4, want))
+      positions.length = 0; positions.push(...targets)
       if (!positions.length) return `近くに${a.block}が見つからない`
       const before = bot.inventory.items().reduce((n, i) => n + i.count, 0)
       let got = 0
@@ -352,6 +369,15 @@ export const ACTIONS = {
     desc: '溶岩や火から離れる', args: '{}',
     async run (ctx) {
       const { bot } = ctx
+      if (bot.entity.isInWater) {
+        // 溺れそう: 上に泳ぎながら、近くの陸へ向かう
+        bot.setControlState('jump', true)
+        const land = bot.findBlock({ matching: b => b && b.boundingBox === 'block' && b.name !== 'water', maxDistance: 16, useExtraInfo: blk => { const up = bot.blockAt(blk.position.offset(0, 1, 0)); return up && up.name === 'air' } })
+        if (land) await withTimeout(bot.pathfinder.goto(new goals.GoalBlock(land.position.x, land.position.y + 1, land.position.z)), 12000, 'swim').catch(() => bot.pathfinder.stop())
+        else await sleep(3000)
+        bot.setControlState('jump', false)
+        return bot.entity.isInWater ? 'まだ水の中' : '水から上がった'
+      }
       const water = bot.findBlock({ matching: b => b && b.name === 'water', maxDistance: 12 })
       bot.setControlState('jump', true)
       if (water) await goNear(bot, water.position, 0, 6000).catch(() => {})
@@ -366,6 +392,7 @@ export const ACTIONS = {
       const { bot } = ctx
       const it = findItem(bot, a.item)
       if (!it) return `${a.item}を持っていない`
+      a.to = ctx.agent.society.resolveName?.(String(a.to ?? a.name ?? a.player ?? '')) || a.to
       const p = bot.players[a.to]?.entity
       if (!p) return `${a.to}が近くにいない`
       await goNear(bot, p.position, 2, 60000)

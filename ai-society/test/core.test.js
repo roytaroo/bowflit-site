@@ -197,3 +197,12 @@ test('プレゼント: もらった側の記憶と関係が変わる', () => {
   assert.ok(soc.relations.get('Rin', 'Haru').affinity > 0)
   assert.ok(agents[1].memory.recent(5).some(m => m.content.includes('poppy')))
 })
+
+test('安全管理: 溺れそうなら水から上がる、慎重さの効果には上限', () => {
+  const sf = new Safety({ max_caution_effect: 3 })
+  assert.equal(sf.reflex(baseState({ inWater: true, oxygen: 5 })).name, 'escape_hazard')
+  sf.setCaution(10)
+  assert.equal(sf.fleeHealth, 11)
+  const r = sf.reflex(baseState({ health: 20, gear: { weapon: 1, armor: 0 }, hostiles: [{ name: 'zombie', dist: 3 }] }))
+  assert.equal(r.name, 'attack', '武器と体力があれば1体なら応戦')
+})

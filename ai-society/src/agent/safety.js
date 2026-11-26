@@ -20,19 +20,26 @@ export class Safety {
 
   setCaution (c) { this.caution = c }
 
-  get fleeHealth () { return Math.min(16, this.cfg.flee_health + this.caution) }
-  get noCombatHealth () { return Math.min(18, this.cfg.no_combat_health + this.caution) }
+  // 死ぬたびに慎重になるが、上がりすぎると逃げてばかりで何もできないので上限を付ける
+  get cautionEffect () { return Math.min(this.cfg.max_caution_effect ?? 3, this.caution) }
+  get fleeHealth () { return Math.min(14, this.cfg.flee_health + this.cautionEffect) }
+  get noCombatHealth () { return Math.min(16, this.cfg.no_combat_health + this.cautionEffect) }
 
   exploreLimit (s) {
     const base = EXPLORE_LIMIT_BY_WEAPON[Math.max(0, s.gear.weapon + 1)] || 64
     const armorBonus = s.gear.armor * 16
-    return Math.round((base + armorBonus) / (1 + this.caution * 0.25))
+    return Math.round((base + armorBonus) / (1 + this.cautionEffect * 0.25))
   }
 
   // 緊急時の反射行動。null なら何もしない
   reflex (s) {
     if (s.inLava || s.onFire) return { name: 'escape_hazard', args: {}, reason: '溶岩/火から離れる' }
-    const near = s.hostiles.filter(h => h.dist <= 10)
+    if (s.inWater && s.oxygen != null && s.oxygen < 14) return { name: 'escape_hazard', args: { water: true }, reason: `息が続かない (酸素${s.oxygen})` }
+    const near = s.hostiles.filter(h => h.dist <= 8)
+    // 武器があって体力に余裕があり、近くの敵が1体だけなら逃げずに戦う
+    if (near.length === 1 && s.gear.weapon >= 0 && s.health > this.noCombatHealth && !['creeper', 'enderman', 'warden'].includes(near[0].name) && near[0].dist <= 4) {
+      return { name: 'attack', args: { target: near[0].name }, reason: `${near[0].name}が接近したので応戦` }
+    }
     if (s.health <= this.fleeHealth && near.length) {
       return { name: 'flee', args: { from: near[0].name }, reason: `体力${s.health}で${near[0].name}が接近` }
     }
@@ -91,7 +98,8 @@ export class Safety {
         return { ok: true, action: a }
       }
       case 'collect': {
-        if (s.health < 6) return { ok: false, reason: '体力が低すぎる' }
+        if (s.health < 6 && !s.foodItems.length) return { ok: false, reason: '体力が低すぎる。まず食べ物を手に入れる (動物を倒す・釣り)' }
+        if (s.health < 6) return { ok: false, reason: '体力が低すぎる。先に食事(eat)をすること' }
         const n = Math.min(16, Math.max(1, Number(a.args.count) || 4)) // 1回の行動は短く
         a.args.count = n
         if (/lava|bedrock|spawner/.test(String(a.args.block))) return { ok: false, reason: '危険・不可能なブロック' }

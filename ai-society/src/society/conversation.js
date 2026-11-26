@@ -78,10 +78,15 @@ export class ConversationManager {
   }
 }
 
+// ひらがな→カタカナ・全角半角などを揃えて比べる (「メタン」でも「めたん」でも同じ人)
+export function normName (s) {
+  return String(s || '').normalize('NFKC').toLowerCase().replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60)).replace(/[\s_＿・]/g, '')
+}
+
 // 発言から名指しされている名前を抜き出す
 export function findAddressed (text, names) {
-  const t = String(text)
-  return names.filter(n => t.includes(n) || t.toLowerCase().includes(n.toLowerCase()))
+  const t = normName(text)
+  return names.filter(n => n && normName(n).length >= 2 && t.includes(normName(n)))
 }
 
 // Minecraftのチャット長制限 (256文字) に収まるよう分割

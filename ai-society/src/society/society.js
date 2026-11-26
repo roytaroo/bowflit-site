@@ -1,7 +1,7 @@
 // 9人が共有する「社会」: DB・共有記憶・人間関係・会話管理・音声・計画(プロジェクト)・死亡処理。
 import { SharedMemory } from '../memory/memory.js'
 import { Relationships } from './relationships.js'
-import { ConversationManager, SocietyBus } from './conversation.js'
+import { ConversationManager, SocietyBus, normName } from './conversation.js'
 import { Floor } from './floor.js'
 import { log } from '../util/log.js'
 
@@ -35,6 +35,18 @@ export class Society {
   }
 
   isAgent (username) { return this.characters.has(username) }
+
+  // 「だいき」「ずんだもん」「メタン」などの呼び方から、Minecraft上の名前を引く
+  resolveName (raw) {
+    const n = normName(raw)
+    if (!n) return null
+    const p = this.config.player
+    if (p && [p.name, p.display_name, p.gamertag].filter(Boolean).some(x => normName(x) === n)) return p.name
+    for (const c of this.characters.values()) {
+      if ([c.username, c.display_name, ...(c.nicknames || [])].some(x => normName(x) === n)) return c.username
+    }
+    return null
+  }
 
   aliveAgents () { return [...this.agents.values()].filter(a => a.alive) }
 
@@ -97,6 +109,11 @@ export class Society {
   // ---- 死亡 ----
   async onAgentDeath (dead, { cause, pos, day, permanent }) {
     const deadName = this.displayName(dead)
+    if (!permanent && !this.config.death?.react_on_respawn) {
+      this.shared.add('death', `${deadName}が${cause}で倒れた (復活)`, { importance: 3, participants: [dead], day })
+      await Promise.allSettled(this.aliveAgents().filter(a => a.name !== dead).map(a => a.reactToDeath(dead, { cause, pos, day, permanent })))
+      return
+    }
     this.shared.add('death', `${deadName}が${cause}で${permanent ? '亡くなった' : '死んでしまった'}${pos ? ` (場所 ${pos.x},${pos.y},${pos.z})` : ''}`, { importance: permanent ? 10 : 7, participants: [dead], day })
     const others = this.aliveAgents().filter(a => a.name !== dead)
     let graveWanted = permanent && this.config.death?.grave_on_permanent_death !== false

@@ -10,6 +10,20 @@
     "name": "Daiki",
     "display_name": "だいき"
   },
+  "world": {
+    "difficulty": "easy",
+    "keep_inventory": true,
+    "start_at_day": true,
+    "starter_kit": [
+      "bread 16",
+      "stone_sword 1",
+      "stone_pickaxe 1",
+      "stone_axe 1",
+      "oak_log 16",
+      "torch 16",
+      "white_bed 1"
+    ]
+  },
   "llm": {
     "provider": "ollama",
     "url": "http://127.0.0.1:11434",
@@ -31,10 +45,10 @@
   },
   "conversation": {
     "hearing_range": 32,
-    "max_bot_exchanges": 6,
+    "max_bot_exchanges": 4,
     "exchange_window_sec": 120,
     "pair_cooldown_sec": 180,
-    "max_bot_messages_per_min": 14,
+    "max_bot_messages_per_min": 6,
     "reply_delay_ms": 800
   },
   "floor": {
@@ -55,12 +69,14 @@
     "no_combat_health": 12,
     "eat_food_level": 14,
     "allow_deadly_bosses": false,
-    "night_explore": false
+    "night_explore": false,
+    "max_caution_effect": 3
   },
   "death": {
     "permanent": false,
     "grave_mode": "llm_decides",
-    "grave_on_permanent_death": true
+    "grave_on_permanent_death": true,
+    "react_on_respawn": false
   },
   "diary": {
     "fallback_interval_min": 20

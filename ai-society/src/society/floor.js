@@ -9,7 +9,7 @@
 //      (進行役には各自の個人的な記憶は渡さない → 記憶は混ざらない)
 // 4. 選ばれた人が順番に、自分の人格・記憶・それまでの会話を踏まえて返事する
 //    返事の中で他の住人に話を振る (ask) と、その人も続けて答える
-import { findAddressed } from './conversation.js'
+import { findAddressed, normName } from './conversation.js'
 import { Relationships } from './relationships.js'
 import { PRIORITY } from '../llm/client.js'
 import { log } from '../util/log.js'
@@ -49,9 +49,10 @@ export class Floor {
   }
 
   resolve (found) {
+    const f = found.map(normName)
     const res = []
     for (const c of this.society.characters.values()) {
-      if ([c.username, c.display_name, ...(c.nicknames || [])].some(n => found.includes(n))) res.push(c.username)
+      if ([c.username, c.display_name, ...(c.nicknames || [])].some(n => f.includes(normName(n)))) res.push(c.username)
     }
     return res
   }

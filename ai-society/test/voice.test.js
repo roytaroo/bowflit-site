@@ -157,3 +157,26 @@ test('続けて話しかけても、会話は1つずつ順番に処理される'
   assert.equal(said[nA][0], 'Metan')
   assert.deepEqual(said.slice(0, nA).map(x => x[1]), a.thread.lines.slice(1).map(l => l.text))
 })
+
+test('カタカナ・ひらがなの違いがあっても名指しになる', async () => {
+  const { soc } = world({ floor: { interject_chance: 0 } })
+  const r = await soc.floor.handleHuman('Daiki', '四国メタンの座標は?')
+  assert.equal(r.plan[0].name, 'Metan')
+})
+
+test('呼び方から名前を引く (住人・プレイヤー)', () => {
+  const { soc } = world()
+  assert.equal(soc.resolveName('だいき'), 'Daiki')
+  assert.equal(soc.resolveName('ズンダモン'), 'Zundamon')
+  assert.equal(soc.resolveName('きりたん'), 'Kiritan')
+  assert.equal(soc.resolveName('誰か'), null)
+})
+
+test('復活するモードでは、死んでも皆がLLMで悲しまない (記憶だけ)', async () => {
+  let calls = 0
+  const { soc, agents } = world({ provider: { chat: async () => { calls++; return { text: '{"say":"そんな…","propose_grave":true}' } } } })
+  await soc.onAgentDeath('Metan', { cause: 'was shot by Skeleton', day: 1, permanent: false })
+  assert.equal(calls, 0)
+  assert.ok(agents[0].memory.recent(5).some(m => m.content.includes('復活')))
+  assert.equal(soc.store.get("SELECT COUNT(*) n FROM projects WHERE kind = 'grave'").n, 0)
+})

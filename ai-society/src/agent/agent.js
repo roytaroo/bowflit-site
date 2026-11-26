@@ -7,7 +7,7 @@ import { Safety } from './safety.js'
 import { ACTIONS } from './actions.js'
 import { AgentMemory } from '../memory/memory.js'
 import { Relationships } from '../society/relationships.js'
-import { findAddressed, splitChat } from '../society/conversation.js'
+import { findAddressed, splitChat, normName } from '../society/conversation.js'
 import { PRIORITY } from '../llm/client.js'
 import { REQUEST_ACTIONS, buildDecidePrompt, buildReplyPrompt, buildDiaryPrompt, buildDeathReactionPrompt, buildSummarizePrompt } from './prompts.js'
 import { log, sleep, withTimeout } from '../util/log.js'
@@ -322,6 +322,8 @@ export class Agent {
   // ------------------------------------------------------------------ 会話
   async say (text, to = null, { voicePriority = 1 } = {}) {
     text = String(text || '').trim()
+    // 小さいモデルが指示文をそのまま書き写したものは話さない
+    if (/字以内|JSON|その場で口にする|返事をJSON|^\(.*\)$|null$/.test(text)) { log.debug(this.name, '指示文の書き写しを除外: ' + text); return }
     if (!text || !this.bot) return
     for (const chunk of splitChat(text)) {
       try { this.bot.chat(chunk) } catch {}
@@ -371,9 +373,10 @@ export class Agent {
   }
 
   _resolveAliases (found) {
+    const f = found.map(normName)
     const res = new Set()
     for (const c of this.society.characters.values()) {
-      if ([c.username, c.display_name, ...(c.nicknames || [])].some(n => found.includes(n))) res.add(c.username)
+      if ([c.username, c.display_name, ...(c.nicknames || [])].some(n => f.includes(normName(n)))) res.add(c.username)
     }
     return [...res]
   }
@@ -584,6 +587,11 @@ export class Agent {
 
   async reactToDeath (dead, { cause, permanent, day }) {
     if (!this.alive) return null
+    if (!permanent && !this.cfg.death?.react_on_respawn) {
+      // 復活するモードでは、いちいち悲しまない。出来事として覚えるだけ
+      this.memory.add('event', `${this.society.displayName(dead)}が${cause}で倒れたが、復活した`, { importance: 3, about: dead, day })
+      return null
+    }
     const deadDisplay = this.society.displayName(dead)
     const messages = buildDeathReactionPrompt({
       character: this.character,

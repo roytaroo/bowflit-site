@@ -111,6 +111,7 @@ export function snapshot (bot, { home = null, scanBlocks = true, knownAgents = [
     home,
     distHome: home && pos ? Math.round(Math.hypot(pos.x - home.x, pos.z - home.z)) : null,
     inWater: !!me?.isInWater,
+    oxygen: bot.oxygenLevel ?? null,
     inLava: !!me?.isInLava,
     onFire: !!(me?.metadata && (me.metadata[0] & 0x01))
   }
