@@ -12,6 +12,7 @@ import { loadConfig } from '../src/config.js'
 import { findVoicevox, patchGeyserConfig, patchProperties, download, modrinthUrl, MC_VERSION } from './setup.js'
 import { ensureJava } from './java.js'
 import { capMaxFps } from './client-setup.js'
+import { skinVariant } from './skin.js'
 import { datapackFiles } from '../src/society/display.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -169,8 +170,10 @@ function skinFiles () {
   for (const f of fs.readdirSync(cdir).filter(f => f.endsWith('.json'))) {
     const base = f.replace(/\.json$/, '')
     try {
-      const u = JSON.parse(fs.readFileSync(path.join(cdir, f), 'utf8')).username
-      if (fs.existsSync(path.join(dir, base + '.png'))) map[u] = base
+      const c = JSON.parse(fs.readFileSync(path.join(cdir, f), 'utf8'))
+      const png = path.join(dir, base + '.png')
+      // スリム(腕3ピクセル)かクラシックかは画像から自動で判定。キャラ設定の skin_variant があればそちらを優先
+      if (fs.existsSync(png)) map[c.username] = { base, variant: c.skin_variant || skinVariant(png) }
     } catch {}
   }
   return map
@@ -272,12 +275,13 @@ async function startServer () {
       skinned.add(j[1])
       // 名前は17文字以上にする (16文字以下だと、同じ名前の実在プレイヤーのスキンが使われてしまう)。
       // 画像の変換サービス(MineSkin)は連続で頼むと断られるので、1人ずつ間を空けて順番に
-      const id = `aisociety_skin_${skins[j[1]]}`
+      const { base, variant } = skins[j[1]]
+      const id = `aisociety_skin_${base}`
       skinChain = skinChain.then(async () => {
-        try { p.stdin.write(`sr createcustom ${id} ${skinUrl}/${skins[j[1]]}.png classic\n`) } catch {}
+        try { p.stdin.write(`sr createcustom ${id} ${skinUrl}/${base}.png ${variant}\n`) } catch {}
         await sleep(12000)
         try { p.stdin.write(`skin set ${id} ${j[1]}\n`) } catch {}
-        log('server', `${j[1]} にスキンを着せた`)
+        log('server', `${j[1]} にスキンを着せた (${variant === 'slim' ? 'スリム' : 'クラシック'})`)
         await sleep(3000)
       })
     }

@@ -96,3 +96,11 @@ test('Minecraft の最大FPSを上限付きにする', async () => {
   assert.match(fs.readFileSync(path.join(dir, 'options.txt'), 'utf8'), /^maxFps:60$/m)
   assert.deepEqual(capMaxFps(60, dir), { changed: false, from: 60 })
 })
+
+test('スキンがスリム(腕3ピクセル)かクラシックかを画像から見分ける', async () => {
+  const { skinVariant } = await import('../scripts/skin.js')
+  const f = n => new URL(`../skins/${n}.png`, import.meta.url).pathname
+  assert.equal(skinVariant(f('metan')), 'classic')
+  assert.equal(skinVariant(f('zundamon')), 'slim')
+  assert.equal(skinVariant(f('kiritan')), 'slim')
+})
