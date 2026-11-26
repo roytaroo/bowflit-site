@@ -71,7 +71,7 @@
     "intonation": 1.0,
     "volume": 1.0
   },
-  "profile_version": 2,
+  "profile_version": 3,
   "speech_rules": {
     "first_person": [
       "私",
@@ -111,5 +111,31 @@
     "中二ワードのルビをきりたんに添削され続け、少しずつ正しい英語を覚える",
     "ずんだもんと「どっちが村に貢献してるか」で張り合い、最後はお互いを認める"
   ],
-  "diary_style": "めたんの口調そのもの。中二ワード入り、照れ隠し多め。"
+  "diary_style": "めたんの口調そのもの。中二ワード入り、照れ隠し多め。",
+  "chores": [
+    {
+      "name": "collect",
+      "args": {
+        "block": "stone",
+        "count": 12
+      }
+    },
+    {
+      "name": "collect",
+      "args": {
+        "block": "iron_ore",
+        "count": 3
+      }
+    },
+    {
+      "name": "store_items",
+      "args": {}
+    }
+  ],
+  "lines": {
+    "gift": [
+      "べ、別にあんたのためじゃないわよ。余ってただけなんだから",
+      "これ、使いなさい。…ちゃんと返さなくていいわよ"
+    ]
+  }
 }

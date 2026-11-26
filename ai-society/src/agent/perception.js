@@ -25,6 +25,8 @@ const INTERESTING = [
   ['作業台', n => n === 'crafting_table'], ['かまど', n => n === 'furnace'], ['花', n => /(dandelion|poppy|tulip|orchid|allium|azure_bluet|oxeye_daisy|cornflower|lily_of_the_valley)$/.test(n)]
 ]
 
+const ID_CACHE = new Map()
+
 export function dayPhase (timeOfDay) {
   if (timeOfDay == null) return '昼'
   if (timeOfDay < 1000) return '早朝'
@@ -76,7 +78,11 @@ export function snapshot (bot, { home = null, scanBlocks = true, knownAgents = [
   const blocks = {}
   if (scanBlocks && bot.findBlocks && pos) {
     try {
-      const found = bot.findBlocks({ matching: b => b && b.name !== 'air' && INTERESTING.some(([, f]) => f(b.name)), maxDistance: 16, count: 200 })
+      // ブロックIDの一覧で探す (関数で探すと重くて固まる)
+      const key = 'perception|' + bot.version
+      if (!ID_CACHE.has(key)) ID_CACHE.set(key, (bot.registry?.blocksArray || []).filter(b => b.name !== 'air' && INTERESTING.some(([, f]) => f(b.name))).map(b => b.id))
+      const ids = ID_CACHE.get(key)
+      const found = ids.length ? bot.findBlocks({ matching: ids, maxDistance: 16, count: 200 }) : []
       for (const p of found) {
         const b = bot.blockAt(p)
         if (!b) continue

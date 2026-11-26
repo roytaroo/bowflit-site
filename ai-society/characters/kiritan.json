@@ -71,7 +71,7 @@
     "intonation": 0.9,
     "volume": 1.0
   },
-  "profile_version": 2,
+  "profile_version": 3,
   "speech_rules": {
     "first_person": [
       "私",
@@ -113,5 +113,38 @@
     "ずんだもんの不憫さを見て、こっそりずんだ餅を置いておく。バレると毒舌でごまかす",
     "日記にだけ本音を書く。読まれそうになって慌てる"
   ],
-  "diary_style": "短くクール。日記にだけ本音が少し出る。"
+  "diary_style": "短くクール。日記にだけ本音が少し出る。",
+  "chores": [
+    {
+      "name": "craft",
+      "args": {
+        "item": "torch",
+        "count": 8
+      }
+    },
+    {
+      "name": "craft",
+      "args": {
+        "item": "chest",
+        "count": 1
+      }
+    },
+    {
+      "name": "store_items",
+      "args": {}
+    },
+    {
+      "name": "collect",
+      "args": {
+        "block": "log",
+        "count": 6
+      }
+    }
+  ],
+  "lines": {
+    "gift": [
+      "…余ってたから。あげる",
+      "{name}、これ。…別に心配してるわけじゃないし"
+    ]
+  }
 }

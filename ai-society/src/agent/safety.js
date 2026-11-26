@@ -105,6 +105,27 @@ export class Safety {
         if (/lava|bedrock|spawner/.test(String(a.args.block))) return { ok: false, reason: '危険・不可能なブロック' }
         return { ok: true, action: a }
       }
+      case 'set_home': {
+        if (s.home) return { ok: false, reason: 'もう家の場所は決まっている。決め直さずに、そこに家を建てる(build_house)か素材を集めること' }
+        return { ok: true, action: a }
+      }
+      case 'visit_grave': {
+        if (!s.graves?.length) return { ok: false, reason: 'お墓はまだ1つもない' }
+        if (a.args.for && !s.graves.includes(a.args.for)) a.args.for = s.graves[0]
+        return { ok: true, action: a }
+      }
+      case 'propose_project': {
+        if (!a.args.title) return { ok: false, reason: '計画の名前がない' }
+        if (s.recentProposal) return { ok: false, reason: '計画はさっき提案したばかり。話し合いより、実際に素材を集めたり建てたりすること' }
+        if (/約束|会議|話し合/.test(a.args.title + (a.args.detail || ''))) return { ok: false, reason: '約束や会議の計画は立てない。実際に手を動かすこと(collect・craft・build_house)' }
+        return { ok: true, action: a }
+      }
+      case 'give': {
+        // "stone_pickaxex1" のようにアイテム名に個数がくっついていたら分ける
+        const m = String(a.args.item || '').match(/^([a-z_]+?)x(\d+)$/)
+        if (m) { a.args.item = m[1]; a.args.count = a.args.count || Number(m[2]) }
+        return { ok: true, action: a }
+      }
       default:
         return { ok: true, action: a }
     }

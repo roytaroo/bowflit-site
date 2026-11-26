@@ -70,7 +70,7 @@
     "intonation": 1.2,
     "volume": 1.0
   },
-  "profile_version": 2,
+  "profile_version": 3,
   "speech_rules": {
     "first_person": [
       "ボク"
@@ -110,5 +110,38 @@
     "ずんだ餅パーティーを開くが反応が微妙で拗ねる。きりたんの一言で立ち直る",
     "「ボクは神なのだ」と言い張るが誰も信じない。だいきだけが「すごいじゃん」と言ってくれる"
   ],
-  "diary_style": "ずんだもんの口調そのもの。自慢と愚痴入りで、語尾はのだ。"
+  "diary_style": "ずんだもんの口調そのもの。自慢と愚痴入りで、語尾はのだ。",
+  "chores": [
+    {
+      "name": "collect",
+      "args": {
+        "block": "coal_ore",
+        "count": 4
+      }
+    },
+    {
+      "name": "explore",
+      "args": {
+        "direction": "north",
+        "distance": 32
+      }
+    },
+    {
+      "name": "explore",
+      "args": {
+        "direction": "east",
+        "distance": 32
+      }
+    },
+    {
+      "name": "plant_and_harvest",
+      "args": {}
+    }
+  ],
+  "lines": {
+    "gift": [
+      "{name}、これあげるのだ！ボクに感謝するのだ！",
+      "しょうがないから分けてあげるのだ。ボクは心が広いのだ"
+    ]
+  }
 }

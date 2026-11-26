@@ -104,3 +104,49 @@ test('スキンがスリム(腕3ピクセル)かクラシックかを画像か�
   assert.equal(skinVariant(f('zundamon')), 'slim')
   assert.equal(skinVariant(f('kiritan')), 'slim')
 })
+
+test('目が合ったか (プレイヤーの視線がこちらを向いている)', async () => {
+  const { lookingAt } = await import('../src/agent/agent.js')
+  const { Vec3 } = await import('vec3')
+  const player = { position: new Vec3(0, 64, 0), yaw: 0, pitch: 0 } // 北(-z)を向いている
+  assert.ok(lookingAt(player, new Vec3(0, 64, -6)))
+  assert.ok(!lookingAt(player, new Vec3(6, 64, 0)))
+  assert.ok(!lookingAt(player, new Vec3(0, 64, 6)))
+})
+
+test('自分の仕事: 素材が無ければ木→石、家の場所→家づくり、の順に選ぶ', async () => {
+  const { Agent } = await import('../src/agent/agent.js')
+  const { Store } = await import('../src/memory/db.js')
+  const { Society } = await import('../src/society/society.js')
+  const { LLMClient } = await import('../src/llm/client.js')
+  const { MockProvider } = await import('../src/llm/mock.js')
+  const store = new Store(':memory:')
+  const soc = new Society({ store, llm: new LLMClient({ provider: 'mock' }, { mockProvider: new MockProvider() }), config: { conversation: {}, agent: {} } })
+  const a = new Agent({ username: 'Z', display_name: 'ず', relationships: {}, chores: [{ name: 'plant_and_harvest', args: {} }] }, soc)
+  a.bot = { isSleeping: false }
+  const st = inv => () => ({ night: false, inWater: false, health: 20, hostiles: [], players: [], inventory: inv })
+  a.state = st([])
+  assert.deepEqual(a._pickChore().args, { block: 'log', count: 6 })
+  a.state = st([{ name: 'oak_log', count: 10 }])
+  assert.equal(a._pickChore().args.block, 'stone')
+  a.state = st([{ name: 'oak_log', count: 10 }, { name: 'cobblestone', count: 30 }])
+  assert.equal(a._pickChore().name, 'set_home')
+  a.home = { x: 0, y: 64, z: 0 }
+  assert.equal(a._pickChore().name, 'build_house')
+  a.state = () => ({ night: true, inWater: false, health: 20, hostiles: [], players: [], inventory: [] })
+  assert.equal(a._pickChore(), null) // 夜は仕事しない
+})
+
+test('意味のない行動を止める: 家の決め直し・無いお墓参り・約束の計画', async () => {
+  const { Safety } = await import('../src/agent/safety.js')
+  const sf = new Safety({})
+  const base = { health: 20, food: 20, foodItems: [], hostiles: [], players: [], inventory: [], gear: { weapon: 0, armor: 0 }, graves: [] }
+  assert.equal(sf.vet({ name: 'set_home', args: {} }, { ...base, home: { x: 0, y: 0, z: 0 } }).ok, false)
+  assert.equal(sf.vet({ name: 'set_home', args: {} }, base).ok, true)
+  assert.equal(sf.vet({ name: 'visit_grave', args: { for: '故人の名前' } }, base).ok, false)
+  assert.equal(sf.vet({ name: 'propose_project', args: { title: '原木集めの約束', detail: '' } }, base).ok, false)
+  assert.equal(sf.vet({ name: 'propose_project', args: { title: 'みんなの橋' } }, { ...base, recentProposal: true }).ok, false)
+  const g = sf.vet({ name: 'give', args: { to: 'Zundamon', item: 'stone_pickaxex1' } }, base)
+  assert.equal(g.action.args.item, 'stone_pickaxe')
+  assert.equal(g.action.args.count, 1)
+})

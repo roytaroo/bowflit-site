@@ -162,6 +162,7 @@ export class Agent {
     if (!r) r = this._bedtime(s)
     if (!r) return
     if (this.currentAction?.reflex && this.currentAction.name === r.name) return
+    if (this.pendingAction?.reflex && this.pendingAction.name === r.name) return // もう予約済み (ログを何度も出さない)
     if (this.busy) {
       log.info(this.name, `反射行動: ${r.name} (${r.reason}) → 現在の行動を中断`)
       this.interruptFlag = true
@@ -181,7 +182,13 @@ export class Agent {
   }
 
   state ({ scanBlocks = true } = {}) {
-    return snapshot(this.bot, { home: this.home, knownAgents: this.society.names(), scanBlocks })
+    const s = snapshot(this.bot, { home: this.home, knownAgents: this.society.names(), scanBlocks })
+    if (scanBlocks) {
+      // 安全管理の審査用: お墓の一覧と、さっき計画を提案したか
+      try { s.graves = this.store.all('SELECT for_agent FROM graves').map(g => g.for_agent) } catch { s.graves = [] }
+      try { s.recentProposal = !!this.store.get('SELECT id FROM projects WHERE proposed_by = ? AND created_at > ?', this.name, Date.now() - 15 * 60000) } catch {}
+    }
+    return s
   }
 
   // ------------------------------------------------------------------ 考え中の動き (LLMなし)
@@ -195,7 +202,49 @@ export class Agent {
     }
   }
 
+  // ペコペコ (しゃがみを数回) してあいさつする
+  async _bow (times = 2) {
+    if (this._bowing || !this.bot) return
+    this._bowing = true
+    try {
+      for (let i = 0; i < times; i++) {
+        this.bot.setControlState('sneak', true); await sleep(250)
+        this.bot.setControlState('sneak', false); await sleep(250)
+      }
+    } catch {} finally { this._bowing = false }
+  }
+
+  // 出会ったとき・目が合ったときのあいさつ (考え中でも作業中でも反応する)
+  _greetTick () {
+    const bot = this.bot
+    if (!this.ready() || !this.alive || bot.isSleeping || this.cfg.agent?.greetings === false) return
+    const me = bot.entity.position
+    const now = Date.now()
+    this._seen = this._seen || new Map()
+    for (const p of Object.values(bot.players)) {
+      if (!p.entity || p.username === this.name) continue
+      const d = p.entity.position.distanceTo(me)
+      const isHuman = !this.society.isAgent(p.username)
+      const last = this._seen.get(p.username) || { near: false, t: 0, bow: 0 }
+      // 出会い: しばらく離れていた相手が近づいてきた
+      if (d <= 6 && !last.near && now - last.t > 60000 && now - last.bow > 30000 && (isHuman || Math.random() < 0.5)) {
+        last.bow = now
+        if (!this.busy) bot.lookAt(p.entity.position.offset(0, 1.6, 0)).catch(() => {})
+        this._bow(isHuman ? 3 : 2)
+      }
+      // 目が合った: 人間がこっちをまっすぐ見ている
+      if (isHuman && d <= 10 && now - last.bow > 15000 && lookingAt(p.entity, me)) {
+        last.bow = now
+        if (!this.busy) bot.lookAt(p.entity.position.offset(0, 1.6, 0)).catch(() => {})
+        this._bow(2)
+      }
+      if (d <= 6) { last.near = true; last.t = now } else if (d > 10) last.near = false
+      this._seen.set(p.username, last)
+    }
+  }
+
   _idleStep (n) {
+    try { this._greetTick() } catch {}
     const bot = this.bot
     if (!this.ready() || !this.alive || this.busy || this.pendingAction || bot.isSleeping) { this._idling = false; return }
     if (this.cfg.agent?.idle_motion === false) return
@@ -239,14 +288,16 @@ export class Agent {
           continue
         }
         const since = Date.now() - this.lastDecision
-        if (since < minGap) { await sleep(minGap - since); continue }
+        // 待ち時間は、ぼーっとせずに自分の仕事 (素材集めなど) をする
+        if (since < minGap) { await this._choreOnce(); continue }
         // プレイヤーへの返事を作っている間は、次の行動を考えるのを待つ (AIを返事に専念させる)
-        if (this.society.floor?.busy?.()) { await sleep(500); continue }
+        if (this.society.floor?.busy?.()) { await this._choreOnce(); continue }
         // LLMが混んでいるときは待つ (9人が一斉に考えて詰まらないように)
         const maxPending = this.cfg.llm?.max_pending ?? Math.max(2, this.society.aliveAgents().length)
-        if (this.society.llm.pending() >= maxPending) { await sleep(800); continue }
+        if (this.society.llm.pending() >= maxPending) { await this._choreOnce(); continue }
         this.lastDecision = Date.now()
-        const decision = await this._decide()
+        // AIが考えている間も手を止めずに仕事をする。考えがまとまったら、そちらに切り替える
+        const decision = await this._workUntil(this._decide())
         if (!this.running) break
         if (this.pendingAction) continue // 考えている間に緊急事態
         await this._handleDecision(decision)
@@ -258,6 +309,102 @@ export class Agent {
     }
   }
 
+  // ------------------------------------------------------------------ 自分の仕事 (LLMなし)
+  // 足りない素材を集める → 家の場所を決める → 家を建てる → 役割の仕事、の順に、状況を見て自分で選ぶ
+  _pickChore () {
+    if (this.cfg.agent?.auto_work === false) return null
+    const s = this.state({ scanBlocks: false })
+    if (s.night || s.inWater || s.health < 10 || s.hostiles.some(h => h.dist < 12) || this.bot.isSleeping) return null
+    const now = Date.now()
+    this._choreBan = this._choreBan || {}
+    const ok = key => !(this._choreBan[key] > now)
+    const count = re => s.inventory.filter(i => re.test(i.name)).reduce((n, i) => n + i.count, 0)
+    const logs = count(/_log$/); const planks = count(/_planks$/); const stone = count(/^(cobblestone|stone|cobbled_deepslate)$/)
+    const mats = logs * 4 + planks + stone
+    const gift = this._giftChore(s)
+    if (gift) return gift
+    if (logs * 4 + planks < 16 && ok('log')) return { name: 'collect', args: { block: 'log', count: 6 }, key: 'log' }
+    if (stone < 24 && ok('stone')) return { name: 'collect', args: { block: 'stone', count: 8 }, key: 'stone' }
+    if (!this.home && mats >= 50 && ok('home')) return { name: 'set_home', args: {}, key: 'home' }
+    if (this.home && mats >= 40 && ok('build') && (this.store.getState(`build:${this.name}:house`, 0) < 70)) return { name: 'build_house', args: { size: 5 }, key: 'build' }
+    // 役割ごとの仕事 (キャラ設定の chores から)
+    const chores = (this.character.chores || []).filter(c => ok('role:' + c.name + JSON.stringify(c.args || {})))
+    if (chores.length) { const c = chores[Math.floor(Math.random() * chores.length)]; return { ...c, key: 'role:' + c.name + JSON.stringify(c.args || {}) } }
+    if (logs < 32 && ok('log')) return { name: 'collect', args: { block: 'log', count: 8 }, key: 'log' }
+    return null
+  }
+
+  async _choreOnce () {
+    const chore = this._pickChore()
+    if (!chore) { await sleep(800); return null }
+    return this._runChore(chore)
+  }
+
+  async _runChore (chore) {
+    log.info(this.name, `🔨 自分の仕事: ${chore.name} ${JSON.stringify(chore.args || {})}`)
+    const ok = await this._execute(chore, 'chore')
+    // 失敗した・無かった仕事はしばらく選ばない (考えが変わって切り上げただけなら除く)
+    const r = this.lastResult || ''
+    if (chore.key && !this._choreCut && (ok === false || /ない|なかった|無い/.test(r))) this._choreBan[chore.key] = Date.now() + 3 * 60000
+    this._choreCut = false
+    if (chore.after) await chore.after().catch(() => {})
+    return ok
+  }
+
+  async _workUntil (decisionPromise) {
+    let done = false; let value; let error
+    decisionPromise.then(v => { done = true; value = v }, e => { done = true; error = e })
+    while (!done && this.running && !this.pendingAction) {
+      const chore = this._pickChore()
+      if (!chore) { await Promise.race([decisionPromise.catch(() => {}), sleep(800)]); continue }
+      const run = this._runChore(chore)
+      await Promise.race([run, decisionPromise.catch(() => {})])
+      if (done && this.busy) {
+        // 考えがまとまった。基本は今の仕事を最後までやってから、考えたことをする (細切れにしない)。
+        // 人のそばへ行く・渡す・戦う・逃げる・寝る など、すぐやるべきことなら切り上げる
+        const plan = Array.isArray(value?.actions) && value.actions.length ? value.actions : [value?.action].filter(Boolean)
+        if (plan[0]?.name === chore.name) { if (Array.isArray(value.actions)) value.actions = value.actions.slice(1); else value.action = null } else if (plan.some(a => URGENT_ACTIONS.has(a?.name))) {
+          this._choreCut = true
+          this.interruptFlag = true
+          try { this.bot.pathfinder.stop() } catch {}
+        }
+      }
+      await run
+    }
+    if (error) throw error
+    return value
+  }
+
+  // 仲間へのおすそ分け: 近くの仲間が食べ物を持っていない、素材が全然ない、なら自分の余りを渡す
+  _giftChore (s) {
+    const now = Date.now()
+    if (now - (this._lastGift || 0) < 90000) return null
+    const mine = name => s.inventory.filter(i => i.name === name).reduce((n, i) => n + i.count, 0)
+    for (const p of s.players.filter(p => p.isAgent && p.dist <= 16)) {
+      const other = this.society.agents.get(p.name)
+      const inv = other?.bot?.inventory?.items?.() || []
+      const has = re => inv.filter(i => re.test(i.name)).reduce((n, i) => n + i.count, 0)
+      let item = null; let n = 0
+      const food = s.inventory.find(i => /^(bread|cooked_|baked_potato|apple|carrot)/.test(i.name))
+      if (food && mine(food.name) >= 8 && has(/^(bread|cooked_|baked_potato|apple|carrot|beef|porkchop|chicken|mutton)/) === 0) { item = food.name; n = 4 }
+      else if (has(/_log$|_planks$/) < 4) { const log = s.inventory.find(i => /_log$/.test(i.name) && i.count >= 20); if (log) { item = log.name; n = 8 } }
+      else if (has(/^(cobblestone|stone)$/) < 4 && mine('cobblestone') >= 40) { item = 'cobblestone'; n = 16 }
+      if (!item) continue
+      this._lastGift = now
+      const to = p.name
+      return {
+        name: 'give', args: { to, item, count: n }, key: 'gift:' + to,
+        after: async () => {
+          if (this.lastResult?.includes('渡した')) {
+            const line = this.character.lines?.gift
+            if (line?.length) await this.say(line[Math.floor(Math.random() * line.length)].replace('{name}', this.society.displayName(to)), to)
+          }
+        }
+      }
+    }
+    return null
+  }
+
   _recentChatText (n = 6) {
     return this.heard.slice(-n).map(h => `- ${h.fromDisplay}「${h.text}」`).join('\n')
   }
@@ -266,8 +413,7 @@ export class Agent {
     const s = this.state()
     const stateText = describeState(s)
     const row = this.store.getAgent(this.name)
-    const promises = this.store.all("SELECT * FROM promises WHERE agent = ? AND status = 'open' ORDER BY id DESC LIMIT 3", this.name)
-    const projects = [this.society.describeProjects(), ...promises.map(p => `- 約束(${this.society.displayName(p.to_agent)}へ): ${p.content}`)].filter(Boolean).join('\n')
+    const projects = this.society.describeProjects()
     const messages = buildDecidePrompt({
       character: this.character,
       agentRow: row,
@@ -308,7 +454,6 @@ export class Agent {
       this.memory.add('goal', `新しい夢: ${d.long_goal}`, { importance: 7, day })
       this.society.shared.add('goal', `${this.display}が新しい目標を持った: ${d.long_goal}`, { importance: 4, participants: [this.name], day })
     }
-    if (d.promise?.to && d.promise?.content) this._makePromise(d.promise.to, d.promise.content)
     // 独り言・話しかけは控えめに: プレイヤーとの会話中は話さない、1人あたり一定間隔をあける
     const gap = (this.cfg.agent?.spontaneous_say_interval_sec ?? 60) * 1000
     // 独り言は口調が違えば手直しし、それでもダメなら言わない (言い直しでLLMを使うほどではない)
@@ -361,7 +506,7 @@ export class Agent {
       this.busy = false
       this.currentAction = null
     }
-    if (this.interruptFlag) result += ' (緊急事態で中断)'
+    if (this.interruptFlag) result += this._choreCut ? ' (別のことをするので切り上げた)' : ' (緊急事態で中断)'
     this.interruptFlag = false
     this.lastResult = result
     log.info(this.name, `◀ ${result}`)
@@ -604,6 +749,9 @@ export class Agent {
 
   _makePromise (to, content) {
     const target = this._resolveAliases([to])[0] || to
+    // 約束は1つずつ。「約束を立てる約束」のような中身のない約束はしない
+    if (/約束|会議/.test(content)) return
+    if (this.store.get("SELECT id FROM promises WHERE agent = ? AND status = 'open'", this.name)) return
     this.store.run('INSERT INTO promises (agent, to_agent, content, day, created_at) VALUES (?, ?, ?, ?, ?)', this.name, target, String(content).slice(0, 120), this.day(), Date.now())
     this.memory.add('goal', `${this.society.displayName(target)}と約束した: ${content}`, { importance: 6, about: target, day: this.day() })
   }
@@ -802,4 +950,18 @@ export function dropMetaTalk (text) {
   const kept = parts.filter(p => !META.test(p))
   return kept.join('').trim()
 }
+
+// 人間がこちらを見ているか (視線の向きと、相手→自分の向きの角度が小さい)
+export function lookingAt (entity, targetPos) {
+  const y = entity.yaw || 0; const p = entity.pitch || 0
+  const dir = { x: -Math.sin(y) * Math.cos(p), y: Math.sin(p), z: -Math.cos(y) * Math.cos(p) }
+  const eye = entity.position.offset ? entity.position.offset(0, 1.62, 0) : { x: entity.position.x, y: entity.position.y + 1.62, z: entity.position.z }
+  const v = { x: targetPos.x - eye.x, y: targetPos.y + 1.5 - eye.y, z: targetPos.z - eye.z }
+  const len = Math.hypot(v.x, v.y, v.z) || 1
+  const cos = (dir.x * v.x + dir.y * v.y + dir.z * v.z) / len
+  return cos > 0.985 // 約10度以内
+}
+
+// 今の仕事を切り上げてでも、すぐやるべき行動
+const URGENT_ACTIONS = new Set(['go_to_player', 'follow', 'give', 'attack', 'flee', 'sleep', 'eat', 'go_home', 'escape_hazard'])
 

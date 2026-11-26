@@ -101,6 +101,16 @@ export async function travelXZ (bot, x, z, { step = 24, timeoutMs = 150000, inte
   return { moved, left, arrived: left <= 4 }
 }
 
+// ブロック探しは「ブロックIDの一覧」で渡す (関数で渡すと周りの全ブロックを1つずつ調べるので、とても重くて固まる)
+const idCache = new Map()
+export function blockIds (bot, pred, key = null) {
+  const k = key && `${bot.version}|${key}`
+  if (k && idCache.has(k)) return idCache.get(k)
+  const ids = mcData(bot).blocksArray.filter(b => pred(b.name, b)).map(b => b.id)
+  if (k) idCache.set(k, ids)
+  return ids
+}
+
 function invCount (bot, pred) {
   return bot.inventory.items().filter(i => typeof pred === 'string' ? i.name === pred : pred(i.name)).reduce((n, i) => n + i.count, 0)
 }
@@ -370,7 +380,7 @@ export const ACTIONS = {
       const wet = p => [[0, 1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].some(([x, y, z]) => { const n = bot.blockAt(p.offset(x, y, z)); return n && n.name === 'water' })
       const find = () => {
         const me = bot.entity.position
-        const all = bot.findBlocks({ matching: b => b && match(b.name), maxDistance: 32, count: Math.min(300, want * 10) })
+        const all = bot.findBlocks({ matching: blockIds(bot, n => match(n), 'collect:' + a.block), maxDistance: 32, count: Math.min(300, want * 10) })
           .filter(p => !inProtectedZone(ctx.store, p, ctx.agent.name) && !wet(p))
         let t = all.filter(exposed).sort((a, b) => a.distanceTo(me) - b.distanceTo(me)).slice(0, want * 2)
         // 見えているブロックが無ければ、地面のすぐ下 (上から掘れる浅い所) を少しだけ狙う
@@ -477,13 +487,13 @@ export const ACTIONS = {
     desc: '夜にベッドで寝る', args: '{}',
     async run (ctx) {
       const { bot } = ctx
-      let bed = bot.findBlock({ matching: b => b && b.name.endsWith('_bed'), maxDistance: 48 })
+      let bed = bot.findBlock({ matching: blockIds(bot, n => n.endsWith('_bed'), 'bed'), maxDistance: 48 })
       // 前に置いた自分のベッドが遠くにあるなら、そこへ戻る
       const mine = ctx.agent.bedPos
       if (!bed && mine && bot.entity.position.distanceTo(new Vec3(mine.x, mine.y, mine.z)) < 120) {
         await goNear(bot, new Vec3(mine.x, mine.y, mine.z), 3, 60000).catch(() => {})
         bot.waitForChunksToLoad && await bot.waitForChunksToLoad().catch(() => {})
-        bed = bot.findBlock({ matching: b => b && b.name.endsWith('_bed'), maxDistance: 8 })
+        bed = bot.findBlock({ matching: blockIds(bot, n => n.endsWith('_bed'), 'bed'), maxDistance: 8 })
       }
       // ベッドを持っていれば、その場に置いて寝る
       const bedItem = findItem(bot, n => n.endsWith('_bed'))
@@ -491,7 +501,7 @@ export const ACTIONS = {
         for (const p of freeSpotsAround(bot, true)) {
           try { if (await placeBlockAt(bot, p, bedItem.name)) break } catch {}
         }
-        bed = bot.findBlock({ matching: b => b && b.name.endsWith('_bed'), maxDistance: 6 })
+        bed = bot.findBlock({ matching: blockIds(bot, n => n.endsWith('_bed'), 'bed'), maxDistance: 6 })
         if (bed) {
           ctx.agent.bedPos = { x: bed.position.x, y: bed.position.y, z: bed.position.z }
           ctx.store?.setState?.(`bed:${ctx.agent.name}`, ctx.agent.bedPos)
@@ -500,7 +510,17 @@ export const ACTIONS = {
       }
       if (!bed) return '近くにベッドがない (wool3個+木材3個でwhite_bedを作れる)'
       await goNear(bot, bed.position, 2, 60000)
-      try { await bot.sleep(bed) } catch (e) { return `眠れなかった: ${e.message}` }
+      try { await bot.sleep(bed) } catch (e) {
+        // 誰かが使っているベッドだったら、自分のベッドを隣に置いて寝る
+        const own = /occupied/i.test(e.message) && findItem(bot, n => n.endsWith('_bed'))
+        if (!own) return `眠れなかった: ${/occupied/i.test(e.message) ? 'ベッドが使われていた' : e.message}`
+        for (const p of freeSpotsAround(bot, true)) { try { if (await placeBlockAt(bot, p, own.name)) break } catch {} }
+        const mine = bot.findBlock({ matching: blockIds(bot, n => n.endsWith('_bed'), 'bed'), maxDistance: 5, useExtraInfo: b => !b.getProperties?.().occupied })
+        if (!mine) return '眠れなかった: ベッドが使われていた'
+        ctx.agent.bedPos = { x: mine.position.x, y: mine.position.y, z: mine.position.z }
+        ctx.store?.setState?.(`bed:${ctx.agent.name}`, ctx.agent.bedPos)
+        try { await bot.sleep(mine) } catch (e2) { return `眠れなかった: ${e2.message}` }
+      }
       while (bot.isSleeping && !ctx.interrupted()) await sleep(1000)
       return 'ぐっすり眠った'
     }
@@ -549,7 +569,7 @@ export const ACTIONS = {
         // 2) いちばん近い陸 (上が空気2マスある固いブロック) へまっすぐ泳ぐ
         const land = bot.findBlock({
           maxDistance: 32,
-          matching: b => b && b.boundingBox === 'block' && b.name !== 'water' && !b.name.includes('leaves'),
+          matching: blockIds(bot, (n, b) => b.boundingBox === 'block' && n !== 'water' && !n.includes('leaves'), 'land'),
           useExtraInfo: blk => {
             const u1 = bot.blockAt(blk.position.offset(0, 1, 0)); const u2 = bot.blockAt(blk.position.offset(0, 2, 0))
             return u1 && u1.name === 'air' && u2 && u2.name === 'air' && blk.position.y >= Math.floor(bot.entity.position.y) - 2
@@ -569,7 +589,7 @@ export const ACTIONS = {
         if (!bot.entity.isInWater) return '水から上がった'
         return land ? 'まだ水の中 (陸へ向かって泳いでいる)' : 'まだ水の中 (近くに陸が見えない)'
       }
-      const water = bot.findBlock({ matching: b => b && b.name === 'water', maxDistance: 12 })
+      const water = bot.findBlock({ matching: blockIds(bot, n => n === 'water', 'water'), maxDistance: 12 })
       bot.setControlState('jump', true)
       if (water) await goNear(bot, water.position, 0, 6000).catch(() => {})
       else await withTimeout(bot.pathfinder.goto(new goals.GoalXZ(Math.floor(bot.entity.position.x + 6), Math.floor(bot.entity.position.z))), 6000, 'escape').catch(() => bot.pathfinder.stop())
@@ -598,7 +618,7 @@ export const ACTIONS = {
     desc: '家のチェストに荷物を整理してしまう', args: '{}',
     async run (ctx) {
       const { bot } = ctx
-      const chest = bot.findBlock({ matching: b => b && b.name === 'chest', maxDistance: 32 })
+      const chest = bot.findBlock({ matching: blockIds(bot, n => n === 'chest', 'chest'), maxDistance: 32 })
       if (!chest) return '近くにチェストがない (chestを作って家に置くと良い)'
       await goNear(bot, chest.position, 2, 40000)
       const c = await bot.openContainer(chest)
@@ -645,7 +665,8 @@ export const ACTIONS = {
     desc: '畑の実った小麦を収穫して種を植え直す', args: '{}',
     async run (ctx) {
       const { bot } = ctx
-      const ripe = bot.findBlocks({ matching: b => b && b.name === 'wheat' && b.getProperties?.().age === 7, maxDistance: 24, count: 16 })
+      const ripe = bot.findBlocks({ matching: blockIds(bot, n => n === 'wheat', 'wheat'), maxDistance: 24, count: 64 })
+        .filter(p => bot.blockAt(p)?.getProperties?.().age === 7).slice(0, 16)
       let h = 0; let p = 0
       for (const pos of ripe) {
         if (ctx.interrupted()) break
@@ -653,7 +674,7 @@ export const ACTIONS = {
         await goNear(bot, pos, 2, 15000).catch(() => {})
         await bot.dig(b).then(() => h++).catch(() => {})
       }
-      const farmland = bot.findBlocks({ matching: b => b && b.name === 'farmland', maxDistance: 24, count: 32 })
+      const farmland = bot.findBlocks({ matching: blockIds(bot, n => n === 'farmland', 'farmland'), maxDistance: 24, count: 32 })
       for (const pos of farmland) {
         if (ctx.interrupted() || !findItem(bot, 'wheat_seeds')) break
         const above = bot.blockAt(pos.offset(0, 1, 0))
@@ -672,7 +693,7 @@ export const ACTIONS = {
       const { bot } = ctx
       const rod = findItem(bot, 'fishing_rod')
       if (!rod) return '釣り竿を持っていない (stick3+string2で作れる)'
-      const water = bot.findBlock({ matching: b => b && b.name === 'water', maxDistance: 32 })
+      const water = bot.findBlock({ matching: blockIds(bot, n => n === 'water', 'water'), maxDistance: 32 })
       if (!water) return '近くに水がない'
       await goNear(bot, water.position, 3, 30000)
       await bot.equip(rod, 'hand')

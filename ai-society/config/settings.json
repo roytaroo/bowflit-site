@@ -44,11 +44,12 @@
     "light_model": "qwen2.5:3b"
   },
   "agent": {
-    "decide_interval_ms": 1500,
+    "decide_interval_ms": 15000,
     "action_timeout_sec": 240,
     "path_search_radius": 40,
-    "spontaneous_say_interval_sec": 60,
-    "idle_motion": true
+    "spontaneous_say_interval_sec": 120,
+    "idle_motion": true,
+    "auto_work": true
   },
   "conversation": {
     "hearing_range": 16,

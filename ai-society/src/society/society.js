@@ -94,6 +94,11 @@ export class Society {
       const rows = this.store.all("SELECT id, content FROM memories WHERE agent = ? AND kind = 'chat'", c.username)
       const own = rows.filter(r => /^([^「が\s]{0,12}に)?「/.test(r.content) && /」と言った$/.test(r.content))
       for (const r of own) this.store.run('DELETE FROM memories WHERE id = ?', r.id)
+      // 「約束を立てる約束」のループの残りを片付ける (中身のない約束・計画・その記憶)
+      this.store.run("UPDATE promises SET status = 'broken' WHERE agent = ? AND status = 'open'", c.username)
+      this.store.run("UPDATE projects SET status = 'cancelled' WHERE proposed_by = ? AND status IN ('open','doing') AND (title LIKE '%約束%' OR title LIKE '%会議%' OR title = 'undefined' OR title IS NULL)", c.username)
+      this.store.run("DELETE FROM memories WHERE agent = ? AND (content LIKE '%約束%' OR content LIKE '%会議%') AND kind IN ('goal','chat','failure','success','event')", c.username)
+      this.store.run("UPDATE agents SET current_goal = ? WHERE name = ?", c.personal_goal || null, c.username)
       this.store.setState(key, c.profile_version)
       log.info('society', `${c.display_name}: キャラ設定を新しくした (古い口調のセリフの記憶 ${own.length}件を整理)`)
     }
