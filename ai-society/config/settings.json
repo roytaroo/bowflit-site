@@ -38,13 +38,13 @@
     "options": {
       "temperature": 0.8,
       "num_ctx": 6144,
-      "num_predict": 300
+      "num_predict": 220
     },
     "auto_light": true,
     "light_model": "qwen2.5:3b"
   },
   "agent": {
-    "decide_interval_ms": 3000,
+    "decide_interval_ms": 1500,
     "action_timeout_sec": 240,
     "path_search_radius": 40,
     "spontaneous_say_interval_sec": 60

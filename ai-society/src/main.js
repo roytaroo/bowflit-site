@@ -62,7 +62,7 @@ async function reportGpuShare (llmCfg, { quiet = false } = {}) {
 
 // グラボに入りきらない (= 1回の考えに10秒以上かかる) なら、自動で軽いモデルに切り替える。
 // 軽いモデルが未ダウンロードなら裏でダウンロードして、終わりしだい切り替える
-async function autoLightModel (cfg, llm) {
+async function autoLightModel (cfg, llm, store) {
   const lc = cfg.llm
   if (lc.provider !== 'ollama' || lc.auto_light === false) return
   const light = lc.light_model || 'qwen2.5:3b'
@@ -73,6 +73,7 @@ async function autoLightModel (cfg, llm) {
   const old = lc.model
   const switchNow = async () => {
     llm.setModel(light)
+    store?.setState('auto_light_model', light) // 次回からは最初から軽量モデルで起動 (重いモデルの読み込み待ちをなくす)
     // 重いモデルをグラボから降ろす
     fetch(base + '/api/generate', { method: 'POST', body: JSON.stringify({ model: old, keep_alive: 0 }) }).catch(() => {})
     try {
@@ -115,6 +116,12 @@ export async function main (argv = process.argv.slice(2)) {
   const store = new Store(path.resolve(ROOT, cfg.database))
   const llm = new LLMClient(cfg.llm, { mockProvider: new MockProvider() })
   await checkOllama(cfg.llm)
+  // 前回グラボに入りきらず軽量モデルに切り替えたなら、今回は最初から軽量モデルで
+  const remembered = store.getState('auto_light_model', null)
+  if (cfg.llm.provider === 'ollama' && cfg.llm.auto_light !== false && remembered && cfg.llm.model !== remembered) {
+    log.info('main', `前回グラボに入りきらなかったので、最初から軽量モデル ${remembered} を使う (元に戻すなら normalmode.bat)`)
+    llm.setModel(remembered)
+  }
   if (cfg.llm.provider === 'ollama') {
     // 最初の1回はモデルの読み込みで時間がかかるので、住人が考え始める前に読み込んでおく
     log.info('main', `LLMを準備中 (${cfg.llm.model} を読み込み中)…`)
@@ -123,7 +130,7 @@ export async function main (argv = process.argv.slice(2)) {
       await fetch(cfg.llm.url.replace(/\/$/, '') + '/api/generate', { method: 'POST', body: JSON.stringify({ model: cfg.llm.model, prompt: 'hi', stream: false, keep_alive: cfg.llm.keep_alive ?? '30m', options: { num_predict: 1 } }), signal: AbortSignal.timeout(300000) })
       log.info('main', `LLM準備OK (${((Date.now() - t0) / 1000).toFixed(0)}秒)`)
       await reportGpuShare(cfg.llm)
-      await autoLightModel(cfg, llm)
+      await autoLightModel(cfg, llm, store)
     } catch (e) { log.warn('main', 'LLMの準備に失敗: ' + e.message) }
   }
   const voice = new TTS({ ...cfg.voice, out_dir: path.resolve(ROOT, cfg.voice.out_dir || 'data/voice') })

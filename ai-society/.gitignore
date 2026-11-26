@@ -8,3 +8,4 @@ voice_input/.venv/
 __pycache__/
 server/
 runtime/
+voice_input/mic.txt

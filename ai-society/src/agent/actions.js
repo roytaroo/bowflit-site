@@ -15,6 +15,40 @@ const FLOWERS = ['dandelion', 'poppy', 'blue_orchid', 'allium', 'azure_bluet', '
 // ----- 共通ヘルパー -----
 function mcData (bot) { return require('minecraft-data')(bot.version) }
 
+// 経路探索で移動。直前の stop() が残っていて「Path was stopped」で即失敗することがあるので1回だけやり直す
+export async function gotoGoal (bot, goal, timeoutMs, label = 'move') {
+  for (let i = 0; ; i++) {
+    try { return await withTimeout(bot.pathfinder.goto(goal), timeoutMs, label) } catch (e) {
+      if (i === 0 && /stopped before|goal was changed/i.test(e.message)) { await sleep(200); continue }
+      throw e
+    }
+  }
+}
+
+// 穴や囲まれた場所にはまって動けないとき: 掘る・足場を積むのを許して、近くの開けた所へ抜け出す
+// (普段は経路探索が膨らむので禁止しているが、短い距離・短い時間だけ使う)
+export async function unstick (bot, toward = null) {
+  const esc = bot.__escapeMovements
+  if (!esc) return false
+  const normal = bot.pathfinder.movements
+  const radius = bot.pathfinder.searchRadius
+  const start = bot.entity.position.clone()
+  try {
+    bot.pathfinder.setMovements(esc)
+    bot.pathfinder.searchRadius = 16
+    const p = bot.entity.position
+    let dx = 0; let dz = 0
+    if (toward) { const d = Math.hypot(toward.x - p.x, toward.z - p.z) || 1; dx = (toward.x - p.x) / d * 6; dz = (toward.z - p.z) / d * 6 } else { const a = Math.random() * Math.PI * 2; dx = Math.cos(a) * 6; dz = Math.sin(a) * 6 }
+    // 目的の方向へ6ブロックほど抜け出す
+    await gotoGoal(bot, new goals.GoalNearXZ(Math.floor(p.x + dx), Math.floor(p.z + dz), 2), 15000, 'unstick').catch(() => {})
+  } finally {
+    try { bot.pathfinder.stop() } catch {}
+    bot.pathfinder.setMovements(normal)
+    bot.pathfinder.searchRadius = radius
+  }
+  return bot.entity.position.distanceTo(start) >= 2
+}
+
 export async function goNear (bot, pos, range = 2, timeoutMs = 60000) {
   // 遠いときは中継地点に分けて近づいてから、最後に正確な位置へ
   if (Math.hypot(pos.x - bot.entity.position.x, pos.z - bot.entity.position.z) > 28) {
@@ -22,9 +56,14 @@ export async function goNear (bot, pos, range = 2, timeoutMs = 60000) {
   }
   const g = new goals.GoalNear(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z), range)
   try {
-    await withTimeout(bot.pathfinder.goto(g), timeoutMs, 'move')
+    await gotoGoal(bot, g, timeoutMs)
   } catch (e) {
     bot.pathfinder.stop()
+    // はまって動けないなら抜け出してからもう一度
+    if (/No path|timeout|stopped/i.test(e.message) && await unstick(bot, pos)) {
+      await gotoGoal(bot, g, Math.min(timeoutMs, 30000)).catch(() => {})
+      if (bot.entity.position.distanceTo(pos) <= range + 2) return
+    }
     throw e
   }
 }
@@ -45,11 +84,14 @@ export async function travelXZ (bot, x, z, { step = 24, timeoutMs = 150000, inte
     const tx = p.x + dx * k + (-dz / dist) * side
     const tz = p.z + dz * k + (dx / dist) * side
     const goal = (dist <= step && y != null) ? new goals.GoalNear(Math.floor(x), Math.floor(y), Math.floor(z), 2) : new goals.GoalNearXZ(Math.floor(tx), Math.floor(tz), 2)
+    const before = bot.entity.position.clone()
     try {
-      await withTimeout(bot.pathfinder.goto(goal), 30000, 'move')
+      await gotoGoal(bot, goal, 30000)
       fails = 0
     } catch (e) {
       try { bot.pathfinder.stop() } catch {}
+      // ほとんど動けていない = はまっている → 掘る/積むのを許して抜け出す
+      if (bot.entity.position.distanceTo(before) < 2) await unstick(bot, { x, z })
       if (++fails > 4) break
       await sleep(300)
     }
@@ -164,6 +206,7 @@ async function ensurePlanks (bot, md, n) {
     const r = plank && bot.recipesFor(plank.id, null, 1, null)[0]
     if (!r) break
     await bot.craft(r, 1, null)
+    await sleep(150)
   }
   return planks() >= n
 }
@@ -174,6 +217,7 @@ async function ensureSticks (bot, md, n) {
     const r = bot.recipesFor(md.itemsByName.stick.id, null, 1, null)[0]
     if (!r) break
     await bot.craft(r, 1, null)
+    await sleep(150)
   }
   return invCount(bot, 'stick') >= n
 }
@@ -208,6 +252,7 @@ async function ensureTable (bot, md) {
     const r = bot.recipesFor(md.itemsByName.crafting_table.id, null, 1, null)[0]
     if (!r) return null
     await bot.craft(r, 1, null)
+    await sleep(150)
   }
   for (const p of freeSpotsAround(bot)) {
     try { if (await placeBlockAt(bot, p, 'crafting_table')) break } catch {}
@@ -308,7 +353,7 @@ export const ACTIONS = {
       const r = Math.min(24, Number(a.radius) || 12)
       const p = ctx.bot.entity.position
       const t = p.offset((Math.random() * 2 - 1) * r, 0, (Math.random() * 2 - 1) * r)
-      await withTimeout(ctx.bot.pathfinder.goto(new goals.GoalXZ(Math.floor(t.x), Math.floor(t.z))), 40000, 'wander').catch(() => ctx.bot.pathfinder.stop())
+      await gotoGoal(ctx.bot, new goals.GoalXZ(Math.floor(t.x), Math.floor(t.z)), 40000, 'wander').catch(() => ctx.bot.pathfinder.stop())
       return '近くを散歩した'
     }
   },
@@ -344,20 +389,23 @@ export const ACTIONS = {
         positions = find()
       }
       if (!positions.length) return `近くに${a.block}が見つからない (${searched ? '周りも探したけど無い。別の場所へ explore すること' : ''})`
+      let failsInRow = 0
       for (const p of positions) {
-        if (got >= want || ctx.interrupted()) break
+        if (got >= want || ctx.interrupted() || failsInRow >= 3) break
         const block = bot.blockAt(p)
         if (!block || !match(block.name)) continue
         try {
-          await withTimeout(bot.collectBlock.collect(block, { ignoreNoPath: true }), 30000, 'collect')
+          await withTimeout(bot.collectBlock.collect(block, { ignoreNoPath: true }), 15000, 'collect')
           const after = bot.blockAt(p)
-          if (!after || !match(after.name)) got++ // 本当に掘れたときだけ数える
-          else lastErr = 'たどり着けなかった'
+          if (!after || !match(after.name)) { got++; failsInRow = 0 } else { lastErr = 'たどり着けなかった'; failsInRow++ }
         } catch (e) {
-          lastErr = e.message.slice(0, 50)
+          failsInRow++
+          lastErr = /No path/i.test(e.message) ? 'たどり着けなかった' : e.message.slice(0, 50)
           if (/timeout/.test(e.message)) { bot.pathfinder.stop(); lastErr = '時間切れ' }
         }
       }
+      // 1個も掘れず、ほとんど動けていないなら、はまっている可能性 → 抜け出しておく
+      if (got === 0 && failsInRow >= 2) await unstick(bot).catch(() => {})
       const after = bot.inventory.items().reduce((n, i) => n + i.count, 0)
       if (got === 0) return `${a.block}を掘れなかった (${lastErr || '理由不明'})`
       return `${a.block}を${got}個掘った (持ち物+${after - before})`
@@ -397,9 +445,16 @@ export const ACTIONS = {
       const times = Math.ceil(count / perCraft)
       let done = 0
       for (let i = 0; i < times; i++) {
-        const r = bot.recipesFor(item.id, null, 1, table)[0]
-        if (!r) break
-        await bot.craft(r, 1, table || undefined)
+        let ok = false
+        for (let attempt = 0; attempt < 2 && !ok; attempt++) {
+          const r = bot.recipesFor(item.id, null, 1, table)[0]
+          if (!r) break
+          try { await bot.craft(r, 1, table || undefined); ok = true } catch (e) {
+            // 直前に作った材料が持ち物にまだ反映されていないことがあるので、少し待ってやり直す
+            if (attempt === 1) { if (!done) throw e } else await sleep(500)
+          }
+        }
+        if (!ok) break
         done += perCraft
       }
       return done ? `${a.item}を${done}個作った` : `${a.item}の材料が足りない`

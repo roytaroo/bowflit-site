@@ -102,6 +102,11 @@ export class Agent {
         for (const id of m.blocksToAvoid) cm.blocksToAvoid.add(id)
         bot.collectBlock.movements = cm
       }
+      // はまったとき用: 掘る・足場を積むのも許す (短い距離だけ使う)
+      const esc = new Movements(bot)
+      Object.assign(esc, { allowParkour: false, allowSprinting: false, canDig: true, digCost: 2, maxDropDown: 3, dontCreateFlow: true, allow1by1towers: true })
+      for (const id of m.blocksToAvoid) esc.blocksToAvoid.add(id)
+      bot.__escapeMovements = esc
       log.info(this.name, `${this.display} がワールドに参加 (${bot.version})`)
       this.memory.add('event', 'ワールドで目を覚ました', { importance: 2, day: this.day() })
       this._reflexTimer = setInterval(() => this._reflexTick(), 1000)

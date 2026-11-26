@@ -18,6 +18,9 @@ import sys
 import threading
 import time
 import urllib.request
+from pathlib import Path
+
+MIC_FILE = Path(__file__).with_name("mic.txt")  # 選んだマイクを覚えておくファイル
 
 SAMPLE_RATE = 16000
 FRAME_MS = 30
@@ -150,16 +153,79 @@ class Recognizer:
         return "".join(s.text for s in segments).strip()
 
 
+def level(audio) -> float:
+    import numpy as np
+    return float(np.max(np.abs(audio))) if len(audio) else 0.0
+
+
+def normalize(audio):
+    """小さい声は大きくしてから認識する (Whisper は小さい音が苦手)"""
+    peak = level(audio)
+    if 0.003 < peak < 0.5:
+        audio = audio * min(30.0, 0.6 / peak)
+    return audio
+
+
 def handle_audio(audio, rec: Recognizer, server: Server):
     dur = len(audio) / SAMPLE_RATE
+    peak = level(audio)
+    if peak < 0.003:
+        print(f"  ✘ 音がほぼ入っていない (音量 {peak:.4f})。マイクが違うかも → 下の一覧から番号を選んで「mic 番号」と打って Enter")
+        print_mics()
+        return
     t0 = time.time()
-    text = rec.transcribe(audio)
+    text = rec.transcribe(normalize(audio))
     took = time.time() - t0
+    vol = "小さい" if peak < 0.05 else "OK"
     if is_hallucination(text):
-        print(f"  (聞き取れなかった / 無視: 「{text}」 {dur:.1f}秒 → 認識{took:.1f}秒)")
+        print(f"  (聞き取れなかった: 「{text}」 {dur:.1f}秒 / 音量 {peak:.3f}={vol} → 認識{took:.1f}秒)")
+        if dur < 0.8:
+            print("    → 短すぎるかも。F9 を押してから少し待って話し始め、話し終わってから離して")
+        elif peak < 0.05:
+            print("    → 声が小さい。マイクに近づくか、Windows のマイク音量を上げて (違うマイクなら「mic 番号」)")
         return
     print(f"🎤 「{text}」 ({dur:.1f}秒 → 認識{took:.1f}秒)")
     server.send(text)
+
+
+# ---------------------------------------------------------------- マイクの選択
+def input_devices():
+    import sounddevice as sd
+    out = []
+    for i, d in enumerate(sd.query_devices()):
+        if d.get("max_input_channels", 0) > 0:
+            out.append((i, d["name"], sd.query_hostapis(d["hostapi"])["name"]))
+    return out
+
+
+def print_mics(current=None):
+    try:
+        print("  マイク一覧 (「mic 番号」で切り替え):")
+        for i, name, api in input_devices():
+            if api.startswith("Windows WDM-KS"):
+                continue
+            mark = " ← 使用中" if current is not None and str(current) == str(i) else ""
+            print(f"    {i:>3}: {name} [{api}]{mark}")
+    except Exception as e:  # noqa: BLE001
+        print(f"  (マイク一覧を取れなかった: {e})")
+
+
+def load_mic(arg):
+    if arg:
+        return int(arg) if str(arg).isdigit() else arg
+    try:
+        v = MIC_FILE.read_text(encoding="utf-8").strip()
+        return int(v) if v.isdigit() else (v or None)
+    except OSError:
+        return None
+
+
+def mic_name(mic):
+    import sounddevice as sd
+    try:
+        return sd.query_devices(mic, "input")["name"]
+    except Exception:  # noqa: BLE001
+        return "?"
 
 
 # ---------------------------------------------------------------- モード
@@ -172,11 +238,19 @@ def run_text(server: Server):
         print("  → 送信" if server.send(line) else "")
 
 
-def start_typing_thread(server: Server):
-    """マイクのウィンドウで文字を打って Enter でも話しかけられるようにする (日本語変換が普通に使える)"""
+def start_typing_thread(server: Server, on_mic=None):
+    """マイクのウィンドウで文字を打って Enter でも話しかけられるようにする (日本語変換が普通に使える)
+    「mic 番号」と打つとマイクを切り替える"""
     def loop():
         for line in sys.stdin:
             line = line.strip()
+            m = re.fullmatch(r"(?:mic|マイク)\s*(\d+)", line, re.I)
+            if m and on_mic:
+                on_mic(int(m.group(1)))
+                continue
+            if line.lower() in ("mic", "マイク"):
+                print_mics()
+                continue
             if line:
                 print("  → 送信" if server.send(line) else "")
     threading.Thread(target=loop, daemon=True).start()
@@ -217,10 +291,35 @@ def run_ptt(server: Server, rec: Recognizer, key_name: str, mic):
 
     threading.Thread(target=worker, daemon=True).start()
     print(f"プッシュ・トゥ・トーク: [{key_name}] を押している間だけ録音します。Ctrl+C で終了")
-    start_typing_thread(server)
-    with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32", device=mic, callback=callback):
-        with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-            listener.join()
+    state = {"mic": mic}
+    switch = threading.Event()
+
+    def on_mic(n):
+        state["mic"] = n
+        try:
+            MIC_FILE.write_text(str(n), encoding="utf-8")
+        except OSError:
+            pass
+        switch.set()
+
+    start_typing_thread(server, on_mic)
+    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+    listener.start()
+    while True:
+        switch.clear()
+        try:
+            with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32", device=state["mic"], callback=callback):
+                print(f"🎙 マイク: {mic_name(state['mic'])}  (違うなら「mic」と打つと一覧が出る)")
+                while not switch.wait(0.5):
+                    pass
+        except Exception as e:  # noqa: BLE001
+            print(f"✘ マイク {state['mic']} を開けなかった: {e}")
+            print_mics(state["mic"])
+            if state["mic"] is not None:
+                print("  → いつものマイク (Windows の既定) で開き直す")
+                state["mic"] = None
+                continue
+            switch.wait()
 
 
 def run_always(server: Server, rec: Recognizer, mic, echo_guard: bool):
@@ -298,7 +397,7 @@ def main(argv=None):
         print(f"✘ 音声認識を起動できなかった: {e}")
         print("  文字入力だけで続けます。")
         return run_text(server)
-    mic = int(a.mic) if a.mic and a.mic.isdigit() else a.mic
+    mic = load_mic(a.mic)
     try:
         if a.mode == "ptt":
             run_ptt(server, rec, a.key, mic)
