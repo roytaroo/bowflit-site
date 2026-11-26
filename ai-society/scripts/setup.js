@@ -50,6 +50,7 @@ export const SERVER_PROPERTIES = {
   'server-port': '25565',
   'spawn-protection': '0',
   'white-list': 'false',             // 入口がPC内と統合版(Xbox認証あり)だけなので不要
+  'broadcast-console-to-ops': 'false', // 裏で流すコマンド(吹き出し等)の結果をOPのチャットに出さない
   difficulty: 'easy',                // AIは反応が遅いので最初はやさしめ (後で normal に変えられる)
   gamemode: 'survival',
   'max-players': '20',

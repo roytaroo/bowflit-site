@@ -9,7 +9,7 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { loadConfig } from '../src/config.js'
-import { findVoicevox, patchGeyserConfig } from './setup.js'
+import { findVoicevox, patchGeyserConfig, patchProperties } from './setup.js'
 import { ensureJava } from './java.js'
 import { datapackFiles } from '../src/society/display.js'
 
@@ -174,6 +174,17 @@ async function startServer () {
         const f = path.join(dp, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, body)
       }
     } catch (e) { log('server', '頭上表示のデータパックを書けなかった: ' + e.message) }
+  }
+  // 裏のコマンド(吹き出し・名前表示)の結果がOPのチャットに流れてうるさいので止める (setup をやり直さなくても効くよう毎回直す)
+  if (!custom) {
+    try {
+      const pf = path.join(srv, 'server.properties')
+      if (fs.existsSync(pf)) {
+        const t = fs.readFileSync(pf, 'utf8')
+        const fixed = patchProperties(t, { 'broadcast-console-to-ops': 'false' })
+        if (fixed !== t) fs.writeFileSync(pf, fixed)
+      }
+    } catch (e) { log('server', 'server.properties を直せなかった: ' + e.message) }
   }
   log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})… 初回はワールド生成で数分かかる`)
   fs.mkdirSync(path.join(srv, 'logs'), { recursive: true })
