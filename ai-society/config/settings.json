@@ -23,7 +23,9 @@
       "torch 16",
       "white_bed 1"
     ],
-    "op_player": true
+    "op_player": true,
+    "sleep_percentage": 1,
+    "auto_sleep": true
   },
   "llm": {
     "provider": "ollama",
@@ -37,7 +39,9 @@
       "temperature": 0.8,
       "num_ctx": 6144,
       "num_predict": 300
-    }
+    },
+    "auto_light": true,
+    "light_model": "qwen2.5:3b"
   },
   "agent": {
     "decide_interval_ms": 3000,
@@ -54,7 +58,7 @@
     "reply_delay_ms": 800
   },
   "floor": {
-    "use_director": true,
+    "use_director": false,
     "group_max_responders": 4,
     "single_max_responders": 2,
     "interject_chance": 0.25,

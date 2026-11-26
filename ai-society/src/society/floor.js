@@ -35,12 +35,15 @@ ${isGroup ? `全員への呼びかけなので、${Math.min(max, candidates.leng
 export class Floor {
   constructor (society) {
     this.society = society
-    this.cfg = { use_director: true, group_max_responders: 4, single_max_responders: 2, interject_chance: 0.25, max_ask_chain: 2, thread_hold_sec: 20, ...(society.config.floor || {}) }
+    this.cfg = { use_director: false, group_max_responders: 4, single_max_responders: 2, interject_chance: 0.25, max_ask_chain: 2, thread_hold_sec: 20, ...(society.config.floor || {}) }
     this.recent = new Map()
     this.threadSeq = 0
     this.rng = Math.random
     this.chain = Promise.resolve() // 発言は1つずつ順番に処理 (2つの会話が混ざらないように)
+    this.active = 0 // 処理中のプレイヤー発言の数 (この間は住人の「次に何するか」の思考を止めて返事を先に)
   }
+
+  busy () { return this.active > 0 }
 
   aliases () {
     const out = []
@@ -78,7 +81,8 @@ export class Floor {
     text = String(text || '').trim()
     if (!text || this.isDuplicate(from, text)) return Promise.resolve(null)
     this.society.conversation.holdForHuman((this.cfg.thread_hold_sec) * 1000)
-    const run = this.chain.then(() => this._handle(from, text, opts))
+    this.active++
+    const run = this.chain.then(() => this._handle(from, text, opts)).finally(() => { this.active-- })
     this.chain = run.catch(() => {})
     return run
   }
@@ -157,10 +161,17 @@ export class Floor {
         log.warn('floor', '進行役LLMが失敗したので簡易ルールで選ぶ: ' + e.message)
       }
     }
-    // 簡易ルール: 社交性で重み付けした抽選
+    // 簡易ルール (LLMなし・即決): 社交性で重み付けした抽選。態度もばらけさせる
     const pool = others.map(a => ({ a, w: (a.character.sociability ?? 0.5) * (0.5 + this.rng()) })).sort((x, y) => y.w - x.w)
-    const n = isGroup ? Math.min(max, Math.max(1, Math.round(pool.length * 0.5))) : (pool.length && pool[0].w > 0.45 ? 1 : 0)
-    for (const { a } of pool.slice(0, n)) plan.push({ name: a.name, stance: null, why: '' })
+    const n = isGroup ? Math.min(max, Math.max(1, Math.ceil(pool.length * 0.6))) : (pool.length && pool[0].w > 0.3 ? 1 : 0)
+    const stances = isGroup ? ['賛成', '便乗', '質問', '冗談', '面倒', '心配'] : ['質問', '便乗', '冗談']
+    const used = new Set()
+    for (const { a } of pool.slice(0, n)) {
+      let st = stances[Math.floor(this.rng() * stances.length)]
+      if (used.has(st)) st = stances.find(x => !used.has(x)) || st
+      used.add(st)
+      plan.push({ name: a.name, stance: st, why: '' })
+    }
     return plan
   }
 

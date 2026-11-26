@@ -18,7 +18,8 @@ const CH = [
   ['Reimu', '霊夢', ['れいむ'], 0.5]
 ].map(([username, display_name, nicknames, sociability]) => ({ username, display_name, nicknames, sociability, personality: `${display_name}の性格。`, speech: 's', relationships: {} }))
 
-function world ({ provider = null, floor = {} } = {}) {
+function world ({ provider = null, floor: floorIn = {} } = {}) {
+  const floor = { use_director: true, ...floorIn } // テストは進行役LLMありで確認
   const store = new Store(':memory:')
   const mock = provider || new MockProvider({ latencyMs: 1 })
   const llm = new LLMClient({ provider: 'mock' }, { mockProvider: mock })

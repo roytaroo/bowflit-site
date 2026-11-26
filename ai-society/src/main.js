@@ -44,16 +44,55 @@ async function checkOllama (cfg) {
 }
 
 // AI がグラボにどれだけ載っているか (100% が理想。低いと CPU で動いて遅くなる)
-async function reportGpuShare (llmCfg) {
+async function reportGpuShare (llmCfg, { quiet = false } = {}) {
+  let worst = null
   try {
     const ps = await (await fetch(llmCfg.url.replace(/\/$/, '') + '/api/ps')).json()
     for (const m of ps.models || []) {
       const pct = m.size ? Math.round(m.size_vram / m.size * 100) : 0
+      if (m.name === llmCfg.model || m.name === llmCfg.model + ':latest') worst = worst == null ? pct : Math.min(worst, pct)
       const msg = `AIのグラボ使用率: ${m.name} ${pct}% がグラボ上 (VRAM ${(m.size_vram / 1e9).toFixed(1)}GB / 全体 ${(m.size / 1e9).toFixed(1)}GB)`
-      if (pct < 90) log.warn('main', msg + ' → グラボに入りきらず遅い。Minecraftを閉じるか、lightmode.bat で軽量モードに')
+      if (quiet) continue
+      if (pct < 90) log.warn('main', msg + ' → グラボに入りきらず遅い')
       else log.info('main', msg)
     }
   } catch {}
+  return worst
+}
+
+// グラボに入りきらない (= 1回の考えに10秒以上かかる) なら、自動で軽いモデルに切り替える。
+// 軽いモデルが未ダウンロードなら裏でダウンロードして、終わりしだい切り替える
+async function autoLightModel (cfg, llm) {
+  const lc = cfg.llm
+  if (lc.provider !== 'ollama' || lc.auto_light === false) return
+  const light = lc.light_model || 'qwen2.5:3b'
+  if (lc.model === light) return
+  const pct = await reportGpuShare(lc, { quiet: true })
+  if (pct == null || pct >= 90) return
+  const base = lc.url.replace(/\/$/, '')
+  const old = lc.model
+  const switchNow = async () => {
+    llm.setModel(light)
+    // 重いモデルをグラボから降ろす
+    fetch(base + '/api/generate', { method: 'POST', body: JSON.stringify({ model: old, keep_alive: 0 }) }).catch(() => {})
+    try {
+      const t0 = Date.now()
+      await fetch(base + '/api/generate', { method: 'POST', body: JSON.stringify({ model: light, prompt: 'hi', stream: false, keep_alive: lc.keep_alive ?? '30m', options: { num_predict: 1 } }), signal: AbortSignal.timeout(300000) })
+      log.info('main', `軽量モデル ${light} の準備OK (${((Date.now() - t0) / 1000).toFixed(0)}秒)`)
+    } catch {}
+    reportGpuShare(lc)
+  }
+  let installed = false
+  try {
+    const tags = await (await fetch(base + '/api/tags')).json()
+    installed = (tags.models || []).some(m => m.name === light || m.name === light + ':latest')
+  } catch {}
+  log.warn('main', `${old} がグラボに${pct}%しか入らず遅いので、軽量モデル ${light} に自動で切り替える (元に戻すなら normalmode.bat)`)
+  if (installed) return switchNow()
+  log.info('main', `${light} をダウンロード中 (約2GB・数分)。終わるまでは ${old} で動く`)
+  fetch(base + '/api/pull', { method: 'POST', body: JSON.stringify({ model: light, stream: false }), signal: AbortSignal.timeout(30 * 60000) })
+    .then(r => r.ok ? switchNow() : log.warn('main', `${light} のダウンロードに失敗 (HTTP ${r.status})`))
+    .catch(e => log.warn('main', `${light} のダウンロードに失敗: ${e.message}`))
 }
 
 export async function main (argv = process.argv.slice(2)) {
@@ -84,6 +123,7 @@ export async function main (argv = process.argv.slice(2)) {
       await fetch(cfg.llm.url.replace(/\/$/, '') + '/api/generate', { method: 'POST', body: JSON.stringify({ model: cfg.llm.model, prompt: 'hi', stream: false, keep_alive: cfg.llm.keep_alive ?? '30m', options: { num_predict: 1 } }), signal: AbortSignal.timeout(300000) })
       log.info('main', `LLM準備OK (${((Date.now() - t0) / 1000).toFixed(0)}秒)`)
       await reportGpuShare(cfg.llm)
+      await autoLightModel(cfg, llm)
     } catch (e) { log.warn('main', 'LLMの準備に失敗: ' + e.message) }
   }
   const voice = new TTS({ ...cfg.voice, out_dir: path.resolve(ROOT, cfg.voice.out_dir || 'data/voice') })

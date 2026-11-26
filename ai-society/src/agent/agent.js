@@ -28,6 +28,7 @@ export class Agent {
     this.row = this.store.ensureAgent(this.name, { long_goal: character.dream })
     this.alive = !!this.row.alive
     this.home = this.row.home ? JSON.parse(this.row.home) : null
+    this.bedPos = this.store.getState(`bed:${this.name}`, null) // 自分で置いたベッドの場所
     this.memory = new AgentMemory(this.store, this.name, this.cfg.memory || {})
     this.safety = new Safety(this.cfg.safety || {}, this.row)
     this.heard = []          // この人が実際に聞いた会話だけ (他人の記憶とは混ざらない)
@@ -150,7 +151,8 @@ export class Agent {
   _reflexTick () {
     if (!this.ready() || !this.alive) return
     const s = this.state({ scanBlocks: false }) // 毎秒なのでブロックの走査はしない
-    const r = this.safety.reflex(s)
+    let r = this.safety.reflex(s)
+    if (!r) r = this._bedtime(s)
     if (!r) return
     if (this.currentAction?.reflex && this.currentAction.name === r.name) return
     if (this.busy) {
@@ -159,6 +161,16 @@ export class Agent {
       try { this.bot.pathfinder.stop(); this.bot.pvp?.stop() } catch {}
     }
     this.pendingAction = { ...r, reflex: true }
+  }
+
+  // 夜になったら、ベッドを持っている(置いてある)住人は寝る。夜の外は危ないので LLM の判断を待たない
+  _bedtime (s) {
+    if (this.cfg.world?.auto_sleep === false || !s.night || this.bot.isSleeping) return null
+    if (this.currentAction?.name === 'sleep' || Date.now() - (this._lastBedTry || 0) < 45000) return null
+    const hasBed = s.inventory.some(i => i.name.endsWith('_bed')) || this.bedPos
+    if (!hasBed || s.hostiles.some(h => h.dist <= 10) || s.inWater) return null
+    this._lastBedTry = Date.now()
+    return { name: 'sleep', args: {}, reason: '夜になったので寝る' }
   }
 
   state ({ scanBlocks = true } = {}) {
@@ -178,6 +190,8 @@ export class Agent {
         }
         const since = Date.now() - this.lastDecision
         if (since < minGap) { await sleep(minGap - since); continue }
+        // プレイヤーへの返事を作っている間は、次の行動を考えるのを待つ (AIを返事に専念させる)
+        if (this.society.floor?.busy?.()) { await sleep(500); continue }
         // LLMが混んでいるときは待つ (9人が一斉に考えて詰まらないように)
         const maxPending = this.cfg.llm?.max_pending ?? Math.max(2, this.society.aliveAgents().length)
         if (this.society.llm.pending() >= maxPending) { await sleep(800); continue }
@@ -340,6 +354,12 @@ export class Agent {
     if (/字以内|JSON|その場で口にする|返事をJSON|^\(.*\)$|null$/.test(text)) { log.debug(this.name, '指示文の書き写しを除外: ' + text); return }
     if (!text || !this.bot) return
     text = text.replace(/^[/\\]+/, '') // 住人の発言がコマンドとして実行されないように
+    text = cleanSpeech(text)
+    if (!text) return
+    // 同じことを短い間に繰り返さない
+    this._said = (this._said || []).filter(x => Date.now() - x.t < 180000)
+    if (this._said.some(x => x.text === text)) { log.debug(this.name, '同じ発言の繰り返しを除外: ' + text); return }
+    this._said.push({ text, t: Date.now() })
     const display = this.society.display
     if (display?.enabled) {
       display.chat(this.character, text)    // チャット欄: 日本語の名前(色付き)
@@ -393,6 +413,7 @@ export class Agent {
   // 人間の発言を聞いた (進行役から呼ばれる)。返事するかどうかは進行役が決める
   hearHuman (from, text, { toMe = false, isGroup = false, source = 'chat' } = {}) {
     const fromDisplay = this.society.displayName(from)
+    this.lastHumanSpeaker = from
     this.heard.push({ from, fromDisplay, text, t: Date.now() })
     this.heard = this.heard.slice(-20)
     const how = toMe ? 'が自分に' : isGroup ? 'がみんなに' : 'が'
@@ -654,3 +675,14 @@ export class Agent {
 }
 
 export { Relationships }
+
+// 小さいモデルが日本語の後ろに付けてしまう英語のゴミ (例: 「探そう！startTime」) を取る
+export function cleanSpeech (text) {
+  let t = String(text || '').trim()
+  // 日本語の直後に続く英字だけの単語 (4文字以上・末尾) を削除
+  t = t.replace(/([\u3000-\u9fff\uff00-\uffef！？。、]) ?[A-Za-z_]{4,}[.!?]*$/u, '$1')
+  // 日本語の文中に混ざったプログラム用の単語 (camelCase)
+  t = t.replace(/(^|[^A-Za-z])[a-z]+[A-Z][A-Za-z]*(?![A-Za-z])/g, '$1')
+  return t.replace(/\s{2,}/g, ' ').trim()
+}
+

@@ -58,8 +58,8 @@ export class WorldDisplay {
     this.send(`kill @e[type=text_display,tag=ais_${n}]`)
     const name = textNbt({ text: c.display_name, color: c.color || '#FFFFFF', bold: true }, this.version)
     // 頭上への追従は、サーバーに入れたデータパック (毎tick tp) が行う。teleport_duration でなめらかに動く
-    this.send(`execute at ${n} run summon text_display ~ ~1.9 ~ {Tags:["ais","ais_${n}","ais_name"],billboard:"center",shadow:1b,line_width:200,teleport_duration:2,background:${argb('#000000', 0x40)},text:${name},${TRANSFORM(this.nameY)}}`)
-    this.send(`execute at ${n} run summon text_display ~ ~1.9 ~ {Tags:["ais","ais_${n}","ais_bubble"],billboard:"center",shadow:0b,line_width:220,teleport_duration:2,background:0,text:${textNbt({ text: '' }, this.version)},${TRANSFORM(this.bubbleY)}}`)
+    this.send(`execute at ${n} run summon text_display ~ ~1.9 ~ {Tags:["ais","ais_${n}","ais_name"],billboard:"center",alignment:"center",shadow:1b,line_width:200,teleport_duration:2,background:${argb('#000000', 0x40)},text:${name},${TRANSFORM(this.nameY)}}`)
+    this.send(`execute at ${n} run summon text_display ~ ~1.9 ~ {Tags:["ais","ais_${n}","ais_bubble"],billboard:"center",alignment:"center",shadow:0b,line_width:220,teleport_duration:2,background:0,text:${textNbt({ text: '' }, this.version)},${TRANSFORM(this.bubbleY)}}`)
   }
 
   detach (c) {

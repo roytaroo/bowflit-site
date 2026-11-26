@@ -240,6 +240,8 @@ async function startServer () {
   // ワールドのルール: 死んでも持ち物を失わない / 初回は昼から始める
   if (cfg.world?.keep_inventory !== false) p.stdin.write('gamerule keepInventory true\n')
   if (cfg.world?.difficulty) p.stdin.write(`difficulty ${cfg.world.difficulty}\n`)
+  // 誰か1人がベッドで寝たら夜を飛ばす (住人は夜になると自分から寝る)。0〜100 で変えられる
+  if (cfg.world?.sleep_percentage != null) p.stdin.write(`gamerule playersSleepingPercentage ${cfg.world.sleep_percentage}\n`)
   // データパックを有効化 (初回はワールド作成後に見つかるので念のため)
   if (!custom && cfg.display?.enabled !== false) p.stdin.write('datapack enable "file/ais"\n')
   // プレイヤーにOP権限 (コマンドが使える)

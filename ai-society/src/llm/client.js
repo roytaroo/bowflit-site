@@ -130,6 +130,12 @@ export class LLMClient {
 
   pending () { return this.queue.length + this.running }
 
+  // 使うモデルを途中で切り替える (グラボに入りきらないときに軽いモデルへ)
+  setModel (model) {
+    this.cfg.model = model
+    if (this.provider && 'model' in this.provider) this.provider.model = model
+  }
+
   _pump () {
     while (this.running < this.concurrency && this.queue.length) {
       const now = Date.now()

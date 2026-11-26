@@ -13,7 +13,7 @@ const model = { light: 'qwen2.5:3b', normal: 'qwen2.5:7b-instruct' }[arg] || arg
 const file = path.join(ROOT, 'config/settings.local.json')
 let local = {}
 try { local = JSON.parse(fs.readFileSync(file, 'utf8')) } catch {}
-local.llm = { ...(local.llm || {}), model }
+local.llm = { ...(local.llm || {}), model, auto_light: arg !== 'normal' } // normal を選んだら自動切り替えもしない
 fs.writeFileSync(file, JSON.stringify(local, null, 2) + '\n')
 console.log(`モデルを ${model} にした。ダウンロードを確認します…`)
 const r = spawnSync('ollama', ['pull', model], { stdio: 'inherit', shell: process.platform === 'win32' })
