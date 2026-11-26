@@ -408,6 +408,11 @@ export class Agent {
     if (!text || !this.bot) return
     text = text.replace(/^[/\\]+/, '') // 住人の発言がコマンドとして実行されないように
     text = cleanSpeech(text)
+    // 英語のID (Kiritan) は日本語の名前に。考えごとの言葉 (短期目標を設定する 等) が混ざった文は削る
+    for (const [u, c] of this.society.characters) text = text.split(u).join(c.display_name)
+    const pn = this.cfg.player?.name
+    if (pn) text = text.split(pn).join(this.society.displayName(pn))
+    text = dropMetaTalk(text)
     if (!text) return
     // 同じことを短い間に繰り返さない
     this._said = (this._said || []).filter(x => Date.now() - x.t < 180000)
@@ -788,5 +793,13 @@ export function cleanSpeech (text) {
   // 日本語の文中に混ざったプログラム用の単語 (camelCase)
   t = t.replace(/(^|[^A-Za-z])[a-z]+[A-Z][A-Za-z]*(?![A-Za-z])/g, '$1')
   return t.replace(/\s{2,}/g, ' ').trim()
+}
+
+// 「短期目標を設定する」「約束をする」のような、考えている内容(計画の言葉)をそのまま口にした文を取り除く
+const META = /(短期目標|長期目標|目標を(設定|更新|立て)|約束をする(の|こと)|行動(を|は)(選|決)|JSON|say|action|goal)/i
+export function dropMetaTalk (text) {
+  const parts = String(text || '').split(/(?<=[。！？!?])/)
+  const kept = parts.filter(p => !META.test(p))
+  return kept.join('').trim()
 }
 

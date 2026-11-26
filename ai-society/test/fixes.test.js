@@ -80,3 +80,19 @@ test('口調チェック: 設定書の一人称・語尾・禁止表現', async 
   // 公式設定書の例文は全部チェックを通る
   for (const c of [z, m, k]) for (const e of c.examples) assert.deepEqual(voiceIssues(c, e), [], `${c.display_name}: ${e}`)
 })
+
+test('考えごとの言葉が混ざった文は話さない', async () => {
+  const { dropMetaTalk } = await import('../src/agent/agent.js')
+  assert.equal(dropMetaTalk('原木を増やす短期目標を設定するのだ。きりたん、一緒に行くのだ！'), 'きりたん、一緒に行くのだ！')
+  assert.equal(dropMetaTalk('ずんだ餅を食べるのだ！'), 'ずんだ餅を食べるのだ！')
+})
+
+test('Minecraft の最大FPSを上限付きにする', async () => {
+  const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path')
+  const { capMaxFps } = await import('../scripts/client-setup.js')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mc-'))
+  fs.writeFileSync(path.join(dir, 'options.txt'), 'version:3953\nmaxFps:260\nfov:0.0\n')
+  assert.deepEqual(capMaxFps(60, dir), { changed: true, from: 260 })
+  assert.match(fs.readFileSync(path.join(dir, 'options.txt'), 'utf8'), /^maxFps:60$/m)
+  assert.deepEqual(capMaxFps(60, dir), { changed: false, from: 60 })
+})

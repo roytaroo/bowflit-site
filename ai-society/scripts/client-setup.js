@@ -65,3 +65,18 @@ export async function addServerEntry (name, ip, dir = minecraftDir()) {
   fs.writeFileSync(f, nbt.writeUncompressed(root, 'big'))
   return { ok: true }
 }
+
+// Minecraft の最大FPSを抑える (上限なしだとグラボを100%使い切って、AIの考える速度が落ちる)
+// options.txt の maxFps を書き換える。上限より低く設定してあれば触らない
+export function capMaxFps (limit = 60, dir = minecraftDir()) {
+  const f = path.join(dir, 'options.txt')
+  if (!fs.existsSync(f)) return null
+  const text = fs.readFileSync(f, 'utf8')
+  const m = text.match(/^maxFps:(\d+)/m)
+  const cur = m ? Number(m[1]) : null
+  if (cur != null && cur <= limit) return { changed: false, from: cur }
+  const next = m ? text.replace(/^maxFps:\d+/m, `maxFps:${limit}`) : text.replace(/\s*$/, `\nmaxFps:${limit}\n`)
+  fs.writeFileSync(f, next)
+  return { changed: true, from: cur }
+}
+

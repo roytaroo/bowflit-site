@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { loadConfig } from '../src/config.js'
 import { findVoicevox, patchGeyserConfig, patchProperties, download, modrinthUrl, MC_VERSION } from './setup.js'
 import { ensureJava } from './java.js'
+import { capMaxFps } from './client-setup.js'
 import { datapackFiles } from '../src/society/display.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -55,6 +56,13 @@ const children = { server: null, agents: null }
 let stopping = false
 
 async function main () {
+  // Minecraft のFPSに上限を付ける (上限なしだとグラボを使い切ってAIが遅くなる)
+  if (cfg.client?.max_fps !== false) {
+    try {
+      const r = capMaxFps(cfg.client?.max_fps || 60)
+      if (r?.changed) log('launch', `Minecraft の最大FPSを ${r.from ?? '上限なし'} → ${cfg.client?.max_fps || 60} にした (AIにグラボを空けるため。Minecraft を起動し直すと効く)`)
+    } catch {}
+  }
   // 1. Ollama
   if (cfg.llm.provider === 'ollama' && !flag('--mock')) {
     const url = cfg.llm.url.replace(/\/$/, '') + '/api/tags'
@@ -235,6 +243,7 @@ async function startServer () {
   const skinUrl = Object.keys(skins).length && await ensureSkinsRestorer(srv) ? skinBaseUrl() : null
   if (Object.keys(skins).length && !skinUrl) log('server', 'スキンの画像URLが作れなかった (git が無い?) → スキンなしで続ける')
   const skinned = new Set()
+  let skinChain = Promise.resolve()
   log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})…${firstWorld ? ' 初回はワールド生成で数分かかる' : ''}`)
   fs.mkdirSync(path.join(srv, 'logs'), { recursive: true })
   const out = fs.createWriteStream(path.join(srv, 'logs', 'launch.log'), { flags: 'a' })
@@ -261,11 +270,18 @@ async function startServer () {
     // 住人が入ったら、その住人のスキンを着せる (起動ごとに1回)
     if (j && skinUrl && skins[j[1]] && !skinned.has(j[1])) {
       skinned.add(j[1])
-      const id = 'ais_' + skins[j[1]]
-      setTimeout(() => { try { p.stdin.write(`sr createcustom ${id} ${skinUrl}/${skins[j[1]]}.png classic\n`) } catch {} }, 4000)
-      setTimeout(() => { try { p.stdin.write(`skin set ${id} ${j[1]}\n`) } catch {} ; log('server', `${j[1]} にスキンを着せた`) }, 12000)
+      // 名前は17文字以上にする (16文字以下だと、同じ名前の実在プレイヤーのスキンが使われてしまう)。
+      // 画像の変換サービス(MineSkin)は連続で頼むと断られるので、1人ずつ間を空けて順番に
+      const id = `aisociety_skin_${skins[j[1]]}`
+      skinChain = skinChain.then(async () => {
+        try { p.stdin.write(`sr createcustom ${id} ${skinUrl}/${skins[j[1]]}.png classic\n`) } catch {}
+        await sleep(12000)
+        try { p.stdin.write(`skin set ${id} ${j[1]}\n`) } catch {}
+        log('server', `${j[1]} にスキンを着せた`)
+        await sleep(3000)
+      })
     }
-    if (/SkinsRestorer|\[SR\]|MineSkin/i.test(line) && /error|fail|失敗|invalid|unknown|could not/i.test(line)) log('server', 'スキン: ' + line.replace(/^\[[\d:]+ /, '').slice(0, 200))
+    if (/SkinsRestorer|\[SR\]|MineSkin|aisociety_skin/i.test(line) && /error|fail|失敗|invalid|unknown|could not|rate|limit|aisociety_skin/i.test(line)) log('server', 'スキン: ' + line.replace(/^\[[\d:]+ /, '').slice(0, 200))
     tail.push(line); if (tail.length > 40) tail.shift()
     if (/Done \(|listening on/.test(line)) done = true
     if (/Done \(|ERROR|Exception|Geyser.*(Started|started)|joined the game|left the game|Failed|FAILED/.test(line)) log('server', line.replace(/^\[[\d:]+ /, '').slice(0, 200))
