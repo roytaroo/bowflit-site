@@ -1,5 +1,5 @@
 // LLM のモデルを切り替える (config/settings.local.json に保存して ollama pull する)
-//   node scripts/set-model.js light    軽量・速い (qwen2.5:3b)
+//   node scripts/set-model.js light    軽量・速い (qwen3:4b)
 //   node scripts/set-model.js normal   標準 (qwen2.5:7b-instruct)
 //   node scripts/set-model.js <モデル名>
 import fs from 'node:fs'
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const arg = process.argv[2] || 'light'
-const model = { light: 'qwen2.5:3b', normal: 'qwen2.5:7b-instruct' }[arg] || arg
+const model = { light: 'qwen3:4b', normal: 'qwen2.5:7b-instruct' }[arg] || arg
 const file = path.join(ROOT, 'config/settings.local.json')
 let local = {}
 try { local = JSON.parse(fs.readFileSync(file, 'utf8')) } catch {}

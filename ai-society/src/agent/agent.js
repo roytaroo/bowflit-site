@@ -3,7 +3,9 @@
 //  [LLM]             行動の意思決定・目標設定・会話・日記・死への反応
 import { createRequire } from 'node:module'
 import { snapshot, describeState } from './perception.js'
+import { DECIDE_ACTIONS } from './prompts.js'
 import { voiceIssues, fixVoice } from './voiceStyle.js'
+import { requestFromText } from './requests.js'
 import { Safety } from './safety.js'
 import { ACTIONS } from './actions.js'
 import { AgentMemory } from '../memory/memory.js'
@@ -325,8 +327,12 @@ export class Agent {
       return { name: 'craft', args: { item: stone >= 3 ? 'stone_pickaxe' : 'wooden_pickaxe', count: 1 }, key: 'pickaxe' }
     }
     if (stone < 24 && ok('stone')) return { name: 'collect', args: { block: 'stone', count: 8 }, key: 'stone' }
-    if (!this.home && mats >= 50 && ok('home')) return { name: 'set_home', args: {}, key: 'home' }
-    if (this.home && mats >= 40 && ok('build') && (this.store.getState(`build:${this.name}:house`, 0) < 70)) return { name: 'build_house', args: { size: 5 }, key: 'build' }
+    // だいきに「建築して」と頼まれていたら、少ない素材でもすぐ建て始める
+    const buildFocus = this.focus?.kind === 'build' && this.focus.until > now
+    const needHome = buildFocus ? 20 : 50; const needBuild = buildFocus ? 20 : 40
+    if (!this.home && mats >= needHome && ok('home')) return { name: 'set_home', args: {}, key: 'home' }
+    if (this.home && mats >= needBuild && ok('build') && (this.store.getState(`build:${this.name}:house`, 0) < 70)) return { name: 'build_house', args: { size: 5 }, key: 'build' }
+    if (buildFocus && logs * 4 + planks < 40 && ok('log')) return { name: 'collect', args: { block: 'log', count: 8 }, key: 'log' }
     // 役割ごとの仕事 (キャラ設定の chores から)
     const chores = (this.character.chores || []).filter(c => ok('role:' + c.name + JSON.stringify(c.args || {})))
     if (chores.length) { const c = chores[Math.floor(Math.random() * chores.length)]; return { ...c, key: 'role:' + c.name + JSON.stringify(c.args || {}) } }
@@ -426,7 +432,8 @@ export class Agent {
       recentChat: this._recentChatText(),
       lastResult: this.lastResult,
       rejected: this.rejected,
-      names: this.society.names().filter(n => n !== this.name).map(n => `${n}(${this.society.displayName(n)})`)
+      // 今ワールドにいる人だけ (いない仲間の名前を出すと、探しに行って迷う)
+      names: Object.keys(this.bot.players || {}).filter(n => n !== this.name).map(n => `${n}(${this.society.displayName(n)})`)
     })
     this.rejected = null
     return this.society.llm.requestJson(messages, { priority: PRIORITY.DECIDE, tag: `${this.name}:decide` })
@@ -463,7 +470,7 @@ export class Agent {
       await this.say(d.say, d.say_to || null)
     }
     // 行動は最大3つまでまとめて計画できる (LLMを毎回呼ばずに動き続けるため)
-    const plan = (Array.isArray(d.actions) && d.actions.length ? d.actions : [d.action]).filter(x => x && x.name).slice(0, 3)
+    const plan = (Array.isArray(d.actions) && d.actions.length ? d.actions : [d.action]).filter(x => x && x.name && DECIDE_ACTIONS.includes(x.name)).slice(0, 3)
     for (let i = 0; i < plan.length; i++) {
       if (!this.running || this.pendingAction) break // 緊急事態やプレイヤーの頼みごとが入ったら計画を中断
       const ok = await this._execute(plan[i], 'decide')
@@ -694,7 +701,7 @@ export class Agent {
       relationText,
       aboutMemories: this.memory.recall(`${speakerDisplay} ${text}`, 5).filter(m => m.about === from || m.importance >= 5).slice(0, 4).concat(this.memory.about(from, 2)).slice(0, 5),
       recentChat: this._recentChatText(6),
-      stateText: describeState(s).split('\n').slice(0, 3).join('\n'),
+      stateText: describeState(s).split('\n').slice(0, 5).join('\n'), // 時間・体力・位置・持ち物・近くの人 (「鉄ある？」に正直に答えられるように)
       thread,
       stance,
       why,
@@ -722,6 +729,14 @@ export class Agent {
       this.memory.add('goal', `${speakerDisplay}との話で目標を「${r.goal}」にした`, { importance: 5, about: from, day })
     }
     if (r.say) await this.say(r.say, from, { voicePriority })
+    // 頼みごとは言葉から確実に読み取る (小さいAIは引き受けると言っても action を書き忘れる)
+    if (isHuman) {
+      const req = requestFromText(text, { from, hasHome: !!this.home })
+      if (req) {
+        if (req.focus) { this.focus = { kind: req.focus, until: Date.now() + 10 * 60000 }; log.info(this.name, `📌 ${speakerDisplay}に頼まれた: ${req.focus}`) }
+        if (req.action) r.action = req.action
+      }
+    }
     const allowed = isHuman ? REQUEST_ACTIONS : ['go_to_player', 'follow', 'give', 'rest']
     if (r.action?.name && allowed.includes(r.action.name) && !this.pendingAction?.reflex) {
       this.pendingAction = { name: r.action.name, args: r.action.args || {} }

@@ -41,7 +41,7 @@
       "num_predict": 220
     },
     "auto_light": true,
-    "light_model": "qwen2.5:3b"
+    "light_model": "qwen3:4b"
   },
   "agent": {
     "decide_interval_ms": 15000,

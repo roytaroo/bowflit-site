@@ -418,7 +418,7 @@ export const ACTIONS = {
       let failsInRow = 0
       // 掘りながら進む経路探索は重いので、探す範囲と時間を絞る (メモリあふれ対策)
       const pf = bot.pathfinder; const keep = { r: pf.searchRadius, t: pf.thinkTimeout }
-      pf.searchRadius = 20; pf.thinkTimeout = 1500
+      pf.searchRadius = 32; pf.thinkTimeout = 2500
       try {
       for (const p of positions) {
         if (got >= want || ctx.interrupted() || failsInRow >= 3) break

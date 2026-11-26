@@ -37,7 +37,7 @@ export function buildDecidePrompt (ctx) {
 
 あなたは次に何をするか自分で決める。体力・時間・仲間の状況・自分の目標と性格を考えて選ぶこと。
 使える行動 (actionのnameはこの中から1つ):
-${actionListForPrompt()}
+${actionListForPrompt(DECIDE_ACTIONS)}
 
 あなたは普段、素材集め・家づくり・自分の役割の仕事を体が勝手に続けている。ここでは「それ以外に今やりたいこと」があるときだけ actions に入れる (特になければ actions は空の配列 [] でよい)。
 約束や会議の話はしない。計画を話し合うより、実際に手を動かす。
@@ -77,6 +77,9 @@ ${recentChat || '- なし'}
 次の行動をJSONで答えて。`
   return [{ role: 'system', content: system }, { role: 'user', content: user }]
 }
+
+// 自分で次の行動を考えるときに使える行動 (座標指定の移動・お墓・計画づくりは、小さいAIだと変な使い方をするので外す)
+export const DECIDE_ACTIONS = ['collect', 'craft', 'build_house', 'explore', 'go_home', 'go_to_player', 'follow', 'give', 'eat', 'sleep', 'rest', 'wander', 'fish', 'plant_and_harvest', 'store_items', 'attack']
 
 // プレイヤーの発言に返事を求めるときに使える行動 (安全管理の審査は通常どおり受ける)
 export const REQUEST_ACTIONS = ['go_to_player', 'follow', 'give', 'rest', 'collect', 'explore', 'go_home', 'fish', 'plant_and_harvest', 'build_house', 'store_items', 'wander', 'sleep', 'set_home', 'craft', 'eat']

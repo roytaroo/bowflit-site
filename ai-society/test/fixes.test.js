@@ -152,3 +152,19 @@ test('意味のない行動を止める: 家の決め直し・無いお墓参り
   assert.equal(g.action.args.item, 'stone_pickaxe')
   assert.equal(g.action.args.count, 1)
 })
+
+test('頼みごとを言葉から読み取る', async () => {
+  const { requestFromText } = await import('../src/agent/requests.js')
+  assert.deepEqual(requestFromText('建築して', { from: 'abkdon' }), { focus: 'build', action: { name: 'set_home', args: {} } })
+  assert.equal(requestFromText('建築して', { from: 'abkdon', hasHome: true }).action, null)
+  assert.equal(requestFromText('こっち来て', { from: 'abkdon' }).action.name, 'go_to_player')
+  assert.equal(requestFromText('ついてきて', { from: 'abkdon' }).action.name, 'follow')
+  assert.deepEqual(requestFromText('パンちょうだい', { from: 'abkdon' }).action.args, { to: 'abkdon', item: 'bread', count: 4 })
+  assert.equal(requestFromText('木を集めて', { from: 'a' }).action.args.block, 'log')
+  assert.equal(requestFromText('鉄ある？', { from: 'a' }), null) // 質問は会話で答える
+})
+
+test('「集めてきて」は来てではない', async () => {
+  const { requestFromText } = await import('../src/agent/requests.js')
+  assert.equal(requestFromText('木を5個集めてきて', { from: 'a' }).action.name, 'collect')
+})
