@@ -191,6 +191,11 @@ export class LLMClient {
       const eff = j => j.priority < 0 ? j.priority : Math.max(0, j.priority - Math.floor((now - j.enq) / AGING_MS)) // プレイヤーとの会話は常に最優先
       this.queue.sort((a, b) => eff(a) - eff(b) || a.seq - b.seq)
       const job = this.queue.shift()
+      // 1日の予算を使い切ったら、ネットのAIには頼まない (住人はルールの仕事だけ続ける)
+      if (this.budget && this.budget.overLimit()) {
+        job.reject(new Error('今日のAIの予算を使い切ったので考えない'))
+        continue
+      }
       this.running++
       const start = Date.now()
       this.stats.totalWaitMs += start - job.enq
@@ -201,10 +206,38 @@ export class LLMClient {
           this.stats.tokens += r.evalCount || 0
           this.stats.inTokens = (this.stats.inTokens || 0) + (r.promptCount || 0)
           this.stats.cacheRead = (this.stats.cacheRead || 0) + (r.cacheRead || 0)
+          if (this.budget) this.budget.add(this.costOf(r))
           job.resolve(r)
         })
         .catch(e => { this.stats.errors++; job.reject(e) })
         .finally(() => { this.running--; this._pump() })
+    }
+  }
+
+  // 1回の呼び出しの料金 (円)。ネットのAIのときだけ
+  costOf (r) {
+    if (this.cfg.provider !== 'anthropic') return 0
+    const p = { input: 0.10, output: 0.50, yen: 150, ...(this.cfg.price || {}) }
+    const cached = r.cacheRead || 0
+    const fresh = Math.max(0, (r.promptCount || 0) - cached)
+    return (fresh / 1e6 * p.input + cached / 1e6 * p.input * 0.1 + (r.evalCount || 0) / 1e6 * p.output) * p.yen
+  }
+
+  // 1日の予算 (円)。store に日付ごとの使用額を保存する
+  setBudget ({ limitYen, store, onLimit = () => {} }) {
+    if (!limitYen || !store) return
+    const key = () => 'llm_spent:' + new Date().toLocaleDateString('sv-SE')
+    let warned = false
+    this.budget = {
+      limitYen,
+      spent: () => store.getState(key(), 0),
+      add: yen => store.setState(key(), store.getState(key(), 0) + yen),
+      overLimit: () => {
+        const over = store.getState(key(), 0) >= limitYen
+        if (over && !warned) { warned = true; onLimit(store.getState(key(), 0)) }
+        if (!over) warned = false
+        return over
+      }
     }
   }
 
@@ -218,6 +251,7 @@ export class LLMClient {
       const fresh = (s.inTokens || 0) - (s.cacheRead || 0)
       const usd = fresh / 1e6 * p.input + (s.cacheRead || 0) / 1e6 * p.input * 0.1 + s.tokens / 1e6 * p.output
       cost = ` / 料金の目安 約${Math.round(usd * p.yen * 10) / 10}円 ($${usd.toFixed(3)})`
+      if (this.budget) cost += ` / 今日の合計 約${Math.round(this.budget.spent())}円 (上限${this.budget.limitYen}円)`
     }
     return `LLM呼び出し ${s.calls}回 / エラー ${s.errors} / 平均応答 ${(s.totalMs / n / 1000).toFixed(1)}秒 / 平均待ち ${(s.totalWaitMs / n / 1000).toFixed(1)}秒 / 最大キュー ${s.maxQueue} / 生成トークン ${s.tokens}${cost}`
   }

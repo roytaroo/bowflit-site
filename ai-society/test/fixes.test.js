@@ -183,3 +183,18 @@ test('ネットのAI (Claude): 送る形と料金の目安', async () => {
   assert.deepEqual(sent.thinking, { type: 'disabled' })
   assert.match(llm.summary(), /料金の目安/)
 })
+
+test('1日の予算を超えたらネットのAIに頼まない', async () => {
+  const { LLMClient } = await import('../src/llm/client.js')
+  const { Store } = await import('../src/memory/db.js')
+  const store = new Store(':memory:')
+  const llm = new LLMClient({ provider: 'anthropic', model: 'claude-haiku-5-5', price: { input: 1000, output: 1000, yen: 1 } })
+  let calls = 0
+  llm.provider.client = { messages: { create: async () => { calls++; return { stop_reason: 'end_turn', content: [{ type: 'text', text: '{}' }], usage: { input_tokens: 1000, output_tokens: 0 } } } } }
+  let warned = 0
+  llm.setBudget({ limitYen: 1, store, onLimit: () => warned++ })
+  await llm.request([{ role: 'user', content: 'a' }]) // 1円使う → 上限に到達
+  await assert.rejects(llm.request([{ role: 'user', content: 'b' }]), /予算/)
+  assert.equal(calls, 1)
+  assert.equal(warned, 1)
+})

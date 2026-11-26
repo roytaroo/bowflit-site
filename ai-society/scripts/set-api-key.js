@@ -21,12 +21,27 @@ if (process.argv.includes('--local')) {
   process.exit(0)
 }
 
+// 予算だけ変える: node scripts/set-api-key.js --budget 200
+const bi = process.argv.indexOf('--budget')
+if (bi >= 0) {
+  const yen = Number(process.argv[bi + 1])
+  if (!(yen > 0)) { console.log('✘ 金額を数字で (例: --budget 200)'); process.exit(1) }
+  local.llm = { ...(local.llm || {}), daily_budget_yen: yen }
+  save()
+  console.log(`1日の予算を ${yen}円 にした。`)
+  process.exit(0)
+}
+
 const model = process.argv.find(a => a.startsWith('claude-')) || 'claude-haiku-5-5'
 console.log('Claude の APIキーを貼り付けて Enter (sk-ant- で始まる文字列)。')
 console.log('キーは https://platform.claude.com の「API Keys」で作れる。キーは他の人に見せないでね。')
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const key = (await rl.question('APIキー: ')).trim()
+const cur = local.llm?.daily_budget_yen ?? 100
+const ans = (await rl.question(`1日にAIに使っていい上限 (円)。超えたらその日はAIを止める [Enterで ${cur}円]: `)).trim()
+const budget = ans ? Number(ans.replace(/[^\d.]/g, '')) : cur
 rl.close()
+if (!(budget > 0)) { console.log('✘ 金額は数字で入れて。もう一度やり直して。'); process.exit(1) }
 if (!/^sk-ant-/.test(key)) { console.log('✘ sk-ant- で始まっていない。コピーし直してもう一度。'); process.exit(1) }
 
 console.log(`${model} で試しに1回話しかけてみる…`)
@@ -48,7 +63,8 @@ try {
   process.exit(1)
 }
 
-local.llm = { ...(local.llm || {}), provider: 'anthropic', model, api_key: key }
+local.llm = { ...(local.llm || {}), provider: 'anthropic', model, api_key: key, daily_budget_yen: budget }
 save()
-console.log('保存した。これで住人の頭はネットのAI (Claude) になる。「AI Society 起動」で起動しなおしてね。')
+console.log(`保存した。これで住人の頭はネットのAI (Claude) になる。1日の上限は ${budget}円。「AI Society 起動」で起動しなおしてね。`)
+console.log('上限だけ変えるときは budget.bat。')
 console.log('元のローカルAIに戻すときは localai.bat。')

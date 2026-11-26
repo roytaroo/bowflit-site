@@ -130,6 +130,12 @@ export async function main (argv = process.argv.slice(2)) {
   }
   const store = new Store(path.resolve(ROOT, cfg.database))
   const llm = new LLMClient(cfg.llm, { mockProvider: new MockProvider() })
+  // ネットのAIの1日の予算 (円)。これを超えたらその日はAIに頼まない (住人はルールの仕事だけ続ける)
+  if (cfg.llm.provider === 'anthropic') {
+    const limitYen = cfg.llm.daily_budget_yen ?? 100
+    llm.setBudget({ limitYen, store, onLimit: yen => log.warn('main', `今日のAIの予算 ${limitYen}円 に達した (約${Math.round(yen)}円)。今日はもうAIに頼まない。変えるなら set-api-key.bat の予算設定で`) })
+    log.info('main', `AIの1日の予算: ${limitYen}円 (今日はここまで 約${Math.round(llm.budget.spent())}円)`)
+  }
   await checkOllama(cfg.llm)
   // 前回グラボに入りきらず軽量モデルに切り替えたなら、今回は最初から軽量モデルで
   const remembered = store.getState('auto_light_model', null)
