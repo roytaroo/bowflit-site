@@ -15,7 +15,7 @@ import path from 'node:path'
 import readline from 'node:readline/promises'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { findJava } from './java.js'
+import { ensureJava } from './java.js'
 import { detectPlayerName, addLauncherProfile, addServerEntry, minecraftDir } from './client-setup.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -177,10 +177,10 @@ async function main () {
   ok(`config/settings.local.json を保存 (サーバー上の名前: ${name})`)
 
   say('\n■ 3. Minecraftサーバー (Paper ' + MC_VERSION + (edition === 'bedrock' ? ' + Geyser + Floodgate + ViaVersion' : '') + ')')
-  const java = findJava(21)
-  if (!java.major) ng('Java が見つからない → Java 21 を入れてから、もう一度実行して')
-  else if (java.major < 21) ng(`Java 21 以上が必要 (見つかったのは Java ${java.major})`)
-  else ok(`Java ${java.major}: ${java.cmd}`)
+  try {
+    const java = await ensureJava(21, m => say('  ' + m))
+    ok(`Java ${java.major}: ${java.cmd}`)
+  } catch (e) { ng(`Java 21 を用意できなかった: ${e.message} → https://adoptium.net/ から Temurin 21 を入れて`) }
   const srv = path.join(ROOT, 'server')
   fs.mkdirSync(path.join(srv, 'plugins'), { recursive: true })
   const jar = path.join(srv, 'paper.jar')

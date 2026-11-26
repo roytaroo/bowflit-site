@@ -30,7 +30,10 @@ if (-not (Has 'winget')) {
 Step '1/3 必要なソフトをインストール'
 Install-Winget 'Git.Git' 'git'
 Install-Winget 'OpenJS.NodeJS.LTS' 'node'
-Install-Winget 'EclipseAdoptium.Temurin.21.JDK' 'java'
+# Java は「入っているか」ではなく「21以上か」で判定 (古い Java 8 があっても 21 を入れる)
+$javaOk = $false
+try { $v = (& java -version 2>&1 | Out-String); if ($v -match 'version "(\d+)') { $javaOk = ([int]$Matches[1] -ge 21) } } catch {}
+if ($javaOk) { Write-Host '  OK  Java 21+ (インストール済み)' } else { Install-Winget 'EclipseAdoptium.Temurin.21.JDK' $null }
 Install-Winget 'Ollama.Ollama' 'ollama'
 Install-Winget 'Python.Python.3.12' 'py'
 if (-not (Test-Path (Join-Path $env:APPDATA '.minecraft'))) {

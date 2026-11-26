@@ -7,3 +7,4 @@ config/settings.local.json
 voice_input/.venv/
 __pycache__/
 server/
+runtime/

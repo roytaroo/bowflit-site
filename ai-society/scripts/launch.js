@@ -10,7 +10,7 @@ import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { loadConfig } from '../src/config.js'
 import { findVoicevox, patchGeyserConfig } from './setup.js'
-import { findJava } from './java.js'
+import { ensureJava } from './java.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -116,9 +116,12 @@ async function startServer () {
   if (custom) { [cmd, ...args] = custom.split(' ') } else {
     if (!fs.existsSync(path.join(srv, 'paper.jar'))) { log('server', 'server/paper.jar が無い → 先に setup.bat を実行して'); process.exit(1) }
     const mem = cfg.minecraft.server_memory_gb || 3
-    const java = findJava(21)
-    if (!java.major) { log('server', 'Java が見つからない → Java 21 を入れて (setup.bat かインストーラーの1行をもう一度)'); await sleep(1000); process.exit(1) }
-    if (java.major < 21) { log('server', `Java ${java.major} しか見つからない。Minecraft 1.21.4 のサーバーには Java 21 以上が必要 → インストーラーの1行をもう一度実行して`); await sleep(1000); process.exit(1) }
+    let java
+    try { java = await ensureJava(21, m => log('server', m)) } catch (e) {
+      log('server', `Java 21 を用意できなかった: ${e.message}`)
+      log('server', '→ https://adoptium.net/ から「Temurin 21」を入れてから、もう一度起動して')
+      await sleep(1000); process.exit(1)
+    }
     log('server', `Java ${java.major} を使う: ${java.cmd}`)
     cmd = java.cmd; args = [`-Xms1G`, `-Xmx${mem}G`, '-jar', 'paper.jar', 'nogui']
   }
