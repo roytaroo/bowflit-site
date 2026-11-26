@@ -147,7 +147,7 @@ export class Floor {
     if (this.cfg.use_director && others.length > 1) {
       try {
         const candidates = others.map(a => this.candidateInfo(a, from))
-        const r = await soc.llm.requestJson(buildDirectorPrompt({ playerDisplay: soc.displayName(from), text, candidates, max, isGroup }), { priority: PRIORITY.CHAT, tag: 'floor:director', temperature: 0.9, model: this.cfg.director_model || undefined })
+        const r = await soc.llm.requestJson(buildDirectorPrompt({ playerDisplay: soc.displayName(from), text, candidates, max, isGroup }), { priority: PRIORITY.HUMAN, tag: 'floor:director', temperature: 0.9, model: this.cfg.director_model || undefined })
         for (const x of r.responders || []) {
           const name = byName.has(x.name) ? x.name : this.resolve([x.name])[0]
           if (name && byName.has(name) && !plan.some(p => p.name === name) && plan.length < max + addressed.length) plan.push({ name, stance: x.stance || null, why: x.why || '' })

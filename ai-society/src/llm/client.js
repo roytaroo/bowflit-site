@@ -86,7 +86,10 @@ async function fetchWithTimeout (url, body, ms) {
   } finally { clearTimeout(t) }
 }
 
-export const PRIORITY = { CHAT: 0, URGENT: 0, DECIDE: 1, REFLECT: 2 }
+// HUMAN: プレイヤーとの会話 (最優先) / URGENT: 緊急 / CHAT: 住人同士の会話 / DECIDE: 行動の決定 / REFLECT: 日記など
+// 住人同士の会話と行動の決定は同じ優先度にして、会話ばかりで誰も動かない状態を防ぐ
+export const PRIORITY = { HUMAN: -1, URGENT: 0, CHAT: 1, DECIDE: 1, REFLECT: 2 }
+const AGING_MS = 20000 // 待ち時間20秒ごとに優先度を1つ上げる (後回しにされ続けないように)
 
 export class LLMClient {
   constructor (cfg, { mockProvider = null } = {}) {
@@ -106,7 +109,6 @@ export class LLMClient {
   request (messages, { priority = PRIORITY.DECIDE, json = true, temperature, tag = '', model } = {}) {
     return new Promise((resolve, reject) => {
       this.queue.push({ messages, priority, json, temperature, tag, model, resolve, reject, seq: this.seq++, enq: Date.now() })
-      this.queue.sort((a, b) => a.priority - b.priority || a.seq - b.seq)
       this.stats.maxQueue = Math.max(this.stats.maxQueue, this.queue.length)
       this._pump()
     })
@@ -130,6 +132,9 @@ export class LLMClient {
 
   _pump () {
     while (this.running < this.concurrency && this.queue.length) {
+      const now = Date.now()
+      const eff = j => j.priority < 0 ? j.priority : Math.max(0, j.priority - Math.floor((now - j.enq) / AGING_MS)) // プレイヤーとの会話は常に最優先
+      this.queue.sort((a, b) => eff(a) - eff(b) || a.seq - b.seq)
       const job = this.queue.shift()
       this.running++
       const start = Date.now()

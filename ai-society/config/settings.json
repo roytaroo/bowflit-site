@@ -39,9 +39,10 @@
     }
   },
   "agent": {
-    "decide_interval_ms": 6000,
+    "decide_interval_ms": 3000,
     "action_timeout_sec": 240,
-    "path_search_radius": 40
+    "path_search_radius": 40,
+    "spontaneous_say_interval_sec": 60
   },
   "conversation": {
     "hearing_range": 32,

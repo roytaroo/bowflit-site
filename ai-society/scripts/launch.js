@@ -99,7 +99,12 @@ async function main () {
     if (fs.existsSync(vpy)) {
       await sleep(4000)
       if (win) {
-        spawn('cmd.exe', ['/c', 'start', '"AI Society mic"', vpy, 'talk.py', ...(opt('--mic-mode') ? ['--mode', opt('--mic-mode')] : [])], { cwd: vdir, detached: true, stdio: 'ignore' }).unref()
+        // mic.bat 経由で新しいウィンドウに開く (エラーで閉じても画面が残るように pause 付き)
+        const bat = path.join(vdir, 'mic.bat')
+        const extra = opt('--mic-mode') ? ` --mode ${opt('--mic-mode')}` : ''
+        const mp = spawn('cmd.exe', ['/c', `start "AI Society mic" "${bat}"${extra}`], { cwd: vdir, detached: true, stdio: 'ignore', windowsVerbatimArguments: true })
+        mp.on('error', e => log('mic', 'マイクのウィンドウを開けなかった: ' + e.message + ' → voice_input\\mic.bat をダブルクリックして'))
+        mp.unref()
         log('mic', '別ウィンドウでマイク入力を開いた (F9 を押しながら話す)')
       } else log('mic', `別のターミナルで: cd voice_input && .venv/bin/python talk.py`)
     } else log('mic', 'Python環境がないのでマイクはオフ (setup.bat で作れる)')

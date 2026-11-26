@@ -242,9 +242,19 @@ export class Agent {
       this.society.shared.add('goal', `${this.display}が新しい目標を持った: ${d.long_goal}`, { importance: 4, participants: [this.name], day })
     }
     if (d.promise?.to && d.promise?.content) this._makePromise(d.promise.to, d.promise.content)
-    // プレイヤーとの会話中は、関係ない独り言・雑談を控える (行動はそのまま)
-    if (d.say && !this.society.conversation.humanThreadActive()) await this.say(d.say, d.say_to || null)
-    if (d.action) await this._execute(d.action, 'decide')
+    // 独り言・話しかけは控えめに: プレイヤーとの会話中は話さない、1人あたり一定間隔をあける
+    const gap = (this.cfg.agent?.spontaneous_say_interval_sec ?? 60) * 1000
+    if (d.say && !this.society.conversation.humanThreadActive() && Date.now() - (this.lastSpontaneous || 0) > gap) {
+      this.lastSpontaneous = Date.now()
+      await this.say(d.say, d.say_to || null)
+    }
+    // 行動は最大3つまでまとめて計画できる (LLMを毎回呼ばずに動き続けるため)
+    const plan = (Array.isArray(d.actions) && d.actions.length ? d.actions : [d.action]).filter(x => x && x.name).slice(0, 3)
+    for (let i = 0; i < plan.length; i++) {
+      if (!this.running || this.pendingAction) break // 緊急事態やプレイヤーの頼みごとが入ったら計画を中断
+      const ok = await this._execute(plan[i], 'decide')
+      if (ok === false) break
+    }
   }
 
   async _execute (action, source) {
@@ -257,13 +267,13 @@ export class Agent {
         this.rejected = `${action.name}: ${v.reason}`
         log.info(this.name, `🛡 却下 ${action.name} (${v.reason})`)
         this.memory.add('failure', `${action.name}をしようとしたが止めた: ${v.reason}`, { importance: 2, day: this.day() })
-        return
+        return false
       }
       a = v.action
       if (v.reason) log.info(this.name, `🛡 修正 ${a.name} (${v.reason})`)
     }
     const def = ACTIONS[a.name]
-    if (!def) { this.lastResult = `「${a.name}」という行動はできない`; return }
+    if (!def) { this.lastResult = `「${a.name}」という行動はできない`; return false }
     this.busy = true
     this.interruptFlag = false
     this.currentAction = { name: a.name, reflex: source === 'reflex' }
@@ -295,6 +305,7 @@ export class Agent {
         this.society.noteTogether(this.name, other, what, this.day())
       }
     }
+    return !failed
   }
 
   _ctx () {
@@ -396,7 +407,8 @@ export class Agent {
     while (this.running) {
       if (!this.inbox.length || !this.ready() || !this.alive) { await sleep(300); continue }
       const msg = this.inbox.shift()
-      if (Date.now() - (msg.t || Date.now()) > 60000) continue
+      const age = Date.now() - (msg.t || Date.now())
+      if (age > (msg.fromIsBot ? 20000 : 60000)) continue // 古い話題には今さら返事しない
       try { await this._reply(msg) } catch (e) { log.warn(this.name, '返事に失敗: ' + e.message) }
     }
   }
@@ -407,10 +419,10 @@ export class Agent {
 
   // プレイヤーとの会話の中で返事する (進行役から順番に呼ばれる)
   async respondInThread (thread, { stance = null, why = '', isGroup = false } = {}) {
-    return this._replyCore({ from: thread.from, text: thread.text, isHuman: true, thread: thread.lines, stance, why, isGroup, voicePriority: 0 })
+    return this._replyCore({ from: thread.from, text: thread.text, isHuman: true, thread: thread.lines, stance, why, isGroup, voicePriority: 0, llmPriority: PRIORITY.HUMAN })
   }
 
-  async _replyCore ({ from, text, isHuman, thread = null, stance = null, why = '', isGroup = false, voicePriority = 1 }) {
+  async _replyCore ({ from, text, isHuman, thread = null, stance = null, why = '', isGroup = false, voicePriority = 1, llmPriority = null }) {
     const speakerDisplay = this.society.displayName(from)
     const s = this.state()
     if (isHuman) this.society.relations.init(this.name, from, { label: '人間の仲間' })
@@ -433,7 +445,7 @@ export class Agent {
       isGroup,
       others
     })
-    const r = await this.society.llm.requestJson(messages, { priority: PRIORITY.CHAT, tag: `${this.name}:reply` })
+    const r = await this.society.llm.requestJson(messages, { priority: llmPriority ?? (isHuman ? PRIORITY.HUMAN : PRIORITY.CHAT), tag: `${this.name}:reply` })
     const gap = this.cfg.conversation?.reply_delay_ms ?? 800
     await sleep(gap)
     const day = this.day()

@@ -31,8 +31,10 @@ export function buildDecidePrompt (ctx) {
 使える行動 (actionのnameはこの中から1つ):
 ${actionListForPrompt()}
 
+行動を優先すること。話すのは本当に必要なときだけで、普段は say を空文字にする。
+続けてやることが決まっていれば actions に最大3つまで順番に並べてよい (例: 木を集める → 板にする → 作業台を作る)。
 必ず次のJSONだけで答える:
-{"thought":"今の気持ちと判断理由(40字以内)","say":"声に出す一言(不要なら空文字)","say_to":"話しかける相手の名前かnull","action":{"name":"行動名","args":{}},"goal":"今取り組んでいる短期目標(20字以内)"}
+{"thought":"判断理由(30字以内)","say":"","say_to":null,"actions":[{"name":"行動名","args":{}}],"goal":"今取り組んでいる短期目標(20字以内)"}
 任意で "long_goal":"新しい長期目標" や "promise":{"to":"名前","content":"約束の内容"} も追加できる。`
 
   const user = `【今の状況】

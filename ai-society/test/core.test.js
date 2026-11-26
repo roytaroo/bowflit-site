@@ -124,7 +124,7 @@ test('LLMキュー: 会話の返事が計画より優先される', async () => 
     llm.request([{ content: 'decide1' }], { priority: PRIORITY.DECIDE }),
     llm.request([{ content: 'diary' }], { priority: PRIORITY.REFLECT }),
     llm.request([{ content: 'decide2' }], { priority: PRIORITY.DECIDE }),
-    llm.request([{ content: 'chat' }], { priority: PRIORITY.CHAT })
+    llm.request([{ content: 'chat' }], { priority: PRIORITY.HUMAN })
   ]
   await Promise.all(ps)
   assert.deepEqual(order, ['decide1', 'chat', 'decide2', 'diary'])
@@ -205,4 +205,20 @@ test('安全管理: 溺れそうなら水から上がる、慎重さの効果に
   assert.equal(sf.fleeHealth, 11)
   const r = sf.reflex(baseState({ health: 20, gear: { weapon: 1, armor: 0 }, hostiles: [{ name: 'zombie', dist: 3 }] }))
   assert.equal(r.name, 'attack', '武器と体力があれば1体なら応戦')
+})
+
+test('LLMキュー: 長く待った行動決定は、新しい会話より先に処理される (後回しにされ続けない)', async () => {
+  const order = []
+  let release
+  const gate = new Promise(resolve => { release = resolve })
+  const provider = { chat: async (m) => { order.push(m[0].content); if (m[0].content === 'first') await gate; return { text: '{}' } } }
+  const llm = new LLMClient({ provider: 'mock', concurrency: 1 }, { mockProvider: provider })
+  const ps = [llm.request([{ content: 'first' }], { priority: PRIORITY.DECIDE })]
+  ps.push(llm.request([{ content: 'old-decide' }], { priority: PRIORITY.DECIDE }))
+  llm.queue[0].enq -= 45000 // 45秒待った扱い
+  ps.push(llm.request([{ content: 'bot-chat' }], { priority: PRIORITY.CHAT }))
+  ps.push(llm.request([{ content: 'human' }], { priority: PRIORITY.HUMAN }))
+  release()
+  await Promise.all(ps)
+  assert.deepEqual(order, ['first', 'human', 'old-decide', 'bot-chat'])
 })
