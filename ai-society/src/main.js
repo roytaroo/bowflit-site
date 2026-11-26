@@ -122,6 +122,12 @@ export async function main (argv = process.argv.slice(2)) {
   const { selected } = loadCharacters(ROOT, cfg)
   if (!selected.length) throw new Error('参加するキャラクターがいません (characters/*.json の enabled か --agents を確認)')
 
+  if (cfg.llm.provider === 'anthropic') {
+    cfg.llm.concurrency = Math.max(cfg.llm.concurrency || 1, cfg.llm.cloud_concurrency ?? 4) // ネットのAIは同時にいくつも頼める
+    if (!cfg.llm.api_key && !process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
+      log.error('main', 'ClaudeのAPIキーが設定されていない → set-api-key.bat を実行してキーを入れて')
+    } else log.info('main', `ネットのAI: ${cfg.llm.model} (Claude) を使う`)
+  }
   const store = new Store(path.resolve(ROOT, cfg.database))
   const llm = new LLMClient(cfg.llm, { mockProvider: new MockProvider() })
   await checkOllama(cfg.llm)

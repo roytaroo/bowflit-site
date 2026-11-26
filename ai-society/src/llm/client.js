@@ -59,6 +59,54 @@ class OllamaProvider {
   }
 }
 
+// ネットのAI: Claude (Anthropic API)。キーは環境変数 ANTHROPIC_API_KEY か config/settings.local.json の llm.api_key
+// (settings.local.json はGitに上がらない)。小さな JSON の返事をたくさん頼むので、考える時間(thinking)は切って速くする
+class AnthropicProvider {
+  constructor (cfg) {
+    this.model = cfg.model || 'claude-haiku-5-5'
+    this.maxTokens = cfg.max_tokens ?? 1024
+    this.effort = cfg.effort ?? 'low'
+    this.cfg = cfg
+    this.client = null
+  }
+
+  async _client () {
+    if (this.client) return this.client
+    const { default: Anthropic } = await import('@anthropic-ai/sdk')
+    const opts = { maxRetries: 2, timeout: (this.cfg.timeout_ms ?? 60000) }
+    if (this.cfg.api_key) opts.apiKey = this.cfg.api_key
+    this.client = new Anthropic(opts)
+    return this.client
+  }
+
+  async chat (messages, { json = true, model } = {}) {
+    const client = await this._client()
+    // system は1つにまとめ、残りは user/assistant の順に (同じ役が続いたらつなげる)
+    const system = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n')
+    const rest = []
+    for (const m of messages.filter(m => m.role !== 'system')) {
+      const last = rest[rest.length - 1]
+      if (last && last.role === m.role) last.content += '\n\n' + m.content
+      else rest.push({ role: m.role, content: String(m.content) })
+    }
+    if (!rest.length || rest[0].role !== 'user') rest.unshift({ role: 'user', content: '続けて。' })
+    if (rest[rest.length - 1].role !== 'user') rest.push({ role: 'user', content: json ? 'JSONだけで答えて。' : '続けて。' })
+    const res = await client.messages.create({
+      model: model || this.model,
+      max_tokens: this.maxTokens,
+      system: system + (json ? '\n\n出力はJSONオブジェクト1つだけ。前置きやコードブロックは付けない。' : ''),
+      messages: rest,
+      thinking: { type: 'disabled' },
+      output_config: { effort: this.effort },
+      cache_control: { type: 'ephemeral' } // 同じ人格の設定文は使い回して安くする
+    })
+    if (res.stop_reason === 'refusal') throw new Error('Claudeが答えを断った (' + (res.stop_details?.category || '理由不明') + ')')
+    const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('')
+    const u = res.usage || {}
+    return { text, evalCount: u.output_tokens, promptCount: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), cacheRead: u.cache_read_input_tokens || 0 }
+  }
+}
+
 // LM Studio / llama.cpp server / vLLM などの OpenAI互換ローカルサーバー用
 class OpenAICompatProvider {
   constructor (cfg) {
@@ -96,6 +144,7 @@ export class LLMClient {
     this.cfg = cfg
     if (cfg.provider === 'mock') this.provider = mockProvider
     else if (cfg.provider === 'openai_compat') this.provider = new OpenAICompatProvider(cfg)
+    else if (cfg.provider === 'anthropic') this.provider = new AnthropicProvider(cfg)
     else this.provider = new OllamaProvider(cfg)
     if (!this.provider) throw new Error('LLM provider not configured')
     this.concurrency = cfg.concurrency ?? 1
@@ -150,6 +199,8 @@ export class LLMClient {
           this.stats.calls++
           this.stats.totalMs += Date.now() - start
           this.stats.tokens += r.evalCount || 0
+          this.stats.inTokens = (this.stats.inTokens || 0) + (r.promptCount || 0)
+          this.stats.cacheRead = (this.stats.cacheRead || 0) + (r.cacheRead || 0)
           job.resolve(r)
         })
         .catch(e => { this.stats.errors++; job.reject(e) })
@@ -160,6 +211,14 @@ export class LLMClient {
   summary () {
     const s = this.stats
     const n = Math.max(1, s.calls)
-    return `LLM呼び出し ${s.calls}回 / エラー ${s.errors} / 平均応答 ${(s.totalMs / n / 1000).toFixed(1)}秒 / 平均待ち ${(s.totalWaitMs / n / 1000).toFixed(1)}秒 / 最大キュー ${s.maxQueue} / 生成トークン ${s.tokens}`
+    let cost = ''
+    if (this.cfg.provider === 'anthropic') {
+      // 料金の目安 (Claude Haiku 5.5: 入力 $0.10 / 出力 $0.50 per 100万トークン、キャッシュ読み込みは入力の約1割)
+      const p = { input: 0.10, output: 0.50, yen: 150, ...(this.cfg.price || {}) }
+      const fresh = (s.inTokens || 0) - (s.cacheRead || 0)
+      const usd = fresh / 1e6 * p.input + (s.cacheRead || 0) / 1e6 * p.input * 0.1 + s.tokens / 1e6 * p.output
+      cost = ` / 料金の目安 約${Math.round(usd * p.yen * 10) / 10}円 ($${usd.toFixed(3)})`
+    }
+    return `LLM呼び出し ${s.calls}回 / エラー ${s.errors} / 平均応答 ${(s.totalMs / n / 1000).toFixed(1)}秒 / 平均待ち ${(s.totalWaitMs / n / 1000).toFixed(1)}秒 / 最大キュー ${s.maxQueue} / 生成トークン ${s.tokens}${cost}`
   }
 }

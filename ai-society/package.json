@@ -21,6 +21,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "minecraft-data": "^3.119.0",
     "minecraft-protocol": "^1.68.0",
     "mineflayer": "^4.39.0",

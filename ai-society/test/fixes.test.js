@@ -168,3 +168,18 @@ test('「集めてきて」は来てではない', async () => {
   const { requestFromText } = await import('../src/agent/requests.js')
   assert.equal(requestFromText('木を5個集めてきて', { from: 'a' }).action.name, 'collect')
 })
+
+test('ネットのAI (Claude): 送る形と料金の目安', async () => {
+  const { LLMClient } = await import('../src/llm/client.js')
+  const llm = new LLMClient({ provider: 'anthropic', model: 'claude-haiku-5-5' })
+  let sent = null
+  llm.provider.client = { messages: { create: async p => { sent = p; return { stop_reason: 'end_turn', content: [{ type: 'text', text: '{"say":"よろしくなのだ"}' }], usage: { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 900 } } } } }
+  const r = await llm.requestJson([{ role: 'system', content: 'あなたはずんだもん' }, { role: 'user', content: 'やあ' }, { role: 'assistant', content: '{"say":"x"}' }, { role: 'user', content: '言い直して' }])
+  assert.equal(r.say, 'よろしくなのだ')
+  assert.equal(sent.model, 'claude-haiku-5-5')
+  assert.match(sent.system, /ずんだもん/)
+  assert.deepEqual(sent.messages.map(m => m.role), ['user', 'assistant', 'user'])
+  assert.equal(sent.temperature, undefined) // Haiku 5.5 は temperature を送ると400
+  assert.deepEqual(sent.thinking, { type: 'disabled' })
+  assert.match(llm.summary(), /料金の目安/)
+})
