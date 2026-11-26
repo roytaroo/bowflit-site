@@ -27,7 +27,7 @@ export function startInputServer ({ society, tts, config }) {
         const text = String(data.text || '').trim()
         if (!text) return send(400, { ok: false, error: 'text is empty' })
         const player = data.player || playerName
-        if (config.voice_input?.echo_to_chat) echoToChat(society, player, text)
+        if (config.voice_input?.echo_to_chat !== false) echoToChat(society, player, text)
         // 返事は非同期で進む (進行役 → 各住人)。ここではすぐ受付を返す
         society.floor.handleHuman(player, text, { source: 'voice' }).catch(e => log.warn('voice-in', e.message))
         return send(200, { ok: true })
@@ -41,10 +41,9 @@ export function startInputServer ({ society, tts, config }) {
   return server
 }
 
-// プレイヤーの声の内容をゲーム内チャットにも表示する (住人ボットの1人にOP権限が必要)
+// プレイヤーが声・別ウィンドウで話した内容をゲーム内チャットにも表示する。
+// 起動役 (launch.js) がこの印の行を見つけて、サーバーの操作画面から tellraw を実行する (住人にOP権限は渡さない)
 function echoToChat (society, player, text) {
-  const bot = society.aliveAgents().find(a => a.ready())?.bot
-  if (!bot) return
-  const msg = JSON.stringify({ text: `[${society.displayName(player)}🎤] ${text}`, color: 'gray' })
-  try { bot.chat(`/tellraw @a ${msg}`) } catch {}
+  const msg = JSON.stringify({ text: `<${society.displayName(player)}> ${text}`, color: 'white' })
+  console.log('@@TELLRAW ' + msg)
 }

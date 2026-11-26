@@ -336,6 +336,7 @@ export class Agent {
     // 小さいモデルが指示文をそのまま書き写したものは話さない
     if (/字以内|JSON|その場で口にする|返事をJSON|^\(.*\)$|null$/.test(text)) { log.debug(this.name, '指示文の書き写しを除外: ' + text); return }
     if (!text || !this.bot) return
+    text = text.replace(/^[/\\]+/, '') // 住人の発言がコマンドとして実行されないように
     for (const chunk of splitChat(text)) {
       try { this.bot.chat(chunk) } catch {}
     }

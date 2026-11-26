@@ -164,12 +164,23 @@ def handle_audio(audio, rec: Recognizer, server: Server):
 
 # ---------------------------------------------------------------- モード
 def run_text(server: Server):
-    print("文字で話しかけるモード。空行で終了。例: みんな、今日はダイヤを探しに行かない?")
+    print("文字で話しかけるモード。例: みんな、今日はダイヤを探しに行かない?")
     for line in sys.stdin:
         line = line.strip()
         if not line:
-            break
+            continue
         print("  → 送信" if server.send(line) else "")
+
+
+def start_typing_thread(server: Server):
+    """マイクのウィンドウで文字を打って Enter でも話しかけられるようにする (日本語変換が普通に使える)"""
+    def loop():
+        for line in sys.stdin:
+            line = line.strip()
+            if line:
+                print("  → 送信" if server.send(line) else "")
+    threading.Thread(target=loop, daemon=True).start()
+    print("  ※ このウィンドウに文字を打って Enter でも話しかけられる (日本語変換OK)")
 
 
 def run_ptt(server: Server, rec: Recognizer, key_name: str, mic):
@@ -206,6 +217,7 @@ def run_ptt(server: Server, rec: Recognizer, key_name: str, mic):
 
     threading.Thread(target=worker, daemon=True).start()
     print(f"プッシュ・トゥ・トーク: [{key_name}] を押している間だけ録音します。Ctrl+C で終了")
+    start_typing_thread(server)
     with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32", device=mic, callback=callback):
         with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
             listener.join()
@@ -240,6 +252,7 @@ def run_always(server: Server, rec: Recognizer, mic, echo_guard: bool):
         threading.Thread(target=poll_speaking, daemon=True).start()
     threading.Thread(target=worker, daemon=True).start()
     print("常時会話モード: 話しかけると自動で認識します。Ctrl+C で終了")
+    start_typing_thread(server)
     print("  ※ スピーカーの声を拾わないよう、ヘッドホンの利用を推奨")
     buf = np.zeros(0, dtype="float32")
     tainted = False
@@ -279,7 +292,12 @@ def main(argv=None):
         return run_text(server)
     names = server.names()
     hint = ("、".join(names) + "と話しています。") if names else ""
-    rec = Recognizer(a.model, a.device, a.compute_type, hint)
+    try:
+        rec = Recognizer(a.model, a.device, a.compute_type, hint)
+    except Exception as e:  # noqa: BLE001
+        print(f"✘ 音声認識を起動できなかった: {e}")
+        print("  文字入力だけで続けます。")
+        return run_text(server)
     mic = int(a.mic) if a.mic and a.mic.isdigit() else a.mic
     try:
         if a.mode == "ptt":

@@ -116,8 +116,20 @@ async function main () {
 const restarts = []
 function startAgents (pass) {
   log('launch', '住人を起動します')
-  const p = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'src/main.js'), ...pass], { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'] })
+  const p = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'src/main.js'), ...pass], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'] })
   children.agents = p
+  // 住人側からの「ゲーム内に表示して」の印 (@@TELLRAW) をサーバーの操作画面に渡す
+  let buf = ''
+  p.stdout.on('data', d => {
+    buf += d
+    const lines = buf.split(/\r?\n/); buf = lines.pop()
+    for (const line of lines) {
+      if (line.startsWith('@@TELLRAW ')) {
+        const json = line.slice(10)
+        if (children.server && children.server.exitCode == null) { try { children.server.stdin.write(`tellraw @a ${json}\n`) } catch {} }
+      } else process.stdout.write(line + '\n')
+    }
+  })
   p.on('exit', code => {
     if (stopping) return
     const now = Date.now()
@@ -203,6 +215,8 @@ async function startServer () {
   // ワールドのルール: 死んでも持ち物を失わない / 初回は昼から始める
   if (cfg.world?.keep_inventory !== false) p.stdin.write('gamerule keepInventory true\n')
   if (cfg.world?.difficulty) p.stdin.write(`difficulty ${cfg.world.difficulty}\n`)
+  // プレイヤーにOP権限 (コマンドが使える)
+  if (cfg.player?.name && cfg.world?.op_player !== false) { p.stdin.write(`op ${cfg.player.name}\n`); log('server', `${cfg.player.name} にOP権限を付けた (コマンドが使える)`) }
   const firstFlag = path.join(srv, 'first-start-done')
   if (cfg.world?.start_at_day !== false && !fs.existsSync(firstFlag)) { p.stdin.write('time set day\n'); fs.writeFileSync(firstFlag, String(Date.now())); log('server', '初回なので昼にした') }
   // 初回だけ: Geyser の設定を「統合版は Floodgate(Xbox認証)で入る」にして再読み込み

@@ -22,7 +22,8 @@
       "oak_log 16",
       "torch 16",
       "white_bed 1"
-    ]
+    ],
+    "op_player": true
   },
   "llm": {
     "provider": "ollama",
@@ -96,7 +97,7 @@
   "voice_input": {
     "enabled": true,
     "port": 8765,
-    "echo_to_chat": false
+    "echo_to_chat": true
   },
   "database": "data/society.db",
   "characters_dir": "characters",
