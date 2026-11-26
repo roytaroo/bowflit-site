@@ -3,19 +3,27 @@
 import { actionListForPrompt } from './actions.js'
 import { EVENT_EFFECTS } from '../society/relationships.js'
 
-export function personaBlock (c, agentRow) {
+export function personaBlock (c, agentRow, { playerDisplay = 'だいき', compact = false } = {}) {
+  const age = /歳|年齢|生|不詳/.test(String(c.age)) ? c.age : c.age + '歳'
   const lines = [
-    `あなたは「${c.display_name}」(Minecraft上の名前: ${c.username})。${c.age}歳。Minecraftのサバイバルワールドで仲間と暮らしている住人。`,
+    `あなたは「${c.display_name}」(Minecraft上の名前: ${c.username})。${age}。Minecraftのサバイバルワールドで仲間と暮らしている住人。`,
     `性格: ${c.personality}`,
-    `口調: ${c.speech}`,
+    `口調: ${c.speech}`
+  ]
+  if (c.never?.length) lines.push(`絶対にしないこと: ${c.never.join(' / ')}`)
+  if (c.examples?.length) lines.push(`セリフの例 (この口調で話す。同じ文をそのまま使わない):\n${(compact ? c.examples.slice(0, 3) : c.examples).map(e => `「${e}」`).join('\n')}`)
+  if (c.role) lines.push(`村での役割: ${c.role}`)
+  if (c.about_others && !compact) for (const v of Object.values(c.about_others)) lines.push(`- ${v}`)
+  if (c.about_player) lines.push(`${playerDisplay}について: ${c.about_player.replace(/だいき/g, playerDisplay)}`)
+  lines.push(
     `大切にしていること: ${(c.values || []).join('、')}`,
     `好き: ${(c.likes || []).join('、')} / 嫌い: ${(c.dislikes || []).join('、')}`,
     `得意: ${(c.skills || []).join('、')} / 苦手: ${(c.weaknesses || []).join('、')}`,
     `個人的な目標: ${c.personal_goal}`,
     `長期的な夢: ${agentRow?.long_goal || c.dream}`
-  ]
+  )
   if (agentRow?.growth) lines.push(`経験を通して変わったこと: ${agentRow.growth}`)
-  lines.push('あなたはAIやボットではなく、この世界の住人として考え、話す。他の住人の心の中は分からない。')
+  lines.push('あなたはAIやボットではなく、この世界の住人として考え、話す。他の住人の心の中は分からない。他の住人の口調(一人称・語尾)は絶対に真似しない。')
   return lines.join('\n')
 }
 
@@ -25,7 +33,7 @@ function memoryLines (mems) {
 
 export function buildDecidePrompt (ctx) {
   const { character, agentRow, stateText, memories, lessons, relations, shared, projects, recentChat, lastResult, rejected, names } = ctx
-  const system = personaBlock(character, agentRow) + `
+  const system = personaBlock(character, agentRow, { compact: true }) + `
 
 あなたは次に何をするか自分で決める。体力・時間・仲間の状況・自分の目標と性格を考えて選ぶこと。
 使える行動 (actionのnameはこの中から1つ):
@@ -113,7 +121,7 @@ export function buildDiaryPrompt (ctx) {
   const { character, agentRow, day, todayMemories, relations, names } = ctx
   const system = personaBlock(character, agentRow) + `
 
-一日の終わりに日記を書く。自分の口調で、正直な気持ちを書く。
+一日の終わりに日記を書く。自分の口調で、正直な気持ちを書く。${character.diary_style ? `文体: ${character.diary_style}` : ''}
 必ず次のJSONだけで答える:
 {"diary":"日記本文(200字以内。今日したこと、話した相手、印象に残ったこと、困ったこと、仲間について気づいたこと)","tomorrow":"明日やりたいこと(40字以内)","impressions":[{"name":"仲間の名前","impression":"その人への今の印象(30字以内)","label":"関係を一言で(親友/ライバル/苦手/師匠 など。変化なしならnull)"}],"growth":"今日の経験で変わった考え方(なければ空文字)","lesson":"次に活かす教訓(なければ空文字)"}`
   const user = `【${day}日目の出来事】

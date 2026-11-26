@@ -77,6 +77,28 @@ export class Society {
     }
   }
 
+  // キャラ設定を書き直したとき (profile_version が上がったとき)、保存済みのデータを新しい設定に合わせる:
+  // 長期の夢・関係の初期値を新しい設定にし、古い口調で自分が言ったセリフの記憶を消す (古い口調に引っ張られないように)
+  applyProfileUpgrades (characters) {
+    for (const c of characters) {
+      if (!c.profile_version) continue
+      const key = `profile_version:${c.username}`
+      if (this.store.getState(key, 0) >= c.profile_version) continue
+      this.store.ensureAgent(c.username, { long_goal: c.dream })
+      this.store.updateAgent(c.username, { long_goal: c.dream, current_goal: c.personal_goal || null })
+      for (const [other, seed] of Object.entries(c.relationships || {})) {
+        this.relations.init(c.username, other, seed)
+        this.store.run('UPDATE relationships SET label = ?, affinity = ?, trust = ?, impression = ? WHERE agent = ? AND other = ?',
+          seed.label ?? null, seed.affinity ?? 0, seed.trust ?? 0, seed.impression ?? '', c.username, other)
+      }
+      const rows = this.store.all("SELECT id, content FROM memories WHERE agent = ? AND kind = 'chat'", c.username)
+      const own = rows.filter(r => /^([^「が\s]{0,12}に)?「/.test(r.content) && /」と言った$/.test(r.content))
+      for (const r of own) this.store.run('DELETE FROM memories WHERE id = ?', r.id)
+      this.store.setState(key, c.profile_version)
+      log.info('society', `${c.display_name}: キャラ設定を新しくした (古い口調のセリフの記憶 ${own.length}件を整理)`)
+    }
+  }
+
   // 1日1回だけ「一緒に活動した」を記録 (同じ2人で数値が急に上がらないように)
   noteTogether (a, b, what, day) {
     const key = `${[a, b].sort().join('|')}|${day}`

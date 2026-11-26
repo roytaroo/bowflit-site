@@ -3,6 +3,7 @@
 //  [LLM]             行動の意思決定・目標設定・会話・日記・死への反応
 import { createRequire } from 'node:module'
 import { snapshot, describeState } from './perception.js'
+import { voiceIssues, fixVoice } from './voiceStyle.js'
 import { Safety } from './safety.js'
 import { ACTIONS } from './actions.js'
 import { AgentMemory } from '../memory/memory.js'
@@ -310,6 +311,8 @@ export class Agent {
     if (d.promise?.to && d.promise?.content) this._makePromise(d.promise.to, d.promise.content)
     // 独り言・話しかけは控えめに: プレイヤーとの会話中は話さない、1人あたり一定間隔をあける
     const gap = (this.cfg.agent?.spontaneous_say_interval_sec ?? 60) * 1000
+    // 独り言は口調が違えば手直しし、それでもダメなら言わない (言い直しでLLMを使うほどではない)
+    if (d.say) { const f = fixVoice(this.character, d.say); d.say = voiceIssues(this.character, f).length ? null : f }
     if (d.say && !this.society.conversation.humanThreadActive() && Date.now() - (this.lastSpontaneous || 0) > gap) {
       this.lastSpontaneous = Date.now()
       await this.say(d.say, d.say_to || null)
@@ -548,7 +551,9 @@ export class Agent {
       isGroup,
       others
     })
-    const r = await this.society.llm.requestJson(messages, { priority: llmPriority ?? (isHuman ? PRIORITY.HUMAN : PRIORITY.CHAT), tag: `${this.name}:reply` })
+    const prio = llmPriority ?? (isHuman ? PRIORITY.HUMAN : PRIORITY.CHAT)
+    const r = await this.society.llm.requestJson(messages, { priority: prio, tag: `${this.name}:reply` })
+    if (r.say) r.say = await this._inVoice(r.say, messages, prio)
     const gap = this.cfg.conversation?.reply_delay_ms ?? 800
     await sleep(gap)
     const day = this.day()
@@ -574,6 +579,22 @@ export class Agent {
       if (this.busy) { this.interruptFlag = true; try { this.bot.pathfinder.stop() } catch {} } // 頼みごとを優先
     }
     return r
+  }
+
+  // 口調がこのキャラのもの (一人称・語尾) か確かめて、違えば1回だけ言い直させる
+  async _inVoice (text, messages, priority) {
+    let issues = voiceIssues(this.character, text)
+    if (!issues.length) return text
+    log.info(this.name, `🎭 口調が違うので言い直し: ${text} (${issues.join(' / ')})`)
+    try {
+      const r = await this.society.llm.requestJson([...messages,
+        { role: 'assistant', content: JSON.stringify({ say: text }) },
+        { role: 'user', content: `今のセリフは${this.display}の口調になっていない: ${issues.join('、')}。\n${this.character.speech}\n同じ内容を${this.display}の口調で言い直して。JSON {"say":"..."} だけで答える。` }
+      ], { priority, tag: `${this.name}:voicefix`, temperature: 0.6 })
+      if (r.say) text = String(r.say)
+    } catch {}
+    issues = voiceIssues(this.character, text)
+    return issues.length ? fixVoice(this.character, text) : text
   }
 
   _makePromise (to, content) {
@@ -730,7 +751,7 @@ export class Agent {
       this.store.updateAgent(this.name, { current_goal: String(r.new_goal).slice(0, 80) })
       this.memory.add('goal', `${deadDisplay}の死をきっかけに: ${r.new_goal}`, { importance: 7, about: dead, day })
     }
-    if (r.say) await this.say(r.say, null)
+    if (r.say) await this.say(fixVoice(this.character, r.say), null)
     return r
   }
 }

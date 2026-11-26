@@ -63,3 +63,20 @@ test('モノラルのWAVを左右の音量が違うステレオにする', () =>
   assert.equal(o.readUInt16LE(22), 2)
   assert.ok(o.readInt16LE(46) > o.readInt16LE(44))
 })
+
+test('口調チェック: 設定書の一人称・語尾・禁止表現', async () => {
+  const fs = await import('node:fs')
+  const { voiceIssues, fixVoice } = await import('../src/agent/voiceStyle.js')
+  const ch = n => JSON.parse(fs.readFileSync(new URL(`../characters/${n}.json`, import.meta.url), 'utf8'))
+  const z = ch('zundamon'); const m = ch('metan'); const k = ch('kiritan')
+  assert.deepEqual(voiceIssues(z, 'ボクが一番なのだ！'), [])
+  assert.ok(voiceIssues(z, '私も行きます。よろしくお願いします').length)
+  assert.equal(fixVoice(z, '私も行きます'), 'ボクも行くのだ')
+  assert.equal(fixVoice(z, '一緒に作りましょう！今日は元気です'), '一緒に作るのだ！今日は元気なのだ')
+  assert.deepEqual(voiceIssues(m, 'べ、別にあんたのためじゃないわよ'), [])
+  assert.ok(voiceIssues(m, 'わたくしもヤッホーですわ').length)
+  assert.deepEqual(voiceIssues(k, 'はいはい、うるさい'), [])
+  assert.ok(voiceIssues(k, 'まあ、いいですけど').length)
+  // 公式設定書の例文は全部チェックを通る
+  for (const c of [z, m, k]) for (const e of c.examples) assert.deepEqual(voiceIssues(c, e), [], `${c.display_name}: ${e}`)
+})

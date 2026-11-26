@@ -148,6 +148,7 @@ export async function main (argv = process.argv.slice(2)) {
   const society = new Society({ store, llm, config: cfg, voice })
   society.display = makeDisplay(cfg)
   society.seedRelationships(selected)
+  society.applyProfileUpgrades(selected)
   const agents = selected.map(c => new Agent(c, society))
   society.bus.on('say', msg => { for (const a of agents) a.hearBot(msg) })
   society.display.setupTeam(agents.map(a => a.name))
