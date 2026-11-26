@@ -182,8 +182,11 @@ class GeminiProvider {
 
 // 使えるモデルの中から、いちばん新しい Flash を選ぶ (名前は時期で変わるので一覧から決める)
 export function pickGeminiModel (models) {
-  const ok = models.filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+  const names = models.filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map(m => String(m.name).replace(/^models\//, ''))
+  // 「常に最新の Flash」を指す名前があればそれを使う
+  if (names.includes('gemini-flash-latest')) return 'gemini-flash-latest'
+  const ok = names
     .filter(n => /^gemini-[\d.]+-flash(-lite)?$/.test(n) || /^gemini-[\d.]+-flash(-lite)?-latest$/.test(n))
   const ver = n => Number((n.match(/gemini-([\d.]+)/) || [])[1]?.split('.').slice(0, 2).join('.') || 0)
   ok.sort((a, b) => ver(b) - ver(a) || (a.includes('lite') ? 1 : 0) - (b.includes('lite') ? 1 : 0) || a.length - b.length)

@@ -12,7 +12,7 @@ const file = path.join(ROOT, 'config/settings.local.json')
 let local = {}
 try { local = JSON.parse(fs.readFileSync(file, 'utf8')) } catch {}
 
-console.log('Gemini の APIキーを貼り付けて Enter (AIza で始まる文字列)。')
+console.log('Gemini の APIキーを貼り付けて Enter (AQ. や AIza で始まる文字列)。')
 console.log('キーは https://aistudio.google.com の「Get API key」で無料で作れる。キーは他の人に見せないでね。')
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const key = (await rl.question('APIキー: ')).trim()
