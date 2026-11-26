@@ -1,0 +1,26 @@
+diff --git a/node_modules/mineflayer/lib/plugins/inventory.js b/node_modules/mineflayer/lib/plugins/inventory.js
+index bab0eef..eec5428 100644
+--- a/node_modules/mineflayer/lib/plugins/inventory.js
++++ b/node_modules/mineflayer/lib/plugins/inventory.js
+@@ -31,8 +31,11 @@ function inject (bot, { hideErrors }) {
+ 
+   let nextActionNumber = 0 // < 1.17
+   let stateId = -1
++  // サーバーは窓 (コンテナ) ごとに stateId を数える。別の窓の更新 (手持ち欄の同期など) で上書きすると
++  // 作業台の窓のクリックが古い番号になり、サーバーに巻き戻される (作った物が消える) ので窓ごとに覚える
++  const stateIds = new Map()
+   if (bot.supportFeature('stateIdUsed')) {
+-    const listener = packet => { stateId = packet.stateId }
++    const listener = packet => { stateId = packet.stateId; stateIds.set(packet.windowId, packet.stateId) }
+     bot._client.on('window_items', listener)
+     bot._client.on('set_slot', listener)
+   }
+@@ -629,7 +632,7 @@ function inject (bot, { hideErrors }) {
+     if (bot.supportFeature('stateIdUsed')) { // 1.17.1 +
+       bot._client.write('window_click', {
+         windowId: window.id,
+-        stateId,
++        stateId: stateIds.has(window.id) ? stateIds.get(window.id) : stateId,
+         slot,
+         mouseButton,
+         mode,
