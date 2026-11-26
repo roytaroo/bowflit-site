@@ -42,6 +42,19 @@ async function checkOllama (cfg) {
   }
 }
 
+// AI がグラボにどれだけ載っているか (100% が理想。低いと CPU で動いて遅くなる)
+async function reportGpuShare (llmCfg) {
+  try {
+    const ps = await (await fetch(llmCfg.url.replace(/\/$/, '') + '/api/ps')).json()
+    for (const m of ps.models || []) {
+      const pct = m.size ? Math.round(m.size_vram / m.size * 100) : 0
+      const msg = `AIのグラボ使用率: ${m.name} ${pct}% がグラボ上 (VRAM ${(m.size_vram / 1e9).toFixed(1)}GB / 全体 ${(m.size / 1e9).toFixed(1)}GB)`
+      if (pct < 90) log.warn('main', msg + ' → グラボに入りきらず遅い。Minecraftを閉じるか、lightmode.bat で軽量モードに')
+      else log.info('main', msg)
+    }
+  } catch {}
+}
+
 export async function main (argv = process.argv.slice(2)) {
   const args = parseArgs(argv)
   const overrides = {}
@@ -69,6 +82,7 @@ export async function main (argv = process.argv.slice(2)) {
     try {
       await fetch(cfg.llm.url.replace(/\/$/, '') + '/api/generate', { method: 'POST', body: JSON.stringify({ model: cfg.llm.model, prompt: 'hi', stream: false, keep_alive: cfg.llm.keep_alive ?? '30m', options: { num_predict: 1 } }), signal: AbortSignal.timeout(300000) })
       log.info('main', `LLM準備OK (${((Date.now() - t0) / 1000).toFixed(0)}秒)`)
+      await reportGpuShare(cfg.llm)
     } catch (e) { log.warn('main', 'LLMの準備に失敗: ' + e.message) }
   }
   const voice = new TTS({ ...cfg.voice, out_dir: path.resolve(ROOT, cfg.voice.out_dir || 'data/voice') })
@@ -105,7 +119,7 @@ export async function main (argv = process.argv.slice(2)) {
 
   const inputServer = cfg.voice_input?.enabled ? startInputServer({ society, tts: voice, config: cfg }) : null
 
-  const stats = setInterval(() => log.info('stats', llm.summary()), 5 * 60000)
+  const stats = setInterval(() => { log.info('stats', llm.summary()); if (cfg.llm.provider === 'ollama') reportGpuShare(cfg.llm) }, 2 * 60000)
 
   let stopping = false
   const shutdown = async () => {
