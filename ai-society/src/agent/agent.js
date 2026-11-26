@@ -106,6 +106,8 @@ export class Agent {
       this._reflexTimer = setInterval(() => this._reflexTick(), 1000)
     })
 
+    // スポーンのたび (リスポーン含む) に頭上の名前・吹き出しを付け直す
+    bot.on('spawn', () => setTimeout(() => this.society.display?.attach(this.character), 1500))
     bot.on('chat', (username, message) => this._onGameChat(username, message))
     bot.on('messagestr', (msg, position) => {
       if (position === 'chat') return
@@ -127,6 +129,7 @@ export class Agent {
 
   stop () {
     this.running = false
+    this.society.display?.detach(this.character)
     clearInterval(this._reflexTimer)
     try { this.bot?.quit() } catch {}
   }
@@ -337,8 +340,14 @@ export class Agent {
     if (/字以内|JSON|その場で口にする|返事をJSON|^\(.*\)$|null$/.test(text)) { log.debug(this.name, '指示文の書き写しを除外: ' + text); return }
     if (!text || !this.bot) return
     text = text.replace(/^[/\\]+/, '') // 住人の発言がコマンドとして実行されないように
-    for (const chunk of splitChat(text)) {
-      try { this.bot.chat(chunk) } catch {}
+    const display = this.society.display
+    if (display?.enabled) {
+      display.chat(this.character, text)    // チャット欄: 日本語の名前(色付き)
+      display.bubble(this.character, text)  // 頭上の吹き出し
+    } else {
+      for (const chunk of splitChat(text)) {
+        try { this.bot.chat(chunk) } catch {}
+      }
     }
     const pos = this.bot.entity?.position
     const id = this.society.conversation.newMessageId()
@@ -347,8 +356,20 @@ export class Agent {
     this.heard = this.heard.slice(-20)
     this.memory.add('chat', `${to ? this.society.displayName(to) + 'に' : ''}「${text}」と言った`, { importance: 2, about: to, day: this.day() })
     log.info(this.name, `💬 ${this.display}: ${text}`)
-    this.society.voice?.speak(this.character, text, { priority: voicePriority })
+    // 声は、プレイヤーの近くにいる住人のものだけ聞こえる (遠いほど小さく)
+    const vol = this._voiceVolumeForPlayer()
+    if (vol > 0) this.society.voice?.speak(this.character, text, { priority: voicePriority, volume: vol })
     this.society.bus.emit('say', { id, from: this.name, to, text, pos })
+  }
+
+  _voiceVolumeForPlayer () {
+    const range = this.cfg.voice?.range ?? 24
+    const pe = this.bot?.players?.[this.cfg.player?.name]?.entity
+    const me = this.bot?.entity?.position
+    if (!pe || !me) return 0 // プレイヤーが近くにいない (または未ログイン) なら声は出さない
+    const d = pe.position.distanceTo(me)
+    if (d > range) return 0
+    return Math.max(0.3, 1 - d / range)
   }
 
   // 他のAIの発言 (プロセス内バス経由で確実に受け取る)

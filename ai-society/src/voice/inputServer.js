@@ -44,6 +44,6 @@ export function startInputServer ({ society, tts, config }) {
 // プレイヤーが声・別ウィンドウで話した内容をゲーム内チャットにも表示する。
 // 起動役 (launch.js) がこの印の行を見つけて、サーバーの操作画面から tellraw を実行する (住人にOP権限は渡さない)
 function echoToChat (society, player, text) {
-  const msg = JSON.stringify({ text: `<${society.displayName(player)}> ${text}`, color: 'white' })
-  console.log('@@TELLRAW ' + msg)
+  const msg = JSON.stringify({ text: `<${society.displayName(player)}> ${String(text).replace(/[\r\n]+/g, ' ')}`, color: 'white' })
+  console.log('@@CMD tellraw @a ' + msg)
 }

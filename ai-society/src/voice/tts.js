@@ -123,11 +123,13 @@ export class TTS {
   }
 
   // priority: 0=プレイヤーとの会話 1=通常の発言。返り値は再生が終わると解決する Promise
-  speak (character, text, { priority = 1 } = {}) {
+  // volume: 0〜1 の倍率 (遠くの住人の声は小さく)
+  speak (character, text, { priority = 1, volume = null } = {}) {
     if (!this.enabled) return Promise.resolve(false)
     const t = cleanForSpeech(text, this.maxChars)
     if (!t) return Promise.resolve(false)
-    const voice = character.voice || {}
+    const voice = { ...(character.voice || {}) }
+    if (volume != null) voice.volume = (voice.volume ?? 1) * volume
     const engine = this.synth[voice.engine || 'voicevox'] || this.synth.voicevox
     let done
     const finished = new Promise(resolve => { done = resolve })

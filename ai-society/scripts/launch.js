@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { loadConfig } from '../src/config.js'
 import { findVoicevox, patchGeyserConfig } from './setup.js'
 import { ensureJava } from './java.js'
+import { datapackFiles } from '../src/society/display.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -116,7 +117,7 @@ async function main () {
 const restarts = []
 function startAgents (pass) {
   log('launch', '住人を起動します')
-  const p = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'src/main.js'), ...pass], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'] })
+  const p = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'src/main.js'), ...pass], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, AI_SOCIETY_LAUNCHED: '1' } })
   children.agents = p
   // 住人側からの「ゲーム内に表示して」の印 (@@TELLRAW) をサーバーの操作画面に渡す
   let buf = ''
@@ -124,9 +125,12 @@ function startAgents (pass) {
     buf += d
     const lines = buf.split(/\r?\n/); buf = lines.pop()
     for (const line of lines) {
-      if (line.startsWith('@@TELLRAW ')) {
-        const json = line.slice(10)
-        if (children.server && children.server.exitCode == null) { try { children.server.stdin.write(`tellraw @a ${json}\n`) } catch {} }
+      if (line.startsWith('@@CMD ')) {
+        // 住人側からのサーバーコマンド (表示用: tellraw / text_display / team のみ許可)
+        const cmd = line.slice(6).replace(/[\r\n]/g, '')
+        if (/^(tellraw|execute at \w+ run summon text_display|data merge entity @e\[type=text_display|kill @e\[type=text_display|team (add|modify|join) ais)/.test(cmd) && children.server && children.server.exitCode == null) {
+          try { children.server.stdin.write(cmd + '\n') } catch {}
+        }
       } else process.stdout.write(line + '\n')
     }
   })
@@ -160,6 +164,16 @@ async function startServer () {
     }
     log('server', `Java ${java.major} を使う: ${java.cmd}`)
     cmd = java.cmd; args = [`-Xms1G`, `-Xmx${mem}G`, '-jar', 'paper.jar', 'nogui']
+  }
+  // 頭上の名前・吹き出しを住人に追従させるデータパックを入れる
+  if (!custom && cfg.display?.enabled !== false) {
+    try {
+      const names = fs.readdirSync(path.join(ROOT, cfg.characters_dir || 'characters')).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(ROOT, cfg.characters_dir || 'characters', f), 'utf8')).username)
+      const dp = path.join(srv, 'world', 'datapacks', 'ais')
+      for (const [rel, body] of Object.entries(datapackFiles(names))) {
+        const f = path.join(dp, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, body)
+      }
+    } catch (e) { log('server', '頭上表示のデータパックを書けなかった: ' + e.message) }
   }
   log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})… 初回はワールド生成で数分かかる`)
   fs.mkdirSync(path.join(srv, 'logs'), { recursive: true })
@@ -215,6 +229,8 @@ async function startServer () {
   // ワールドのルール: 死んでも持ち物を失わない / 初回は昼から始める
   if (cfg.world?.keep_inventory !== false) p.stdin.write('gamerule keepInventory true\n')
   if (cfg.world?.difficulty) p.stdin.write(`difficulty ${cfg.world.difficulty}\n`)
+  // データパックを有効化 (初回はワールド作成後に見つかるので念のため)
+  if (!custom && cfg.display?.enabled !== false) p.stdin.write('datapack enable "file/ais"\n')
   // プレイヤーにOP権限 (コマンドが使える)
   if (cfg.player?.name && cfg.world?.op_player !== false) { p.stdin.write(`op ${cfg.player.name}\n`); log('server', `${cfg.player.name} にOP権限を付けた (コマンドが使える)`) }
   const firstFlag = path.join(srv, 'first-start-done')

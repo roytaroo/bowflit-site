@@ -13,6 +13,7 @@ import { TTS } from './voice/tts.js'
 import { startInputServer } from './voice/inputServer.js'
 import { Society } from './society/society.js'
 import { Agent } from './agent/agent.js'
+import { makeDisplay } from './society/display.js'
 import { log, sleep } from './util/log.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -98,9 +99,11 @@ export async function main (argv = process.argv.slice(2)) {
   }
 
   const society = new Society({ store, llm, config: cfg, voice })
+  society.display = makeDisplay(cfg)
   society.seedRelationships(selected)
   const agents = selected.map(c => new Agent(c, society))
   society.bus.on('say', msg => { for (const a of agents) a.hearBot(msg) })
+  society.display.setupTeam(agents.map(a => a.name))
 
   log.info('main', `参加者: ${agents.map(a => `${a.display}(${a.name})`).join(', ')} / LLM: ${cfg.llm.provider}${cfg.llm.provider !== 'mock' ? ' ' + cfg.llm.model : ''} / 同時処理 ${cfg.llm.concurrency}`)
   for (const a of agents) {
@@ -141,7 +144,7 @@ export async function main (argv = process.argv.slice(2)) {
     log.info('main', '終了します… ' + llm.summary())
     clearInterval(fallback); clearInterval(stats); clearInterval(memWatch)
     inputServer?.close()
-    for (const a of agents) a.stop()
+    for (const a of agents) { a.stop(); society.display.detach(a.character) }
     await sleep(500)
     store.close()
   }

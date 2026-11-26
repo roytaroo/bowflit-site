@@ -92,7 +92,8 @@
     "aquestalk": {
       "command": null,
       "fallback_speaker_name": "ずんだもん"
-    }
+    },
+    "range": 24
   },
   "voice_input": {
     "enabled": true,
@@ -101,5 +102,10 @@
   },
   "database": "data/society.db",
   "characters_dir": "characters",
-  "agents": null
+  "agents": null,
+  "display": {
+    "enabled": true,
+    "name_offset": 0.25,
+    "bubble_offset": 0.55
+  }
 }
