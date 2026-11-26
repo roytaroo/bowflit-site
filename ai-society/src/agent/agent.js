@@ -104,11 +104,7 @@ export class Agent {
         for (const id of m.blocksToAvoid) cm.blocksToAvoid.add(id)
         bot.collectBlock.movements = cm
       }
-      // はまったとき用: 掘る・足場を積むのも許す (短い距離だけ使う)
-      const esc = new Movements(bot)
-      Object.assign(esc, { allowParkour: false, allowSprinting: false, canDig: true, digCost: 2, maxDropDown: 3, dontCreateFlow: true, allow1by1towers: true })
-      for (const id of m.blocksToAvoid) esc.blocksToAvoid.add(id)
-      bot.__escapeMovements = esc
+
       log.info(this.name, `${this.display} がワールドに参加 (${bot.version})`)
       this.memory.add('event', 'ワールドで目を覚ました', { importance: 2, day: this.day() })
       this._reflexTimer = setInterval(() => this._reflexTick(), 1000)
@@ -324,6 +320,10 @@ export class Agent {
     const gift = this._giftChore(s)
     if (gift) return gift
     if (logs * 4 + planks < 16 && ok('log')) return { name: 'collect', args: { block: 'log', count: 6 }, key: 'log' }
+    // ツルハシが無ければ作る (壊れたときも)。丸石があれば石のツルハシ
+    if (!s.inventory.some(i => /_pickaxe$/.test(i.name)) && ok('pickaxe')) {
+      return { name: 'craft', args: { item: stone >= 3 ? 'stone_pickaxe' : 'wooden_pickaxe', count: 1 }, key: 'pickaxe' }
+    }
     if (stone < 24 && ok('stone')) return { name: 'collect', args: { block: 'stone', count: 8 }, key: 'stone' }
     if (!this.home && mats >= 50 && ok('home')) return { name: 'set_home', args: {}, key: 'home' }
     if (this.home && mats >= 40 && ok('build') && (this.store.getState(`build:${this.name}:house`, 0) < 70)) return { name: 'build_house', args: { size: 5 }, key: 'build' }

@@ -128,8 +128,10 @@ test('自分の仕事: 素材が無ければ木→石、家の場所→家づく
   a.state = st([])
   assert.deepEqual(a._pickChore().args, { block: 'log', count: 6 })
   a.state = st([{ name: 'oak_log', count: 10 }])
+  assert.deepEqual(a._pickChore().args, { item: 'wooden_pickaxe', count: 1 }) // ツルハシが無ければまず作る
+  a.state = st([{ name: 'oak_log', count: 10 }, { name: 'stone_pickaxe', count: 1 }])
   assert.equal(a._pickChore().args.block, 'stone')
-  a.state = st([{ name: 'oak_log', count: 10 }, { name: 'cobblestone', count: 30 }])
+  a.state = st([{ name: 'oak_log', count: 10 }, { name: 'cobblestone', count: 30 }, { name: 'stone_pickaxe', count: 1 }])
   assert.equal(a._pickChore().name, 'set_home')
   a.home = { x: 0, y: 64, z: 0 }
   assert.equal(a._pickChore().name, 'build_house')

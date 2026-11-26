@@ -127,9 +127,9 @@ export class Store {
     this.db.exec(SCHEMA)
   }
 
-  run (sql, ...params) { return this.db.prepare(sql).run(...params) }
-  get (sql, ...params) { return this.db.prepare(sql).get(...params) }
-  all (sql, ...params) { return this.db.prepare(sql).all(...params) }
+  run (sql, ...params) { return this.db.prepare(sql).run(...params.map(sqlValue)) }
+  get (sql, ...params) { return this.db.prepare(sql).get(...params.map(sqlValue)) }
+  all (sql, ...params) { return this.db.prepare(sql).all(...params.map(sqlValue)) }
 
   // ---- agents ----
   ensureAgent (name, defaults = {}) {
@@ -161,3 +161,12 @@ export class Store {
 
   close () { this.db.close() }
 }
+
+// AIの答えが文字のはずの所に配列や true/false を入れてきても、DBに保存できる形にする
+function sqlValue (v) {
+  if (v === undefined) return null
+  if (typeof v === 'boolean') return v ? 1 : 0
+  if (v !== null && typeof v === 'object' && !(v instanceof Uint8Array)) return JSON.stringify(v)
+  return v
+}
+

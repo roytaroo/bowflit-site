@@ -25,27 +25,36 @@ export async function gotoGoal (bot, goal, timeoutMs, label = 'move') {
   }
 }
 
-// 穴や囲まれた場所にはまって動けないとき: 掘る・足場を積むのを許して、近くの開けた所へ抜け出す
-// (普段は経路探索が膨らむので禁止しているが、短い距離・短い時間だけ使う)
+// 穴や囲まれた場所にはまって動けないとき: 経路探索は使わず (掘る経路探索はメモリを食い尽くす)、
+// 直接操作で「目の前のブロックを掘る → ジャンプしながら前へ」を数回だけ試す
 export async function unstick (bot, toward = null) {
-  const esc = bot.__escapeMovements
-  if (!esc) return false
-  const normal = bot.pathfinder.movements
-  const radius = bot.pathfinder.searchRadius
+  if (bot.__unsticking) return false
+  bot.__unsticking = true
   const start = bot.entity.position.clone()
   try {
-    bot.pathfinder.setMovements(esc)
-    bot.pathfinder.searchRadius = 16
+    try { bot.pathfinder.stop(); bot.pathfinder.setGoal(null) } catch {}
     const p = bot.entity.position
-    let dx = 0; let dz = 0
-    if (toward) { const d = Math.hypot(toward.x - p.x, toward.z - p.z) || 1; dx = (toward.x - p.x) / d * 6; dz = (toward.z - p.z) / d * 6 } else { const a = Math.random() * Math.PI * 2; dx = Math.cos(a) * 6; dz = Math.sin(a) * 6 }
-    // 目的の方向へ6ブロックほど抜け出す
-    await gotoGoal(bot, new goals.GoalNearXZ(Math.floor(p.x + dx), Math.floor(p.z + dz), 2), 15000, 'unstick').catch(() => {})
-  } finally {
-    try { bot.pathfinder.stop() } catch {}
-    bot.pathfinder.setMovements(normal)
-    bot.pathfinder.searchRadius = radius
-  }
+    let yaw
+    if (toward) yaw = Math.atan2(-(toward.x - p.x), -(toward.z - p.z))
+    else yaw = Math.random() * Math.PI * 2
+    for (let attempt = 0; attempt < 3 && bot.entity.position.distanceTo(start) < 2; attempt++) {
+      await bot.look(yaw + attempt * 1.2, 0, true).catch(() => {})
+      const dir = new Vec3(-Math.sin(yaw + attempt * 1.2), 0, -Math.cos(yaw + attempt * 1.2))
+      const front = bot.entity.position.plus(dir).floored()
+      // 目の前の足元と顔の高さのブロックを掘る (固いブロックや危ない所は掘らない)
+      for (const dy of [1, 0]) {
+        const b = bot.blockAt(front.offset(0, dy, 0))
+        if (b && b.boundingBox === 'block' && b.diggable && !/bedrock|obsidian|chest|bed|crafting_table|furnace/.test(b.name)) {
+          const below = bot.blockAt(front.offset(0, -1, 0))
+          if (below && /lava|water/.test(below.name)) continue
+          await withTimeout(bot.dig(b), 6000, 'dig').catch(() => {})
+        }
+      }
+      bot.setControlState('forward', true); bot.setControlState('jump', true)
+      await sleep(1200)
+      bot.clearControlStates()
+    }
+  } finally { bot.clearControlStates(); bot.__unsticking = false }
   return bot.entity.position.distanceTo(start) >= 2
 }
 
@@ -109,6 +118,13 @@ export function blockIds (bot, pred, key = null) {
   const ids = mcData(bot).blocksArray.filter(b => pred(b.name, b)).map(b => b.id)
   if (k) idCache.set(k, ids)
   return ids
+}
+
+// 今の持ち物で、このブロックを掘って手に入れられるか
+export function canHarvest (bot, block) {
+  const tools = block?.harvestTools
+  if (!tools) return true
+  return bot.inventory.items().some(i => tools[i.type])
 }
 
 function invCount (bot, pred) {
@@ -400,10 +416,17 @@ export const ACTIONS = {
       }
       if (!positions.length) return `近くに${a.block}が見つからない (${searched ? '周りも探したけど無い。別の場所へ explore すること' : ''})`
       let failsInRow = 0
+      // 掘りながら進む経路探索は重いので、探す範囲と時間を絞る (メモリあふれ対策)
+      const pf = bot.pathfinder; const keep = { r: pf.searchRadius, t: pf.thinkTimeout }
+      pf.searchRadius = 20; pf.thinkTimeout = 1500
+      try {
       for (const p of positions) {
         if (got >= want || ctx.interrupted() || failsInRow >= 3) break
         const block = bot.blockAt(p)
         if (!block || !match(block.name)) continue
+        // 道具が無いと掘れないブロック (石・鉱石) は、道具が無ければ掘りに行かない。
+        // (採掘プラグインが道具を探して無限ループになり、固まってメモリがあふれるため)
+        if (!canHarvest(bot, block)) { lastErr = 'ツルハシが無い (wooden_pickaxe か stone_pickaxe を craft すること)'; break }
         try {
           await withTimeout(bot.collectBlock.collect(block, { ignoreNoPath: true }), 15000, 'collect')
           const after = bot.blockAt(p)
@@ -414,6 +437,7 @@ export const ACTIONS = {
           if (/timeout/.test(e.message)) { bot.pathfinder.stop(); lastErr = '時間切れ' }
         }
       }
+      } finally { pf.searchRadius = keep.r; pf.thinkTimeout = keep.t }
       // 1個も掘れず、ほとんど動けていないなら、はまっている可能性 → 抜け出しておく
       if (got === 0 && failsInRow >= 2) await unstick(bot).catch(() => {})
       const after = bot.inventory.items().reduce((n, i) => n + i.count, 0)
