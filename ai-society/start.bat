@@ -10,6 +10,8 @@ where git >nul 2>nul && (
   rem run npm install only when package.json changed (it is slow)
   call :maybe_install
 )
+rem ask for the Gemini key once (skipped if already set or declined)
+node scripts\set-gemini-key.js --ask
 node --disable-warning=ExperimentalWarning scripts\launch.js %*
 pause
 exit /b

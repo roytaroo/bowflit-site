@@ -12,12 +12,25 @@ const file = path.join(ROOT, 'config/settings.local.json')
 let local = {}
 try { local = JSON.parse(fs.readFileSync(file, 'utf8')) } catch {}
 
+// 起動のときに1回だけ聞くモード (start.bat から): 何も入れずに Enter なら、もう聞かない
+const askMode = process.argv.includes('--ask')
+const askedFlag = path.join(ROOT, 'config/.gemini-asked')
+if (askMode && (local.llm?.api_key || fs.existsSync(askedFlag))) process.exit(0)
+if (askMode) {
+  console.log('')
+  console.log('====================================================')
+  console.log(' 住人の頭を Gemini (無料) にする設定')
+  console.log(' キーを貼り付けて Enter (貼り付けは右クリック)')
+  console.log(' 今は使わないなら、何も入れずに Enter')
+  console.log('====================================================')
+}
 console.log('Gemini の APIキーを貼り付けて Enter (AQ. や AIza で始まる文字列)。')
 console.log('キーは https://aistudio.google.com の「Get API key」で無料で作れる。キーは他の人に見せないでね。')
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const key = (await rl.question('APIキー: ')).trim()
 rl.close()
-if (key.length < 20) { console.log('✘ キーが短すぎる。コピーし直してもう一度。'); process.exit(1) }
+if (askMode && !key) { fs.writeFileSync(askedFlag, 'skip'); console.log('今は使わない。あとで使うときは set-gemini-key.bat。'); process.exit(0) }
+if (key.length < 20) { console.log('✘ キーが短すぎる。コピーし直してもう一度。'); process.exit(askMode ? 0 : 1) }
 const headers = { 'content-type': 'application/json', 'x-goog-api-key': key }
 
 let model = process.argv.find(a => a.startsWith('gemini-'))
@@ -44,7 +57,7 @@ try {
 } catch (e) {
   console.log('✘ うまく話せなかった: ' + e.message)
   console.log('  設定は保存していない。このメッセージをそのまま送ってくれれば原因を見るよ。')
-  process.exit(1)
+  process.exit(askMode ? 0 : 1)
 }
 
 local.llm = { ...(local.llm || {}), provider: 'gemini', model, api_key: key }

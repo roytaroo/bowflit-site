@@ -9,3 +9,4 @@ __pycache__/
 server/
 runtime/
 voice_input/mic.txt
+config/.gemini-asked
