@@ -80,10 +80,10 @@ export class Agent {
       const m = new Movements(bot)
       m.allowParkour = false        // 危険なジャンプはしない
       m.allowSprinting = true
-      m.canDig = true
+      m.canDig = false             // 掘りながら進む経路は候補が爆発的に増えてメモリを食うので使わない
       m.maxDropDown = 3             // 落下ダメージを受ける高さから降りない
       m.dontCreateFlow = true
-      m.allow1by1towers = true
+      m.allow1by1towers = false    // 足場を積んで登る経路も同じ理由で使わない
       try {
         const md = require('minecraft-data')(bot.version)
         for (const n of ['lava', 'fire', 'magma_block', 'sweet_berry_bush', 'powder_snow', 'cactus', 'wither_rose']) {
@@ -92,10 +92,15 @@ export class Agent {
       } catch {}
       bot.pathfinder.setMovements(m)
       // 経路探索が広がりすぎてメモリを使い果たさないよう、範囲と時間を制限
-      bot.pathfinder.searchRadius = this.cfg.agent?.path_search_radius ?? 64
-      bot.pathfinder.thinkTimeout = 4000
-      // 採掘プラグインは独自の移動設定を使うので、安全な設定に揃える
-      if (bot.collectBlock) bot.collectBlock.movements = m
+      bot.pathfinder.searchRadius = this.cfg.agent?.path_search_radius ?? 40
+      bot.pathfinder.thinkTimeout = 2500
+      // 採掘プラグイン用: 目的のブロックは掘れるようにするが、掘りながら進むのは大きく割高にして経路探索の膨張を防ぐ
+      if (bot.collectBlock) {
+        const cm = new Movements(bot)
+        Object.assign(cm, { allowParkour: false, allowSprinting: true, canDig: true, digCost: 40, maxDropDown: 3, dontCreateFlow: true, allow1by1towers: false })
+        for (const id of m.blocksToAvoid) cm.blocksToAvoid.add(id)
+        bot.collectBlock.movements = cm
+      }
       log.info(this.name, `${this.display} がワールドに参加 (${bot.version})`)
       this.memory.add('event', 'ワールドで目を覚ました', { importance: 2, day: this.day() })
       this._reflexTimer = setInterval(() => this._reflexTick(), 1000)
@@ -124,6 +129,14 @@ export class Agent {
     this.running = false
     clearInterval(this._reflexTimer)
     try { this.bot?.quit() } catch {}
+  }
+
+  // メモリが危ないときなどに、移動・戦闘・実行中の行動をすぐ止める
+  emergencyStop () {
+    if (!this.bot) return
+    this.interruptFlag = true
+    try { this.bot.pathfinder?.stop(); this.bot.pathfinder?.setGoal(null) } catch {}
+    try { this.bot.pvp?.stop() } catch {}
   }
 
   ready () { return !!(this.bot && this.bot.entity && this.bot.pathfinder) }

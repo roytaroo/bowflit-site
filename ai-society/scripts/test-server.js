@@ -17,7 +17,7 @@ mcServer.createMCServer({
   gameMode: 0,
   difficulty: 1,
   worldFolder: undefined,
-  generation: { name: 'superflat', options: { worldHeight: 80 } },
+  generation: process.env.MC_GEN === 'hills' ? { name: 'diamond_square', options: { worldHeight: 80, seed: 12345 } } : { name: 'superflat', options: { worldHeight: 80 } },
   kickTimeout: 60000,
   plugins: {},
   modpe: false,

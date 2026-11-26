@@ -27,7 +27,7 @@
   "agent": {
     "decide_interval_ms": 6000,
     "action_timeout_sec": 240,
-    "path_search_radius": 64
+    "path_search_radius": 40
   },
   "conversation": {
     "hearing_range": 32,

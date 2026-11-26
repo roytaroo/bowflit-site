@@ -119,14 +119,27 @@ export async function main (argv = process.argv.slice(2)) {
 
   const inputServer = cfg.voice_input?.enabled ? startInputServer({ society, tts: voice, config: cfg }) : null
 
-  const stats = setInterval(() => { log.info('stats', llm.summary()); if (cfg.llm.provider === 'ollama') reportGpuShare(cfg.llm) }, 2 * 60000)
+  // メモリの見張り: 住人プロセスのメモリが危なくなったら、落ちる前に全員の移動を止めて原因を記録
+  const heapLimit = (await import('node:v8')).default.getHeapStatistics().heap_size_limit
+  let lastWarn = 0
+  const memWatch = setInterval(() => {
+    const used = process.memoryUsage().heapUsed
+    if (process.env.MEM_DEBUG) log.info('mem', `${Math.round(used / 1e6)}MB / ${Math.round(heapLimit / 1e6)}MB`)
+    if (used > heapLimit * 0.6) {
+      const doing = agents.map(a => `${a.name}:${a.currentAction?.name || '-'}`).join(' ')
+      for (const a of agents) a.emergencyStop?.()
+      if (Date.now() - lastWarn > 30000) { log.warn('mem', `メモリ使用が多い (${Math.round(used / 1e6)}MB/${Math.round(heapLimit / 1e6)}MB)。全員の移動を止めた。その時の行動: ${doing}`); lastWarn = Date.now() }
+    }
+  }, 2000)
+
+  const stats = setInterval(() => { log.info('stats', llm.summary() + ` / メモリ ${Math.round(process.memoryUsage().heapUsed / 1e6)}MB`); if (cfg.llm.provider === 'ollama') reportGpuShare(cfg.llm) }, 2 * 60000)
 
   let stopping = false
   const shutdown = async () => {
     if (stopping) return
     stopping = true
     log.info('main', '終了します… ' + llm.summary())
-    clearInterval(fallback); clearInterval(stats)
+    clearInterval(fallback); clearInterval(stats); clearInterval(memWatch)
     inputServer?.close()
     for (const a of agents) a.stop()
     await sleep(500)

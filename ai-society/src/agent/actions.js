@@ -16,6 +16,10 @@ const FLOWERS = ['dandelion', 'poppy', 'blue_orchid', 'allium', 'azure_bluet', '
 function mcData (bot) { return require('minecraft-data')(bot.version) }
 
 export async function goNear (bot, pos, range = 2, timeoutMs = 60000) {
+  // 遠いときは中継地点に分けて近づいてから、最後に正確な位置へ
+  if (Math.hypot(pos.x - bot.entity.position.x, pos.z - bot.entity.position.z) > 28) {
+    await travelXZ(bot, pos.x, pos.z, { timeoutMs, y: pos.y })
+  }
   const g = new goals.GoalNear(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z), range)
   try {
     await withTimeout(bot.pathfinder.goto(g), timeoutMs, 'move')
@@ -23,6 +27,36 @@ export async function goNear (bot, pos, range = 2, timeoutMs = 60000) {
     bot.pathfinder.stop()
     throw e
   }
+}
+
+// 遠くへの移動は 24ブロックずつの中継地点に分けて進む (経路探索の範囲を小さく保ってメモリを抑える)
+export async function travelXZ (bot, x, z, { step = 24, timeoutMs = 150000, interrupted = () => false, y = null } = {}) {
+  const start = bot.entity.position.clone()
+  const end = Date.now() + timeoutMs
+  let fails = 0
+  while (Date.now() < end && !interrupted()) {
+    const p = bot.entity.position
+    const dx = x - p.x; const dz = z - p.z
+    const dist = Math.hypot(dx, dz)
+    if (dist <= 3) break
+    const k = Math.min(1, step / dist)
+    // 失敗したら少し横にずらした中継地点を試す
+    const side = fails ? (fails % 2 ? 1 : -1) * 6 * Math.ceil(fails / 2) : 0
+    const tx = p.x + dx * k + (-dz / dist) * side
+    const tz = p.z + dz * k + (dx / dist) * side
+    const goal = (dist <= step && y != null) ? new goals.GoalNear(Math.floor(x), Math.floor(y), Math.floor(z), 2) : new goals.GoalNearXZ(Math.floor(tx), Math.floor(tz), 2)
+    try {
+      await withTimeout(bot.pathfinder.goto(goal), 30000, 'move')
+      fails = 0
+    } catch (e) {
+      try { bot.pathfinder.stop() } catch {}
+      if (++fails > 4) break
+      await sleep(300)
+    }
+  }
+  const moved = Math.round(bot.entity.position.distanceTo(start))
+  const left = Math.round(Math.hypot(x - bot.entity.position.x, z - bot.entity.position.z))
+  return { moved, left, arrived: left <= 4 }
 }
 
 function invCount (bot, pred) {
@@ -132,8 +166,8 @@ export const ACTIONS = {
   go_to: {
     desc: '座標へ移動', args: '{"x":数,"y":数,"z":数}',
     async run (ctx, a) {
-      await goNear(ctx.bot, new Vec3(a.x, a.y ?? ctx.bot.entity.position.y, a.z), 2, 90000)
-      return `(${a.x},${a.z})に着いた`
+      const r = await travelXZ(ctx.bot, a.x, a.z, { timeoutMs: 120000, interrupted: ctx.interrupted })
+      return r.arrived ? `(${a.x},${a.z})に着いた` : `(${a.x},${a.z})へ向かったが途中で止まった (${r.moved}m進んだ。残り${r.left}m)`
     }
   },
   go_home: {
@@ -173,14 +207,8 @@ export const ACTIONS = {
       const d = dirs[a.direction] || Object.values(dirs)[Math.floor(Math.random() * 4)]
       const dist = Number(a.distance) || 48
       const p = ctx.bot.entity.position
-      const goal = new goals.GoalXZ(Math.floor(p.x + d[0] * dist), Math.floor(p.z + d[1] * dist))
-      try {
-        await withTimeout(ctx.bot.pathfinder.goto(goal), 150000, 'explore')
-      } catch (e) {
-        ctx.bot.pathfinder.stop()
-        const moved = Math.round(ctx.bot.entity.position.distanceTo(p))
-        return `探索を途中でやめた(${moved}m進んだ: ${e.message})`
-      }
+      const r = await travelXZ(ctx.bot, p.x + d[0] * dist, p.z + d[1] * dist, { interrupted: ctx.interrupted })
+      if (!r.arrived) return `探索を途中でやめた (${r.moved}m進んだ。地形が険しくて進めない)`
       ctx.agent.society.recordDiscovery?.(ctx.agent.name, ctx.bot.entity.position)
       return `${a.direction}へ${dist}m探索した`
     }
@@ -219,7 +247,8 @@ export const ACTIONS = {
         if (!block || !match(block.name)) continue
         try {
           await withTimeout(bot.collectBlock.collect(block, { ignoreNoPath: true }), 45000, 'collect')
-          got++
+          const after = bot.blockAt(p)
+          if (!after || !match(after.name)) got++ // 本当に掘れたときだけ数える
         } catch (e) {
           if (/timeout/.test(e.message)) { bot.pathfinder.stop(); break }
         }
@@ -315,7 +344,7 @@ export const ACTIONS = {
       if (ctx.agent.home && Math.hypot(me.x - ctx.agent.home.x, me.z - ctx.agent.home.z) < 80) target = new Vec3(ctx.agent.home.x, ctx.agent.home.y, ctx.agent.home.z)
       else if (enemy) target = me.plus(me.minus(enemy.position).normalize().scaled(20))
       else target = me.offset(16, 0, 0)
-      await withTimeout(bot.pathfinder.goto(new goals.GoalXZ(Math.floor(target.x), Math.floor(target.z))), 20000, 'flee').catch(() => bot.pathfinder.stop())
+      await travelXZ(bot, target.x, target.z, { timeoutMs: 20000 })
       return `${a.from || '危険'}から逃げた`
     }
   },
