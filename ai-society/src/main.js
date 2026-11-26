@@ -62,6 +62,15 @@ export async function main (argv = process.argv.slice(2)) {
   const store = new Store(path.resolve(ROOT, cfg.database))
   const llm = new LLMClient(cfg.llm, { mockProvider: new MockProvider() })
   await checkOllama(cfg.llm)
+  if (cfg.llm.provider === 'ollama') {
+    // 最初の1回はモデルの読み込みで時間がかかるので、住人が考え始める前に読み込んでおく
+    log.info('main', `LLMを準備中 (${cfg.llm.model} を読み込み中。初回は1〜2分かかることがある)…`)
+    const t0 = Date.now()
+    try {
+      await fetch(cfg.llm.url.replace(/\/$/, '') + '/api/generate', { method: 'POST', body: JSON.stringify({ model: cfg.llm.model, prompt: 'hi', stream: false, keep_alive: cfg.llm.keep_alive ?? '30m', options: { num_predict: 1 } }), signal: AbortSignal.timeout(300000) })
+      log.info('main', `LLM準備OK (${((Date.now() - t0) / 1000).toFixed(0)}秒)`)
+    } catch (e) { log.warn('main', 'LLMの準備に失敗: ' + e.message) }
+  }
   const voice = new TTS({ ...cfg.voice, out_dir: path.resolve(ROOT, cfg.voice.out_dir || 'data/voice') })
   if (voice.enabled) {
     const v = await voice.check()

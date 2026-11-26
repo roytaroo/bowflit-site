@@ -80,9 +80,19 @@ export class Safety {
         }
         return { ok: true, action: a }
       }
+      case 'eat': {
+        if (!s.foodItems.length) return { ok: false, reason: '食べ物を持っていない。動物を倒す(attack)・釣り(fish)・畑(plant_and_harvest)で手に入れること' }
+        if (s.food >= 20) return { ok: false, reason: 'お腹はいっぱい' }
+        return { ok: true, action: a }
+      }
+      case 'build_house': {
+        const mats = s.inventory.filter(i => /(_planks|cobblestone|^stone$|bricks|^dirt$|sandstone|deepslate)/.test(i.name)).reduce((n, i) => n + i.count, 0)
+        if (mats < 20) return { ok: false, reason: `建材が足りない (${mats}個)。先に collect で木(log)を集めて craft で板材にするか、石(stone)を集めること` }
+        return { ok: true, action: a }
+      }
       case 'collect': {
         if (s.health < 6) return { ok: false, reason: '体力が低すぎる' }
-        const n = Math.min(64, Math.max(1, Number(a.args.count) || 4))
+        const n = Math.min(16, Math.max(1, Number(a.args.count) || 4)) // 1回の行動は短く
         a.args.count = n
         if (/lava|bedrock|spawner/.test(String(a.args.block))) return { ok: false, reason: '危険・不可能なブロック' }
         return { ok: true, action: a }

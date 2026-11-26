@@ -17,7 +17,7 @@
     "concurrency": 1,
     "keep_alive": "30m",
     "think": false,
-    "timeout_ms": 120000,
+    "timeout_ms": 240000,
     "options": {
       "temperature": 0.8,
       "num_ctx": 6144,
@@ -26,7 +26,8 @@
   },
   "agent": {
     "decide_interval_ms": 6000,
-    "action_timeout_sec": 240
+    "action_timeout_sec": 240,
+    "path_search_radius": 64
   },
   "conversation": {
     "hearing_range": 32,

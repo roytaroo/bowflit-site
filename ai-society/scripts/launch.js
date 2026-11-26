@@ -90,9 +90,7 @@ async function main () {
   if (flag('--mock')) pass.push('--mock')
   if (opt('--port')) pass.push('--port', opt('--port'))
   if (voice) pass.push('--voice'); else pass.push('--no-voice')
-  log('launch', '住人を起動します')
-  children.agents = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'src/main.js'), ...pass], { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'] })
-  children.agents.on('exit', code => { log('launch', `住人のプロセスが終了 (${code})`); shutdown() })
+  startAgents(pass)
 
   // 5. マイク入力 (別ウィンドウ)
   if (cfg.voice_input?.enabled !== false && !flag('--no-mic')) {
@@ -107,6 +105,27 @@ async function main () {
     } else log('mic', 'Python環境がないのでマイクはオフ (setup.bat で作れる)')
   }
   log('launch', '準備完了。止めるときはこのウィンドウで Ctrl+C')
+}
+
+// 住人のプロセスが落ちても、サーバーは止めずに住人だけ自動で再起動する
+const restarts = []
+function startAgents (pass) {
+  log('launch', '住人を起動します')
+  const p = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(ROOT, 'src/main.js'), ...pass], { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'] })
+  children.agents = p
+  p.on('exit', code => {
+    if (stopping) return
+    const now = Date.now()
+    while (restarts.length && now - restarts[0] > 10 * 60000) restarts.shift()
+    if (code !== 0 && restarts.length < 5) {
+      restarts.push(now)
+      log('launch', `住人のプロセスが異常終了 (${code})。サーバーは動かしたまま、10秒後に住人だけ再起動します (${restarts.length}/5)`)
+      setTimeout(() => !stopping && startAgents(pass), 10000)
+    } else {
+      log('launch', `住人のプロセスが終了 (${code})${code !== 0 ? '。10分間に何度も落ちたので止めます。この画面を送って' : ''}`)
+      shutdown()
+    }
+  })
 }
 
 async function startServer () {

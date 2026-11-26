@@ -34,7 +34,7 @@ const run = async (name, args = {}) => {
 const cmd = async c => { bot.chat(c); await sleep(800) }
 
 await run('set_home')
-await run('collect', { block: 'dirt', count: 3 })
+await run('collect', { block: 'grass_block', count: 3 })
 await cmd('/give Tester cobblestone 64')
 await cmd('/give Tester oak_log 4')
 await cmd('/give Tester bread 3')

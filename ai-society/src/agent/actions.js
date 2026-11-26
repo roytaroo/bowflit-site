@@ -201,8 +201,15 @@ export const ACTIONS = {
       const { bot } = ctx
       const match = blockMatcher(a.block)
       const want = Number(a.count) || 4
-      const positions = bot.findBlocks({ matching: b => b && match(b.name), maxDistance: 48, count: want * 3 })
-        .filter(p => !inProtectedZone(ctx.store, p, ctx.agent.name))
+      // 地中に埋まったブロックを目指すと経路探索が膨らむので、空気に面した(見えている)ブロックを優先
+      const exposed = p => [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([x, y, z]) => {
+        const n = bot.blockAt(p.offset(x, y, z)); return n && (n.name === 'air' || n.name === 'cave_air' || n.name === 'water')
+      })
+      const me = bot.entity.position
+      const positions = bot.findBlocks({ matching: b => b && match(b.name), maxDistance: 32, count: Math.min(200, want * 6) })
+        .filter(p => !inProtectedZone(ctx.store, p, ctx.agent.name) && exposed(p))
+        .sort((a, b) => a.distanceTo(me) - b.distanceTo(me))
+        .slice(0, want * 2)
       if (!positions.length) return `近くに${a.block}が見つからない`
       const before = bot.inventory.items().reduce((n, i) => n + i.count, 0)
       let got = 0

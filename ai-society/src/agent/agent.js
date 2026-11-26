@@ -91,6 +91,11 @@ export class Agent {
         }
       } catch {}
       bot.pathfinder.setMovements(m)
+      // 経路探索が広がりすぎてメモリを使い果たさないよう、範囲と時間を制限
+      bot.pathfinder.searchRadius = this.cfg.agent?.path_search_radius ?? 64
+      bot.pathfinder.thinkTimeout = 4000
+      // 採掘プラグインは独自の移動設定を使うので、安全な設定に揃える
+      if (bot.collectBlock) bot.collectBlock.movements = m
       log.info(this.name, `${this.display} がワールドに参加 (${bot.version})`)
       this.memory.add('event', 'ワールドで目を覚ました', { importance: 2, day: this.day() })
       this._reflexTimer = setInterval(() => this._reflexTick(), 1000)
@@ -128,7 +133,7 @@ export class Agent {
   // ------------------------------------------------------------------ 反射 (LLMなし)
   _reflexTick () {
     if (!this.ready() || !this.alive) return
-    const s = this.state()
+    const s = this.state({ scanBlocks: false }) // 毎秒なのでブロックの走査はしない
     const r = this.safety.reflex(s)
     if (!r) return
     if (this.currentAction?.reflex && this.currentAction.name === r.name) return
@@ -140,8 +145,8 @@ export class Agent {
     this.pendingAction = { ...r, reflex: true }
   }
 
-  state () {
-    return snapshot(this.bot, { home: this.home, knownAgents: this.society.names() })
+  state ({ scanBlocks = true } = {}) {
+    return snapshot(this.bot, { home: this.home, knownAgents: this.society.names(), scanBlocks })
   }
 
   // ------------------------------------------------------------------ 意思決定ループ
