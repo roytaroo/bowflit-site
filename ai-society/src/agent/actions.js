@@ -823,3 +823,8 @@ export function actionListForPrompt (allowed = null) {
     .filter(([k]) => !allowed || allowed.includes(k))
     .map(([k, v]) => `- ${k} ${v.args}: ${v.desc}`).join('\n')
 }
+
+// 行動の中身を、Mindcraft のスキルを使う版 (src/agent/bodyActions.js) で上書きする。説明文はそのまま
+import { BODY_ACTIONS } from './bodyActions.js'
+for (const [k, v] of Object.entries(BODY_ACTIONS)) if (ACTIONS[k]) ACTIONS[k] = { ...ACTIONS[k], run: v.run }
+

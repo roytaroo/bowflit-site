@@ -43,7 +43,10 @@ async function getLogs (bot, n) {
       continue
     }
     const need = n - count(bot, 'log')
+    const before = count(bot, 'log')
     await skills.collectBlock(bot, type, Math.min(need, 8))
+    // 1本も取れなかった (高すぎる木など) なら、別の場所の木を探しに行く
+    if (count(bot, 'log') === before && !bot.interrupt_code) { skills.log(bot, `${type}に届かない。別の木を探す。`); await explore(bot, 32) }
   }
   return count(bot, 'log') >= n
 }
@@ -121,46 +124,68 @@ export async function obtain (bot, item, n = 1, depth = 0) {
   if (needsTable(bot, item) && !world.getNearestBlock(bot, 'crafting_table', 16) && count(bot, 'crafting_table') < 1) {
     if (!await obtain(bot, 'crafting_table', 1, depth + 1)) return false
   }
-  await skills.craftRecipe(bot, item, times)
+  // クラフトは、サーバーとのずれで失敗することがあるので、少し待って1回だけやり直す
+  for (let attempt = 0; attempt < 2 && count(bot, item) < n && !bot.interrupt_code; attempt++) {
+    try { await skills.craftRecipe(bot, item, Math.ceil((n - count(bot, item)) / perCraft)) } catch (e) {
+      skills.log(bot, `${item}のクラフトでエラー: ${String(e?.message || e).slice(0, 60)}`)
+      try { bot.closeWindow(bot.currentWindow) } catch {}
+      await new Promise(resolve => setTimeout(resolve, 1500))
+    }
+  }
   return count(bot, item) >= n
 }
 
-// 家を建てる場所を探す: 周りで size x size が平ら (高さの差1以内) で、水や木の無い地面。見つかれば南西の角の足元 (空気の高さ)
-export function findBuildSite (bot, size = 7, radius = 20) {
+// 家を建てる場所を探す: 地表で size x size が平ら (高さの差1以内)、水・溶岩・木の幹が無く、
+// 上に4マスの空き (葉っぱも無い) がある所。見つかれば南西の角の、地面の1つ上 (空気の高さ)
+const PASS = /^(air|cave_air|short_grass|tall_grass|fern|large_fern|snow|dead_bush|dandelion|poppy|.*_tulip|azure_bluet|oxeye_daisy|cornflower|allium|blue_orchid|lily_of_the_valley|.*_mushroom|sweet_berry_bush)$/
+const LEAF = /leaves$/
+export function surfaceY (bot, x, z, from) {
   const V = bot.entity.position.constructor
-  const base = bot.entity.position.floored()
-  const bad = /water|lava|leaves|_log|ice|snow_block|cactus|bush|vine|bamboo/
-  const ground = (x, z) => {
-    const top = base.y + 12
-    const first = bot.blockAt(new V(x, top, z))
-    if (!first || first.boundingBox === 'block') return null // 山の中や木の上かもしれないので使わない
-    for (let y = top - 1; y >= base.y - 12; y--) {
-      const b = bot.blockAt(new V(x, y, z))
-      if (!b) return null
-      if (b.name === 'air' || b.name === 'cave_air' || /grass$|fern|flower|poppy|dandelion|snow$/.test(b.name) && b.boundingBox !== 'block') continue
-      if (bad.test(b.name) || b.boundingBox !== 'block') return null
-      return y + 1
-    }
-    return null
+  for (let y = from + 40; y >= from - 40; y--) {
+    const b = bot.blockAt(new V(x, y, z))
+    if (!b) continue
+    if (PASS.test(b.name) || LEAF.test(b.name) || /_log$|vine/.test(b.name)) continue
+    return { y: y + 1, top: b.name }
   }
-  let best = null
-  for (let r = 0; r <= radius && !best; r += 2) {
-    for (let dx = -r; dx <= r && !best; dx += 2) {
-      for (let dz = -r; dz <= r && !best; dz += 2) {
+  return null
+}
+
+export function findBuildSite (bot, size = 5, radius = 40) {
+  const V = bot.entity.position.constructor
+  const me = bot.entity.position.floored()
+  const s0 = surfaceY(bot, me.x, me.z, me.y)
+  const base = s0 ? s0.y : me.y
+  const cache = new Map()
+  const ground = (x, z) => {
+    const k = x + ',' + z
+    if (cache.has(k)) return cache.get(k)
+    let r = null
+    const g = surfaceY(bot, x, z, base)
+    if (g && !/water|lava|ice|cactus|magma/.test(g.top) && Math.abs(g.y - base) <= 8) {
+      // 上の4マスが空いているか (葉っぱや幹があると家がめり込む)
+      let free = true
+      for (let dy = 0; dy < 5 && free; dy++) { const b = bot.blockAt(new V(x, g.y + dy, z)); if (!b || !PASS.test(b.name)) free = false }
+      if (free) r = g.y
+    }
+    cache.set(k, r)
+    return r
+  }
+  for (let r = 0; r <= radius; r += 2) {
+    for (let dx = -r; dx <= r; dx += 2) {
+      for (let dz = -r; dz <= r; dz += 2) {
         if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue
-        const x0 = base.x + dx; const z0 = base.z + dz
+        const x0 = me.x + dx; const z0 = me.z + dz
         const ys = []
         let ok = true
         for (let i = 0; i < size && ok; i++) for (let j = 0; j < size && ok; j++) { const y = ground(x0 + i, z0 + j); if (y == null) ok = false; else ys.push(y) }
-        if (ok && Math.max(...ys) - Math.min(...ys) <= 1 && Math.abs(Math.max(...ys) - base.y) <= 6) best = new V(x0, Math.max(...ys), z0)
+        if (ok && Math.max(...ys) - Math.min(...ys) <= 1) return new V(x0, Math.max(...ys), z0)
       }
     }
   }
-  return best
+  return null
 }
 
-// 小屋を建てる。中心 (cx, cy, cz)、5x5、壁3段+屋根。持っている丸石・板材を使う
-export async function buildHut (bot, cx, cy, cz, size = 5) {
+function hutSpots (cx, cy, cz, size = 5) {
   const half = Math.floor(size / 2)
   const spots = []
   for (let y = 0; y < 4; y++) {
@@ -172,6 +197,20 @@ export async function buildHut (bot, cx, cy, cz, size = 5) {
       }
     }
   }
+  return spots
+}
+
+const EMPTY = ['air', 'cave_air', 'short_grass', 'tall_grass', 'snow', 'fern']
+
+// 小屋の、まだブロックが置かれていない場所の数
+export function remainingHut (bot, cx, cy, cz, size = 5) {
+  const V = bot.entity.position.constructor
+  return hutSpots(cx, cy, cz, size).filter(([x, y, z]) => { const b = bot.blockAt(new V(x, y, z)); return !b || EMPTY.includes(b.name) }).length
+}
+
+// 小屋を建てる。中心 (cx, cy, cz)、5x5、壁3段+屋根。持っている丸石・板材を使う
+export async function buildHut (bot, cx, cy, cz, size = 5) {
+  const spots = hutSpots(cx, cy, cz, size)
   const material = () => {
     const inv = world.getInventoryCounts(bot)
     return ['cobblestone', 'cobbled_deepslate', ...Object.keys(inv).filter(k => k.endsWith('_planks')), 'dirt']
@@ -181,7 +220,7 @@ export async function buildHut (bot, cx, cy, cz, size = 5) {
   for (const [x, y, z] of spots) {
     if (bot.interrupt_code) break
     const cur = bot.blockAt(new (bot.entity.position.constructor)(x, y, z))
-    if (cur && !['air', 'cave_air', 'short_grass', 'tall_grass', 'snow'].includes(cur.name)) continue
+    if (cur && !EMPTY.includes(cur.name)) continue
     const m = material()
     if (!m) { skills.log(bot, '建材が足りない。'); break }
     if (await skills.placeBlock(bot, m, x, y, z, 'bottom', true)) placed++

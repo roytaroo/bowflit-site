@@ -34,8 +34,20 @@ class ActionManager {
     }
   }
 
-  // 行動を1つ実行する。実行中の行動があれば止めてから。timeout は分
-  async runAction (label, fn, { timeout = -1 } = {}) {
+  // 行動を1つ実行する。実行中の行動があれば止めてから。timeout は分。
+  // 2つの呼び出し (モードと住人の行動など) が同時に来ても、必ず1つずつ順番に動かす
+  async runAction (label, fn, opts = {}) {
+    if (this.executing) this.body.requestInterrupt() // 今の行動にすぐ止まってもらう
+    const prev = this.chain || Promise.resolve()
+    let release
+    this.chain = new Promise(resolve => { release = resolve })
+    try {
+      await prev
+      return await this._run(label, fn, opts)
+    } finally { release() }
+  }
+
+  async _run (label, fn, { timeout = -1 } = {}) {
     const bot = this.body.bot
     await this.stop()
     this.body.clearBotLogs()

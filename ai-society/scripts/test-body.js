@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import { Body } from '../src/body/body.js'
 import * as plan from '../src/body/plan.js'
 import * as skills from '../src/body/skills.js'
+import { BODY_ACTIONS } from '../src/agent/bodyActions.js'
 
 const require = createRequire(import.meta.url)
 const mineflayer = require('mineflayer')
@@ -25,6 +26,7 @@ bot.on('error', e => console.log('ERROR', e.message))
 
 bot.once('spawn', async () => {
   const body = new Body(bot, { onModeSay: m => console.log(`  [mode] ${m}`) })
+  if (process.env.DEBUG_INT) { const ri = body.requestInterrupt.bind(body); body.requestInterrupt = () => { console.log('  [interrupt] by', new Error().stack.split('\n').slice(2, 5).map(l => l.trim().replace(/.*\//, '')).join(' < ')); ri() } }
   if (fifo) {
     const x = Math.round((Math.random() - 0.5) * 2000); const z = Math.round((Math.random() - 0.5) * 2000)
     cmd(`clear ${name}`); cmd(`effect clear ${name}`); cmd('time set day')
@@ -40,7 +42,8 @@ bot.once('spawn', async () => {
     const r = await body.run(label, fn, { timeout: 5 })
     const ok = r.success && r.value !== false
     results.push([label, ok, ((Date.now() - t) / 1000).toFixed(0) + 's'])
-    console.log(`${ok ? 'OK  ' : 'FAIL'} ${label} ${((Date.now() - t) / 1000).toFixed(0)}s ${ok ? '' : (r.message || '').replace(/\s+/g, ' ').slice(-300)}`)
+    const msg = (r.message || '').replace(/\s+/g, ' ')
+    console.log(`${ok ? 'OK  ' : 'FAIL'} ${label} ${((Date.now() - t) / 1000).toFixed(0)}s ${ok ? '' : msg.slice(0, 200) + ' … ' + msg.slice(-200)}`)
     return ok
   }
   for (const s of steps) {
@@ -50,16 +53,15 @@ bot.once('spawn', async () => {
     if (s === 'stone') await step('丸石を20個集める', () => plan.obtain(bot, 'cobblestone', 20))
     if (s === 'spick') await step('石のツルハシを作る', () => plan.obtain(bot, 'stone_pickaxe', 1))
     if (s === 'hut') {
-      await step('小屋を建てる', async () => {
-        await plan.obtain(bot, 'planks', 40)
-        const site = plan.findBuildSite(bot, 7, 24)
-        if (!site) { console.log('   平らな場所が見つからない'); return false }
-        console.log(`   建てる場所: ${site.x},${site.y},${site.z}`)
-        await skills.goToPosition(bot, site.x + 3, site.y, site.z - 2, 2)
-        const r = await plan.buildHut(bot, site.x + 3, site.y, site.z + 3)
-        console.log(`   小屋: ${r.placed}/${r.total} ブロック`)
-        return r.placed >= r.total * 0.6
-      })
+      // 住人と同じ「家を建てる」行動で (建材が足りなければ集めるところから)
+      const agent = { name, home: null, houseSite: null, setHome (p) { this.home = p }, society: { isAgent: () => false, resolveName: n => n } }
+      const ctx = { bot, agent, body, store: null }
+      for (let k = 0; k < 4; k++) {
+        let msg = ''
+        const ok = await step(`家を建てる(${k + 1}回目)`, async () => { msg = await BODY_ACTIONS.build_house.run(ctx, {}); return true })
+        console.log('   → ' + msg)
+        if (/完成/.test(msg) || !ok) break
+      }
     }
   }
   console.log('RESULT ' + results.map(([l, ok, t]) => `${ok ? '○' : '×'}${l}(${t})`).join(' '))

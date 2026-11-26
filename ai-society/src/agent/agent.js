@@ -6,6 +6,7 @@ import { snapshot, describeState } from './perception.js'
 import { DECIDE_ACTIONS } from './prompts.js'
 import { voiceIssues, fixVoice } from './voiceStyle.js'
 import { requestFromText } from './requests.js'
+import { Body } from '../body/body.js'
 import { Safety } from './safety.js'
 import { ACTIONS } from './actions.js'
 import { AgentMemory } from '../memory/memory.js'
@@ -32,6 +33,7 @@ export class Agent {
     this.alive = !!this.row.alive
     this.home = this.row.home ? JSON.parse(this.row.home) : null
     this.bedPos = this.store.getState(`bed:${this.name}`, null) // 自分で置いたベッドの場所
+    this.houseSite = this.store.getState(`house_site:${this.name}`, null) // 家を建てている場所
     this.memory = new AgentMemory(this.store, this.name, this.cfg.memory || {})
     this.safety = new Safety(this.cfg.safety || {}, this.row)
     this.heard = []          // この人が実際に聞いた会話だけ (他人の記憶とは混ざらない)
@@ -75,13 +77,22 @@ export class Agent {
       auth: mc.auth || 'offline', checkTimeoutInterval: 60000, hideErrors: false
     })
     this.bot = bot
-    const { pathfinder, Movements } = require('mineflayer-pathfinder')
-    bot.loadPlugin(pathfinder)
-    bot.loadPlugin(require('mineflayer-collectblock').plugin)
-    bot.loadPlugin(require('mineflayer-pvp').plugin)
+    const { Movements } = require('mineflayer-pathfinder')
+    // 体の準備: 経路探索・採掘・戦闘・自動で食べる・防具を着る、と Paper 向けの対策 (src/body)
+    Body.prepare(bot)
 
     bot.once('spawn', () => {
       this.reconnects = 0
+      // 体: 行動を1つずつ実行し、裏で「モード」(溺れる・はまる・敵・落ちている物・松明・きょろきょろ) を回す
+      try { this.body?.stop() } catch {}
+      this.body = new Body(bot, {
+        modes: this.cfg.agent?.modes || {},
+        onModeSay: m => log.debug(this.name, `[mode] ${m}`),
+        onModeFinished: (mode, interrupted) => {
+          if (interrupted && !/^mode:/.test(interrupted)) log.info(this.name, `⚡ ${MODE_JA[mode] || mode} のため「${interrupted}」を中断`)
+        }
+      })
+      try { bot.autoEat.options = { ...bot.autoEat.options, priority: 'foodPoints', startAt: 14, bannedFood: ['rotten_flesh', 'spider_eye', 'poisonous_potato', 'pufferfish', 'chicken'] } } catch {}
       const m = new Movements(bot)
       m.allowParkour = false        // 危険なジャンプはしない
       m.allowSprinting = true
@@ -95,17 +106,7 @@ export class Agent {
           if (md.blocksByName[n]) m.blocksToAvoid.add(md.blocksByName[n].id)
         }
       } catch {}
-      bot.pathfinder.setMovements(m)
-      // 経路探索が広がりすぎてメモリを使い果たさないよう、範囲と時間を制限
-      bot.pathfinder.searchRadius = this.cfg.agent?.path_search_radius ?? 40
-      bot.pathfinder.thinkTimeout = 2500
-      // 採掘プラグイン用: 目的のブロックは掘れるようにするが、掘りながら進むのは大きく割高にして経路探索の膨張を防ぐ
-      if (bot.collectBlock) {
-        const cm = new Movements(bot)
-        Object.assign(cm, { allowParkour: false, allowSprinting: true, canDig: true, digCost: 40, maxDropDown: 3, dontCreateFlow: true, allow1by1towers: false })
-        for (const id of m.blocksToAvoid) cm.blocksToAvoid.add(id)
-        bot.collectBlock.movements = cm
-      }
+      bot.pathfinder.setMovements(m) // 普段の歩き方 (行動の中ではスキルがそれぞれ歩き方を決める)
 
       log.info(this.name, `${this.display} がワールドに参加 (${bot.version})`)
       this.memory.add('event', 'ワールドで目を覚ました', { importance: 2, day: this.day() })
@@ -135,6 +136,7 @@ export class Agent {
 
   stop () {
     this.running = false
+    try { this.body?.stop() } catch {}
     this.society.display?.detach(this.character)
     clearInterval(this._reflexTimer)
     try { this.bot?.quit() } catch {}
@@ -144,6 +146,7 @@ export class Agent {
   emergencyStop () {
     if (!this.bot) return
     this.interruptFlag = true
+    try { this.body?.requestInterrupt() } catch {}
     try { this.bot.pathfinder?.stop(); this.bot.pathfinder?.setGoal(null) } catch {}
     try { this.bot.pvp?.stop() } catch {}
   }
@@ -156,15 +159,15 @@ export class Agent {
   _reflexTick () {
     if (!this.ready() || !this.alive) return
     const s = this.state({ scanBlocks: false }) // 毎秒なのでブロックの走査はしない
-    let r = this.safety.reflex(s)
-    if (!r) r = this._bedtime(s)
+    // 溺れる・燃える・敵・はまる・食べる は「体」のモードと自動で食べる機能がやるので、ここは夜に寝ることだけ
+    const r = this.body ? this._bedtime(s) : (this.safety.reflex(s) || this._bedtime(s))
     if (!r) return
     if (this.currentAction?.reflex && this.currentAction.name === r.name) return
     if (this.pendingAction?.reflex && this.pendingAction.name === r.name) return // もう予約済み (ログを何度も出さない)
     if (this.busy) {
       log.info(this.name, `反射行動: ${r.name} (${r.reason}) → 現在の行動を中断`)
       this.interruptFlag = true
-      try { this.bot.pathfinder.stop(); this.bot.pvp?.stop() } catch {}
+      try { this.body?.requestInterrupt(); this.bot.pathfinder.stop(); this.bot.pvp?.stop() } catch {}
     }
     this.pendingAction = { ...r, reflex: true }
   }
@@ -181,6 +184,7 @@ export class Agent {
 
   state ({ scanBlocks = true } = {}) {
     const s = snapshot(this.bot, { home: this.home, knownAgents: this.society.names(), scanBlocks })
+    s.newBody = !!this.body
     if (scanBlocks) {
       // 安全管理の審査用: お墓の一覧と、さっき計画を提案したか
       try { s.graves = this.store.all('SELECT for_agent FROM graves').map(g => g.for_agent) } catch { s.graves = [] }
@@ -245,6 +249,7 @@ export class Agent {
     try { this._greetTick() } catch {}
     const bot = this.bot
     if (!this.ready() || !this.alive || this.busy || this.pendingAction || bot.isSleeping) { this._idling = false; return }
+    if (this.body && !this.body.isIdle()) return // 体が反射の動き (物を拾う・反撃など) をしている
     if (this.cfg.agent?.idle_motion === false) return
     const me = bot.entity.position
     const { goals } = require('mineflayer-pathfinder')
@@ -262,6 +267,7 @@ export class Agent {
     }
     if (this._idling) { try { bot.pathfinder.setGoal(null) } catch {} ; this._idling = false }
     if (target && dist < 10) { bot.lookAt(target.entity.position.offset(0, 1.6, 0)).catch(() => {}); return }
+    if (this.body) return // きょろきょろ・少し歩くは体のモード (idle_staring) がやる
     if (n % 5 === 4 && Math.random() < 0.5) {
       // たまに少し歩く
       const a = Math.random() * Math.PI * 2
@@ -372,7 +378,7 @@ export class Agent {
         if (plan[0]?.name === chore.name) { if (Array.isArray(value.actions)) value.actions = value.actions.slice(1); else value.action = null } else if (plan.some(a => URGENT_ACTIONS.has(a?.name))) {
           this._choreCut = true
           this.interruptFlag = true
-          try { this.bot.pathfinder.stop() } catch {}
+          try { this.body?.requestInterrupt(); this.bot.pathfinder.stop() } catch {}
         }
       }
       await run
@@ -504,7 +510,12 @@ export class Agent {
     let result; let ok = true
     try {
       const timeout = (this.cfg.agent?.action_timeout_sec ?? 240) * 1000
-      result = await withTimeout(def.run(this._ctx(), a.args || {}), timeout, a.name)
+      if (this.body) {
+        // 体の上で実行 (モードの反射と順番待ち・割り込みを共有する)
+        const r = await this.body.run(`action:${a.name}`, () => def.run(this._ctx(), a.args || {}), { timeout: timeout / 60000 })
+        if (!r.success) throw r.error || new Error('失敗')
+        result = typeof r.value === 'string' ? r.value : (r.value === false ? `${a.name}できなかった` : `${a.name}をした`)
+      } else result = await withTimeout(def.run(this._ctx(), a.args || {}), timeout, a.name)
     } catch (e) {
       ok = false
       result = `${a.name}に失敗: ${e.message.slice(0, 100)}`
@@ -531,7 +542,7 @@ export class Agent {
   }
 
   _ctx () {
-    return { bot: this.bot, agent: this, store: this.store, interrupted: () => this.interrupted() }
+    return { bot: this.bot, agent: this, body: this.body, store: this.store, interrupted: () => this.interrupted() || !!this.bot?.interrupt_code }
   }
 
   // ------------------------------------------------------------------ 家・建築
@@ -741,7 +752,7 @@ export class Agent {
     if (r.action?.name && allowed.includes(r.action.name) && !this.pendingAction?.reflex) {
       this.pendingAction = { name: r.action.name, args: r.action.args || {} }
       if (isHuman) this.memory.add('goal', `${speakerDisplay}に頼まれて${r.action.name}をすることにした`, { importance: 4, about: from, day })
-      if (this.busy) { this.interruptFlag = true; try { this.bot.pathfinder.stop() } catch {} } // 頼みごとを優先
+      if (this.busy) { this.interruptFlag = true; try { this.body?.requestInterrupt(); this.bot.pathfinder.stop() } catch {} } // 頼みごとを優先
     }
     return r
   }
@@ -979,4 +990,6 @@ export function lookingAt (entity, targetPos) {
 
 // 今の仕事を切り上げてでも、すぐやるべき行動
 const URGENT_ACTIONS = new Set(['go_to_player', 'follow', 'give', 'attack', 'flee', 'sleep', 'eat', 'go_home', 'escape_hazard'])
+
+const MODE_JA = { self_preservation: '身の危険', unstuck: 'はまった', self_defense: '敵への反撃', item_collecting: '落ちている物拾い', torch_placing: '松明置き', elbow_room: '場所をあける', cowardice: '逃げる', hunting: '狩り' }
 

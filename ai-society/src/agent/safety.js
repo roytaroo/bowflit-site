@@ -93,6 +93,7 @@ export class Safety {
         return { ok: true, action: a }
       }
       case 'build_house': {
+        if (s.newBody) return { ok: true, action: a } // 新しい体は建材集めからやる
         const mats = s.inventory.filter(i => /(_planks|cobblestone|^stone$|bricks|^dirt$|sandstone|deepslate)/.test(i.name)).reduce((n, i) => n + i.count, 0)
         if (mats < 20) return { ok: false, reason: `建材が足りない (${mats}個)。先に collect で木(log)を集めて craft で板材にするか、石(stone)を集めること` }
         return { ok: true, action: a }
