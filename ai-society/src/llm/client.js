@@ -107,6 +107,89 @@ class AnthropicProvider {
   }
 }
 
+// ネットのAI: Gemini (Google)。無料枠は1分あたりの回数に制限があるので、間隔を空けて頼む。
+// キーは config/settings.local.json の llm.api_key (set-gemini-key.bat で保存。Gitには上がらない)
+export const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta'
+
+class GeminiProvider {
+  constructor (cfg) {
+    this.cfg = cfg
+    this.model = cfg.model
+    this.minGapMs = Math.ceil(60000 / (cfg.rpm ?? 10)) // 無料枠の回数制限 (1分あたり) に合わせて間隔を空ける
+    this.next = 0
+    this.noThinkingConfig = false
+  }
+
+  async _slot () {
+    const now = Date.now()
+    const at = Math.max(now, this.next)
+    this.next = at + this.minGapMs
+    if (at > now) await new Promise(resolve => setTimeout(resolve, at - now))
+  }
+
+  async chat (messages, { json = true, temperature, model } = {}) {
+    const system = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n')
+    const contents = []
+    for (const m of messages.filter(m => m.role !== 'system')) {
+      const role = m.role === 'assistant' ? 'model' : 'user'
+      const last = contents[contents.length - 1]
+      if (last && last.role === role) last.parts[0].text += '\n\n' + m.content
+      else contents.push({ role, parts: [{ text: String(m.content) }] })
+    }
+    if (!contents.length || contents[contents.length - 1].role !== 'user') contents.push({ role: 'user', parts: [{ text: json ? 'JSONだけで答えて。' : '続けて。' }] })
+    const generationConfig = { maxOutputTokens: this.cfg.max_tokens ?? 1024, temperature: temperature ?? this.cfg.options?.temperature ?? 0.8 }
+    if (json) generationConfig.responseMimeType = 'application/json'
+    if (!this.noThinkingConfig) generationConfig.thinkingConfig = { thinkingBudget: 0 } // 考える時間を切って速く (使えないモデルなら外す)
+    const body = { contents, generationConfig }
+    if (system) body.systemInstruction = { parts: [{ text: system }] }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this._slot()
+      const ac = new AbortController()
+      const t = setTimeout(() => ac.abort(), this.cfg.timeout_ms ?? 60000)
+      let res
+      try {
+        res = await fetch(`${GEMINI_BASE}/models/${model || this.model}:generateContent`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': this.cfg.api_key || process.env.GEMINI_API_KEY || '' },
+          body: JSON.stringify(body),
+          signal: ac.signal
+        })
+      } finally { clearTimeout(t) }
+      if (res.status === 429 || res.status === 503) {
+        // 回数制限・混雑: 少し待ってやり直す
+        const wait = 15000 * (attempt + 1)
+        log.warn('llm', `Geminiの回数制限/混雑 (HTTP ${res.status})。${wait / 1000}秒待ってやり直す`)
+        this.next = Math.max(this.next, Date.now() + wait)
+        continue
+      }
+      if (!res.ok) {
+        const t2 = await res.text()
+        if (res.status === 400 && /thinking/i.test(t2) && !this.noThinkingConfig) {
+          this.noThinkingConfig = true; delete generationConfig.thinkingConfig; continue
+        }
+        throw new Error(`Gemini HTTP ${res.status}: ${t2.slice(0, 200)}`)
+      }
+      const data = await res.json()
+      const cand = data.candidates?.[0]
+      if (!cand?.content?.parts) throw new Error('Geminiが答えなかった (' + (cand?.finishReason || data.promptFeedback?.blockReason || '理由不明') + ')')
+      const text = cand.content.parts.filter(p => !p.thought).map(p => p.text || '').join('')
+      const u = data.usageMetadata || {}
+      return { text, evalCount: u.candidatesTokenCount, promptCount: u.promptTokenCount }
+    }
+    throw new Error('Geminiの回数制限が続いている (少し時間をおいて)')
+  }
+}
+
+// 使えるモデルの中から、いちばん新しい Flash を選ぶ (名前は時期で変わるので一覧から決める)
+export function pickGeminiModel (models) {
+  const ok = models.filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+    .map(m => String(m.name).replace(/^models\//, ''))
+    .filter(n => /^gemini-[\d.]+-flash(-lite)?$/.test(n) || /^gemini-[\d.]+-flash(-lite)?-latest$/.test(n))
+  const ver = n => Number((n.match(/gemini-([\d.]+)/) || [])[1]?.split('.').slice(0, 2).join('.') || 0)
+  ok.sort((a, b) => ver(b) - ver(a) || (a.includes('lite') ? 1 : 0) - (b.includes('lite') ? 1 : 0) || a.length - b.length)
+  return ok[0] || null
+}
+
 // LM Studio / llama.cpp server / vLLM などの OpenAI互換ローカルサーバー用
 class OpenAICompatProvider {
   constructor (cfg) {
@@ -145,6 +228,7 @@ export class LLMClient {
     if (cfg.provider === 'mock') this.provider = mockProvider
     else if (cfg.provider === 'openai_compat') this.provider = new OpenAICompatProvider(cfg)
     else if (cfg.provider === 'anthropic') this.provider = new AnthropicProvider(cfg)
+    else if (cfg.provider === 'gemini') this.provider = new GeminiProvider(cfg)
     else this.provider = new OllamaProvider(cfg)
     if (!this.provider) throw new Error('LLM provider not configured')
     this.concurrency = cfg.concurrency ?? 1

@@ -128,6 +128,13 @@ export async function main (argv = process.argv.slice(2)) {
       log.error('main', 'ClaudeのAPIキーが設定されていない → set-api-key.bat を実行してキーを入れて')
     } else log.info('main', `ネットのAI: ${cfg.llm.model} (Claude) を使う`)
   }
+  if (cfg.llm.provider === 'gemini') {
+    cfg.llm.concurrency = Math.max(cfg.llm.concurrency || 1, 2)
+    // 無料枠は1日の回数にも上限があるので、自分で考える間隔を長めに (仕事はルールで続く)
+    cfg.agent = { ...(cfg.agent || {}), decide_interval_ms: Math.max(cfg.agent?.decide_interval_ms ?? 0, cfg.llm.decide_interval_ms ?? 30000) }
+    if (!cfg.llm.api_key && !process.env.GEMINI_API_KEY) log.error('main', 'GeminiのAPIキーが設定されていない → set-gemini-key.bat を実行してキーを入れて')
+    else log.info('main', `ネットのAI: ${cfg.llm.model} (Gemini 無料枠・1分あたり${cfg.llm.rpm ?? 10}回まで) を使う`)
+  }
   const store = new Store(path.resolve(ROOT, cfg.database))
   const llm = new LLMClient(cfg.llm, { mockProvider: new MockProvider() })
   // ネットのAIの1日の予算 (円)。これを超えたらその日はAIに頼まない (住人はルールの仕事だけ続ける)

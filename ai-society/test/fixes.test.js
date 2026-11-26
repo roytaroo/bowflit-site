@@ -198,3 +198,28 @@ test('1日の予算を超えたらネットのAIに頼まない', async () => {
   assert.equal(calls, 1)
   assert.equal(warned, 1)
 })
+
+test('Gemini: いちばん新しい Flash を選ぶ・送る形', async () => {
+  const { LLMClient, pickGeminiModel } = await import('../src/llm/client.js')
+  const gc = ['generateContent']
+  assert.equal(pickGeminiModel([
+    { name: 'models/gemini-2.5-flash', supportedGenerationMethods: gc },
+    { name: 'models/gemini-3.8-flash', supportedGenerationMethods: gc },
+    { name: 'models/gemini-3.8-flash-lite', supportedGenerationMethods: gc },
+    { name: 'models/gemini-3.8-pro', supportedGenerationMethods: gc },
+    { name: 'models/gemini-3.8-flash-preview-tts', supportedGenerationMethods: gc },
+    { name: 'models/text-embedding-004', supportedGenerationMethods: ['embedContent'] }
+  ]), 'gemini-3.8-flash')
+  const llm = new LLMClient({ provider: 'gemini', model: 'gemini-3.8-flash', api_key: 'k', rpm: 6000 })
+  const orig = globalThis.fetch
+  let sent = null
+  globalThis.fetch = async (url, init) => { sent = { url, init, body: JSON.parse(init.body) }; return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"say":"やあ"}' }] } }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 3 } }) } }
+  try {
+    const r = await llm.requestJson([{ role: 'system', content: 'きりたん' }, { role: 'user', content: 'こんにちは' }])
+    assert.equal(r.say, 'やあ')
+    assert.match(sent.url, /models\/gemini-3\.8-flash:generateContent$/)
+    assert.equal(sent.init.headers['x-goog-api-key'], 'k')
+    assert.equal(sent.body.systemInstruction.parts[0].text, 'きりたん')
+    assert.equal(sent.body.generationConfig.responseMimeType, 'application/json')
+  } finally { globalThis.fetch = orig }
+})
