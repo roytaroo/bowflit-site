@@ -118,6 +118,15 @@ class GeminiProvider {
     this.minGapMs = Math.ceil(60000 / (cfg.rpm ?? 10)) // 無料枠の回数制限 (1分あたり) に合わせて間隔を空ける
     this.next = 0
     this.noThinkingConfig = false
+    // 混んでいる(503)・使えない(404)ときに順に試す予備のモデル
+    this.models = [...new Set([cfg.model, ...(cfg.fallback_models || ['gemini-flash-lite-latest', 'gemini-3.1-flash-lite', 'gemini-flash-latest'])].filter(Boolean))]
+    this.busyUntil = new Map() // モデル名 → この時刻まで避ける
+  }
+
+  _pickModel (asked) {
+    if (asked) return asked
+    const now = Date.now()
+    return this.models.find(m => !(this.busyUntil.get(m) > now)) || this.models[0]
   }
 
   async _slot () {
@@ -142,29 +151,42 @@ class GeminiProvider {
     if (!this.noThinkingConfig) generationConfig.thinkingConfig = { thinkingBudget: 0 } // 考える時間を切って速く (使えないモデルなら外す)
     const body = { contents, generationConfig }
     if (system) body.systemInstruction = { parts: [{ text: system }] }
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 4; attempt++) {
       await this._slot()
+      const useModel = this._pickModel(model)
       const ac = new AbortController()
-      const t = setTimeout(() => ac.abort(), this.cfg.timeout_ms ?? 60000)
+      const t = setTimeout(() => ac.abort(), this.cfg.timeout_ms ?? 30000)
       let res
       try {
-        res = await fetch(`${GEMINI_BASE}/models/${model || this.model}:generateContent`, {
+        res = await fetch(`${GEMINI_BASE}/models/${useModel}:generateContent`, {
           method: 'POST',
           headers: { 'content-type': 'application/json', 'x-goog-api-key': this.cfg.api_key || process.env.GEMINI_API_KEY || '' },
           body: JSON.stringify(body),
           signal: ac.signal
         })
+      } catch (e) {
+        // 時間切れ: このモデルは混んでいるとみなして、しばらく別のモデルを使う
+        this.busyUntil.set(useModel, Date.now() + 5 * 60000)
+        log.warn('llm', `Gemini ${useModel} が時間切れ。しばらく別のモデルを使う`)
+        continue
       } finally { clearTimeout(t) }
-      if (res.status === 429 || res.status === 503) {
-        // 回数制限・混雑: 少し待ってやり直す
+      if (res.status === 503 || res.status === 404) {
+        // 混雑・使えないモデル: しばらく別のモデルに切り替える
+        this.busyUntil.set(useModel, Date.now() + (res.status === 404 ? 24 * 3600000 : 5 * 60000))
+        log.warn('llm', `Gemini ${useModel} が${res.status === 503 ? '混雑中' : '使えない'} (HTTP ${res.status})。別のモデルで試す`)
+        continue
+      }
+      if (res.status === 429) {
+        // 回数制限: 少し待ってやり直す
         const wait = 15000 * (attempt + 1)
-        log.warn('llm', `Geminiの回数制限/混雑 (HTTP ${res.status})。${wait / 1000}秒待ってやり直す`)
+        log.warn('llm', `Geminiの回数制限 (HTTP 429)。${wait / 1000}秒待ってやり直す`)
         this.next = Math.max(this.next, Date.now() + wait)
         continue
       }
       if (!res.ok) {
         const t2 = await res.text()
-        if (res.status === 400 && /thinking/i.test(t2) && !this.noThinkingConfig) {
+        // 新しいモデルは「考える時間0」の指定を受け付けないことがあるので、外してやり直す
+        if (res.status === 400 && generationConfig.thinkingConfig) {
           this.noThinkingConfig = true; delete generationConfig.thinkingConfig; continue
         }
         throw new Error(`Gemini HTTP ${res.status}: ${t2.slice(0, 200)}`)
@@ -184,7 +206,8 @@ class GeminiProvider {
 export function pickGeminiModel (models) {
   const names = models.filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map(m => String(m.name).replace(/^models\//, ''))
-  // 「常に最新の Flash」を指す名前があればそれを使う
+  // 速くて混みにくい「最新の Flash-Lite」を優先 (無料枠の Flash は混雑で待たされやすい)
+  if (names.includes('gemini-flash-lite-latest')) return 'gemini-flash-lite-latest'
   if (names.includes('gemini-flash-latest')) return 'gemini-flash-latest'
   const ok = names
     .filter(n => /^gemini-[\d.]+-flash(-lite)?$/.test(n) || /^gemini-[\d.]+-flash(-lite)?-latest$/.test(n))

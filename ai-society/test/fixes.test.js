@@ -211,6 +211,7 @@ test('Gemini: いちばん新しい Flash を選ぶ・送る形', async () => {
     { name: 'models/text-embedding-004', supportedGenerationMethods: ['embedContent'] }
   ]), 'gemini-3.8-flash')
   assert.equal(pickGeminiModel([{ name: 'models/gemini-3.8-flash', supportedGenerationMethods: gc }, { name: 'models/gemini-flash-latest', supportedGenerationMethods: gc }]), 'gemini-flash-latest')
+  assert.equal(pickGeminiModel([{ name: 'models/gemini-flash-lite-latest', supportedGenerationMethods: gc }, { name: 'models/gemini-flash-latest', supportedGenerationMethods: gc }]), 'gemini-flash-lite-latest')
   const llm = new LLMClient({ provider: 'gemini', model: 'gemini-3.8-flash', api_key: 'k', rpm: 6000 })
   const orig = globalThis.fetch
   let sent = null

@@ -46,9 +46,9 @@ async function run () {
     try {
       const r = await fetch(`${GEMINI_BASE}/models?pageSize=200`, { headers })
       if (r.ok) model = pickGeminiModel((await r.json()).models || [])
-      else console.log(`  (モデル一覧は取れなかった: HTTP ${r.status}。gemini-flash-latest で試す)`)
-    } catch (e) { console.log('  (モデル一覧は取れなかった: ' + e.message + '。gemini-flash-latest で試す)') }
-    model = model || 'gemini-flash-latest'
+      else console.log(`  (モデル一覧は取れなかった: HTTP ${r.status}。gemini-flash-lite-latest で試す)`)
+    } catch (e) { console.log('  (モデル一覧は取れなかった: ' + e.message + '。gemini-flash-lite-latest で試す)') }
+    model = model || 'gemini-flash-lite-latest'
   }
   console.log(`${model} で試しに1回話しかけてみる…`)
   try {
