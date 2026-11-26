@@ -117,7 +117,7 @@ export async function main (argv = process.argv.slice(2)) {
   await checkOllama(cfg.llm)
   if (cfg.llm.provider === 'ollama') {
     // 最初の1回はモデルの読み込みで時間がかかるので、住人が考え始める前に読み込んでおく
-    log.info('main', `LLMを準備中 (${cfg.llm.model} を読み込み中。初回は1〜2分かかることがある)…`)
+    log.info('main', `LLMを準備中 (${cfg.llm.model} を読み込み中)…`)
     const t0 = Date.now()
     try {
       await fetch(cfg.llm.url.replace(/\/$/, '') + '/api/generate', { method: 'POST', body: JSON.stringify({ model: cfg.llm.model, prompt: 'hi', stream: false, keep_alive: cfg.llm.keep_alive ?? '30m', options: { num_predict: 1 } }), signal: AbortSignal.timeout(300000) })

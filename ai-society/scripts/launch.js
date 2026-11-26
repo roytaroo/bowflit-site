@@ -22,6 +22,7 @@ if (opt('--port')) cfg.minecraft.port = Number(opt('--port'))
 const log = (tag, m) => console.log(`${new Date().toTimeString().slice(0, 8)} [${tag}] ${m}`)
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 const win = process.platform === 'win32'
+const T0 = Date.now()
 
 async function httpOk (url) {
   try { return (await fetch(url, { signal: AbortSignal.timeout(2000) })).ok } catch { return false }
@@ -110,7 +111,7 @@ async function main () {
       } else log('mic', `別のターミナルで: cd voice_input && .venv/bin/python talk.py`)
     } else log('mic', 'Python環境がないのでマイクはオフ (setup.bat で作れる)')
   }
-  log('launch', '準備完了。止めるときはこのウィンドウで Ctrl+C')
+  log('launch', `準備完了 (起動まで${Math.round((Date.now() - T0) / 1000)}秒)。止めるときはこのウィンドウで Ctrl+C`)
 }
 
 // 住人のプロセスが落ちても、サーバーは止めずに住人だけ自動で再起動する
@@ -186,7 +187,8 @@ async function startServer () {
       }
     } catch (e) { log('server', 'server.properties を直せなかった: ' + e.message) }
   }
-  log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})… 初回はワールド生成で数分かかる`)
+  const firstWorld = !fs.existsSync(path.join(srv, 'world', 'level.dat'))
+  log('server', `Minecraftサーバーを起動します (${custom || 'Paper'})…${firstWorld ? ' 初回はワールド生成で数分かかる' : ''}`)
   fs.mkdirSync(path.join(srv, 'logs'), { recursive: true })
   const out = fs.createWriteStream(path.join(srv, 'logs', 'launch.log'), { flags: 'a' })
   const p = spawn(cmd, args, { cwd: custom ? ROOT : srv, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, MC_PORT: String(cfg.minecraft.port) } })
