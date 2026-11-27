@@ -46,10 +46,15 @@ export const BODY_ACTIONS = {
   },
   go_home: {
     async run (ctx) {
-      const h = ctx.agent.home
+      const h = ctx.agent.village?.center || ctx.agent.home
       if (!h) return 'まだ家がない'
-      const ok = await skills.goToPosition(ctx.bot, h.x, h.y, h.z, 2)
-      return ok ? '家に帰ってきた' : '家にたどり着けなかった'
+      const { bot } = ctx
+      const near = () => bot.entity.position.distanceTo(new Vec3(h.x, h.y, h.z)) <= 4
+      for (let k = 0; k < 3 && !near() && !bot.interrupt_code; k++) {
+        if (k > 0) await skills.goToSurface(bot) // 地下から帰れないときは、まず地上へ
+        await skills.goToPosition(bot, h.x, h.y, h.z, 2)
+      }
+      return near() ? '家に帰ってきた' : '家にたどり着けなかった'
     }
   },
   go_to_player: {
@@ -146,19 +151,27 @@ export const BODY_ACTIONS = {
       // 自分のベッド (みんなの家) があれば、そこへ帰って寝る
       if (agent.bedPos) {
         const bp = new Vec3(agent.bedPos.x, agent.bedPos.y, agent.bedPos.z)
-        if (bot.entity.position.distanceTo(bp) > 3) await skills.goToPosition(bot, bp.x, bp.y, bp.z, 2)
+        // 家まで帰る。地下や遠くで道が見つからなければ、地上に出てからもう一度
+        for (let k = 0; k < 3 && bot.entity.position.distanceTo(bp) > 3 && !bot.interrupt_code; k++) {
+          if (k > 0) await skills.goToSurface(bot)
+          await skills.goToPosition(bot, bp.x, bp.y, bp.z, 2)
+        }
         if (bot.interrupt_code) return '家に帰る途中で中断した'
+        if (bot.entity.position.distanceTo(bp) > 4) return `家に帰れなかった (${Math.round(bot.entity.position.distanceTo(bp))}ブロック離れている)`
         const bed = bot.blockAt(bp)
         if (!bed || !bed.name.endsWith('_bed')) return '自分のベッドが無くなっていた'
-        // まだ寝られる時間でなければ、ベッドのそばで少し待つ (最大90秒)
-        for (let i = 0; i < 30 && !bot.interrupt_code; i++) {
+        // まだ寝られる時間でなければ、ベッドのそばで待つ (最大2分)
+        let lastErr = ''
+        for (let i = 0; i < 40 && !bot.interrupt_code; i++) {
           try { await bot.sleep(bed); break } catch (e) {
+            lastErr = e.message
             if (/occupied/i.test(e.message)) return '自分のベッドに誰かが寝ていた'
-            if (/monster|enemies|安全/i.test(e.message)) return '近くにモンスターがいて眠れない'
+            if (/monster|enemies/i.test(e.message)) return '近くにモンスターがいて眠れない'
+            if (/far|distance/i.test(e.message)) await skills.goToPosition(bot, bp.x, bp.y, bp.z, 1)
             await new Promise(resolve => setTimeout(resolve, 3000))
           }
         }
-        if (!bot.isSleeping) return '眠れなかった (まだ夜じゃない)'
+        if (!bot.isSleeping) return `眠れなかった (${/night|day/i.test(lastErr) ? 'まだ夜じゃない' : lastErr.slice(0, 40)})`
         while (bot.isSleeping && !bot.interrupt_code) await new Promise(resolve => setTimeout(resolve, 1000))
         return 'ぐっすり眠った'
       }

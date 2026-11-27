@@ -225,3 +225,14 @@ test('Gemini: いちばん新しい Flash を選ぶ・送る形', async () => {
     assert.equal(sent.body.generationConfig.responseMimeType, 'application/json')
   } finally { globalThis.fetch = orig }
 })
+
+test('場所を家基準で言う・夜までの残り時間', async () => {
+  const { relativePlace, timeToNight } = await import('../src/agent/perception.js')
+  const home = { x: 0, y: 64, z: 0 }
+  assert.equal(relativePlace({ x: 38, y: 64, z: 0 }, home), '家から東へ約38ブロック')
+  assert.equal(relativePlace({ x: 72, y: 64, z: 72 }, home), '家から南東へ約102ブロック')
+  assert.equal(relativePlace({ x: 0, y: 40, z: -20 }, home), '家から北へ約20ブロック・地下')
+  assert.equal(relativePlace({ x: 2, y: 64, z: 2 }, home), '家のすぐそば')
+  assert.equal(timeToNight(11342), '夜まであと約1分')
+  assert.equal(timeToNight(13000), '今は夜')
+})

@@ -85,7 +85,7 @@ export const DECIDE_ACTIONS = ['collect', 'craft', 'build_house', 'explore', 'go
 export const REQUEST_ACTIONS = ['go_to_player', 'follow', 'give', 'rest', 'collect', 'explore', 'go_home', 'fish', 'plant_and_harvest', 'build_house', 'store_items', 'wander', 'sleep', 'set_home', 'craft', 'eat']
 
 export function buildReplyPrompt (ctx) {
-  const { character, agentRow, speakerDisplay, text, relationText, aboutMemories, recentChat, stateText, isHuman, thread, stance, why, isGroup, others = [] } = ctx
+  const { character, agentRow, speakerDisplay, text, relationText, aboutMemories, recentChat, stateText, isHuman, thread, stance, why, isGroup, others = [], sightings = '' } = ctx
   const types = Object.keys(EVENT_EFFECTS).filter(k => k !== 'died').join('|')
   const threadText = thread && thread.length > 1
     ? thread.slice(1).map(l => `- ${l.display}「${l.text}」`).join('\n')
@@ -101,12 +101,17 @@ ${speakerDisplay}が${isGroup ? 'みんなに' : 'あなたに(または近く�
 - 他の住人に意見を聞きたいときは "ask" にその人の名前を入れる
 - 頼みごとを引き受けるなら "action" に行動を入れる (${REQUEST_ACTIONS.join('|')})。引き受けないなら null
 - 以前その人と話した内容を覚えていれば、自然に触れてよい
-- 自分の場所を聞かれたら【状況】の位置(座標)をそのまま答える。知らないことは知らないと言い、作り話をしない
+- 場所は「家から東へ約38ブロック」のように家を基準に言う (【状況】の「いる場所」をそのまま使う)。座標の数字は言わない
+- 誰かの居場所を聞かれたら【見かけた人】を見て「3分前に家から東へ約56ブロックで見た」のように、いつ・どこで見たかを答える。見ていなければ「見てない」と言う。人から聞いた話なら、そう言う
+- 知らないことは知らないと言い、作り話をしない
 必ず次のJSONだけで答える:
 {"say":"返事","ask":null または "住人の名前","action":null または {"name":"行動名","args":{}},"goal":null または "新しい短期目標","relationship_event":null または {"type":"${types}","note":"相手の発言をどう受け取ったか(20字)"}}
 `
   const user = `【状況】
 ${stateText}
+
+【見かけた人】
+${sightings || '- (最近だれも見かけていない)'}
 
 【${speakerDisplay}${isHuman ? '(人間のプレイヤー)' : ''}との関係】
 ${relationText || '特になし'}

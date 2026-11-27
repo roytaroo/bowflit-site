@@ -2,7 +2,7 @@
 //  [通常のプログラム] 接続・知覚・反射行動・安全審査・行動実行・記録
 //  [LLM]             行動の意思決定・目標設定・会話・日記・死への反応
 import { createRequire } from 'node:module'
-import { snapshot, describeState } from './perception.js'
+import { snapshot, describeState, relativePlace } from './perception.js'
 import { DECIDE_ACTIONS } from './prompts.js'
 import { voiceIssues, fixVoice } from './voiceStyle.js'
 import { requestFromText } from './requests.js'
@@ -178,6 +178,13 @@ export class Agent {
 
   // 夜になったら、ベッドを持っている(置いてある)住人は寝る。夜の外は危ないので LLM の判断を待たない
   _bedtime (s) {
+    // 遠く・地下にいるときは、夕方より早めに (夜まであと約1分半) 家へ向かい始める
+    if (this.village && s.timeOfDay != null && s.timeOfDay >= 10000 && s.timeOfDay < 11800 && s.pos && !this._headingHome) {
+      const h = this.village.center
+      const far = Math.hypot(s.pos.x - h.x, s.pos.z - h.z) > 40 || s.pos.y < h.y - 8
+      if (far && this.currentAction?.name !== 'go_home') { this._headingHome = true; return { name: 'go_home', args: {}, reason: 'もうすぐ夜なので、遠くから家に戻る' } }
+    }
+    if (s.timeOfDay != null && s.timeOfDay < 10000) this._headingHome = false
     // みんなの家があれば、日が暮れ始めたら (夕方) 家に帰り始める
     const dusk = s.night || (this.village && s.timeOfDay != null && s.timeOfDay >= 11800 && s.timeOfDay < 23000)
     if (this.cfg.world?.auto_sleep === false || !dusk || this.bot.isSleeping) return null
@@ -251,8 +258,34 @@ export class Agent {
     }
   }
 
+  // 見かけた人を、いつ・どこで見たか覚えておく (「3分前に家から東へ約56ブロックで見た」と答えられるように)
+  _noteSightings () {
+    const bot = this.bot
+    if (!bot?.entity) return
+    this.sightings = this.sightings || {}
+    const me = bot.entity.position
+    const home = this.village?.center || this.home
+    for (const p of Object.values(bot.players)) {
+      if (!p.entity || p.username === this.name) continue
+      if (p.entity.position.distanceTo(me) > 24) continue
+      this.sightings[p.username] = { t: Date.now(), place: relativePlace(p.entity.position, home) }
+    }
+  }
+
+  sightingsText (names = null) {
+    const list = Object.entries(this.sightings || {})
+      .filter(([n]) => !names || names.includes(n))
+      .sort((a, b) => b[1].t - a[1].t).slice(0, 8)
+    if (!list.length) return ''
+    return list.map(([n, v]) => {
+      const min = Math.round((Date.now() - v.t) / 60000)
+      return `- ${this.society.displayName(n)}: ${min <= 0 ? 'さっき' : `${min}分前に`}${v.place}で見た`
+    }).join('\n')
+  }
+
   _idleStep (n) {
     try { this._greetTick() } catch {}
+    if (n % 4 === 0) try { this._noteSightings() } catch {}
     const bot = this.bot
     if (!this.ready() || !this.alive || this.busy || this.pendingAction || bot.isSleeping) { this._idling = false; return }
     if (this.body && !this.body.isIdle()) return // 体が反射の動き (物を拾う・反撃など) をしている
@@ -772,6 +805,7 @@ export class Agent {
       aboutMemories: this.memory.recall(`${speakerDisplay} ${text}`, 5).filter(m => m.about === from || m.importance >= 5).slice(0, 4).concat(this.memory.about(from, 2)).slice(0, 5),
       recentChat: this._recentChatText(6),
       stateText: describeState(s).split('\n').slice(0, 5).join('\n'), // 時間・体力・位置・持ち物・近くの人 (「鉄ある？」に正直に答えられるように)
+      sightings: this.sightingsText(),
       thread,
       stance,
       why,

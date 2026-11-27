@@ -7,6 +7,7 @@ import * as mc from './mcdata.js'
 const LOG_TYPES = mc.WOOD_TYPES.map(w => w + '_log').concat(['crimson_stem', 'warped_stem'])
 
 export function count (bot, name) {
+  if (name === 'planks_same') return maxSamePlanks(bot)
   const inv = world.getInventoryCounts(bot)
   if (name === 'planks') return Object.entries(inv).filter(([k]) => k.endsWith('_planks')).reduce((n, [, v]) => n + v, 0)
   if (name === 'log') return Object.entries(inv).filter(([k]) => k.endsWith('_log') || k.endsWith('_stem')).reduce((n, [, v]) => n + v, 0)
@@ -63,6 +64,34 @@ async function getPlanks (bot, n) {
   return count(bot, 'planks') >= n
 }
 
+// 板材を「同じ種類で」n 枚以上持つ。レシピは同じ種類の板材しか使えない
+// (オークとトウヒが混ざっていると、3枚あっても木のツルハシが作れない)
+function woodOf (name) { return name.replace(/^stripped_/, '').replace(/_(log|stem|planks|wood|hyphae)$/, '') }
+function sameTypePlanks (bot) {
+  const by = {}
+  for (const i of bot.inventory.items()) if (i.name.endsWith('_planks')) by[woodOf(i.name)] = (by[woodOf(i.name)] || 0) + i.count
+  return by
+}
+export function maxSamePlanks (bot) { return Math.max(0, ...Object.values(sameTypePlanks(bot))) }
+
+async function getSamePlanks (bot, n) {
+  for (let guard = 0; guard < 4 && maxSamePlanks(bot) < n && !bot.interrupt_code; guard++) {
+    const planks = sameTypePlanks(bot)
+    const logs = {}
+    for (const i of bot.inventory.items()) if (LOG_TYPES.includes(i.name)) logs[woodOf(i.name)] = (logs[woodOf(i.name)] || 0) + i.count
+    // 板材+原木で n 枚に届く種類を選ぶ。無ければ原木を集めてからもう一度
+    const types = [...new Set([...Object.keys(planks), ...Object.keys(logs)])]
+    const best = types.map(t => ({ t, total: (planks[t] || 0) + (logs[t] || 0) * 4 })).sort((a, b) => b.total - a.total)[0]
+    if (!best || best.total < n) {
+      if (!await getLogs(bot, count(bot, 'log') + Math.ceil((n - (best?.total || 0)) / 4))) return false
+      continue
+    }
+    const plank = best.t + '_planks'
+    await skills.craftRecipe(bot, plank, Math.ceil((n - (planks[best.t] || 0)) / 4))
+  }
+  return maxSamePlanks(bot) >= n
+}
+
 // 丸石を n 個以上持つ (石を掘る。ツルハシが無ければ作る)
 async function getCobblestone (bot, n) {
   if (count(bot, 'cobblestone') >= n) return true
@@ -97,6 +126,7 @@ function needsTable (bot, item) {
 export async function obtain (bot, item, n = 1, depth = 0) {
   if (bot.interrupt_code || depth > 6) return false
   if (item === 'log' || LOG_TYPES.includes(item)) return getLogs(bot, n)
+  if (item === 'planks_same') return getSamePlanks(bot, n)
   if (item === 'planks' || item.endsWith('_planks')) return getPlanks(bot, n)
   if (item === 'cobblestone' || item === 'stone') return getCobblestone(bot, n)
   if (count(bot, item) >= n) return true
@@ -110,13 +140,14 @@ export async function obtain (bot, item, n = 1, depth = 0) {
   const perCraft = result?.craftedCount || 1
   const times = Math.ceil((n - count(bot, item)) / perCraft)
   // 材料をそろえる (板材は種類を問わない)。棒を作ると板材が減るので、全部そろうまで何周か確かめる
-  const generic = ing => ing.endsWith('_planks') ? 'planks' : ing.endsWith('_log') ? 'log' : ing
+  // 材料の板材は「同じ種類で」そろえる
+  const generic = ing => ing.endsWith('_planks') ? 'planks_same' : ing.endsWith('_log') ? 'log' : ing
   for (let pass = 0; pass < 3; pass++) {
     const missing = Object.entries(ingredients).filter(([ing, num]) => count(bot, generic(ing)) < num * times)
     if (!missing.length) break
     for (const [ing, num] of missing) {
       // 板材は、ほかの材料(棒など)に使う分も見込んで多めに
-      const extra = generic(ing) === 'planks' ? Object.entries(ingredients).filter(([i]) => i === 'stick').reduce((a, [, k]) => a + Math.ceil(k * times / 4) * 2, 0) : 0
+      const extra = generic(ing) === 'planks_same' ? Object.entries(ingredients).filter(([i]) => i === 'stick').reduce((a, [, k]) => a + Math.ceil(k * times / 4) * 2, 0) : 0
       if (!await obtain(bot, generic(ing), num * times + extra, depth + 1)) { skills.log(bot, `${item}の材料 ${ing} がそろわなかった。`); return false }
     }
   }

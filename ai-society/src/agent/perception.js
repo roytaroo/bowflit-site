@@ -123,15 +123,38 @@ export function snapshot (bot, { home = null, scanBlocks = true, knownAgents = [
   }
 }
 
+// 家を基準にした場所の言い方: 「家から東へ約38ブロック」(北=-z, 東=+x)
+export function relativePlace (pos, home) {
+  if (!pos) return '不明'
+  if (!home) return `(${Math.round(pos.x)},${Math.round(pos.z)})あたり`
+  const dx = pos.x - home.x; const dz = pos.z - home.z
+  const d = Math.round(Math.hypot(dx, dz))
+  if (d <= 6) return '家のすぐそば'
+  const ang = Math.atan2(dx, -dz) * 180 / Math.PI // 北=0, 東=90
+  const dirs = ['北', '北東', '東', '南東', '南', '南西', '西', '北西']
+  const dir = dirs[Math.round(((ang + 360) % 360) / 45) % 8]
+  const below = home.y != null && pos.y < home.y - 10 ? '・地下' : ''
+  return `家から${dir}へ約${d}ブロック${below}`
+}
+
+// 夜までの残り時間 (ゲーム内の1日 = 現実の20分。夜は時刻12542から)
+export function timeToNight (timeOfDay) {
+  if (timeOfDay == null) return null
+  if (timeOfDay >= 12542 && timeOfDay < 23460) return '今は夜'
+  const left = timeOfDay < 12542 ? 12542 - timeOfDay : 24000 - timeOfDay + 12542
+  const min = Math.round(left / 1200)
+  return min <= 0 ? 'もうすぐ夜' : `夜まであと約${min}分`
+}
+
 export function describeState (s) {
   const inv = s.inventory.length ? s.inventory.map(i => `${i.name}x${i.count}`).join(', ') : 'なし'
   const hostile = s.hostiles.length ? s.hostiles.slice(0, 4).map(h => `${h.name}(${h.dist}m)`).join(', ') : 'なし'
   const players = s.players.length ? s.players.slice(0, 8).map(p => `${p.name}(${p.dist}m)`).join(', ') : '近くに誰もいない'
   const blocks = Object.entries(s.blocks).map(([k, v]) => `${k}${v.count}個(最寄り${v.nearest}m)`).join(', ') || '特になし'
   return [
-    `時間: ${s.day != null ? `${s.day}日目 ` : ''}${s.phase}${s.raining ? ' 雨' : ''}`,
+    `時間: ${s.day != null ? `${s.day}日目 ` : ''}${s.phase}${s.raining ? ' 雨' : ''}${timeToNight(s.timeOfDay) ? ` (${timeToNight(s.timeOfDay)})` : ''}`,
     `体力 ${s.health}/20, 満腹度 ${s.food}/20, 装備 ${s.gear.label}・防具${s.gear.armor}部位`,
-    `位置 ${s.pos ? `${s.pos.x},${s.pos.y},${s.pos.z}` : '不明'}${s.home ? ` / 家まで${s.distHome}m` : ' / まだ家がない'}`,
+    `いる場所: ${relativePlace(s.pos, s.home)}${s.home ? '' : ' (まだ家がない)'}`,
     `持ち物: ${inv}`,
     `近くの人: ${players}`,
     `近くの敵: ${hostile}`,

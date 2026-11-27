@@ -18,6 +18,11 @@ export class MockProvider {
       const stances = ['賛成', '反対', '面倒', '他人に振る', '心配']
       const n = sys.includes('全員への呼びかけ') ? Math.min(3, names.length) : (Math.random() < 0.6 ? 1 : 0)
       out = { responders: names.sort(() => Math.random() - 0.5).slice(0, n).map((name, i) => ({ name, stance: stances[i % stances.length], why: 'ダミー' })) }
+    } else if (sys.includes('今日それぞれ何をするか話し合っている')) {
+      // 朝の作戦会議 (テスト用): 仕事をランダムに選び、ときどき仲間を誘う
+      const tasks = ['wood', 'stone', 'coal', 'food', 'farm', 'explore', 'tools', 'storage']
+      const others = [...user.matchAll(/([A-Za-z_]+)\(/g)].map(m => m[1])
+      out = { say: `今日は${tasks[Math.floor(Math.random() * tasks.length)]}をやるよ`, task: tasks[Math.floor(Math.random() * tasks.length)], with: others.length && Math.random() < 0.5 ? others[0] : null }
     } else if (sys.includes('記憶を整理する係')) out = { summary: '昔のことをまとめた記憶' }
     else if (sys.includes('日記を書く')) {
       out = { diary: '今日は木を集めて、仲間と少し話した。明日はもっと頑張りたい。', tomorrow: '家を建てる材料を集める', impressions: [], growth: '', lesson: '' }

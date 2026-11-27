@@ -56,13 +56,25 @@ class ActionManager {
     this.timedout = false
     let timer = null
     if (timeout > 0) timer = setTimeout(() => { this.timedout = true; this.body.requestInterrupt() }, timeout * 60000)
+    // 止まるよう頼んでも8秒たって終わらない行動 (中で何かを待ち続けて固まったもの) は見捨てて先へ進む
+    let watchdog = null
+    const abandoned = new Promise((resolve, reject) => {
+      watchdog = setInterval(() => {
+        if (!bot.interrupt_code) { this._intAt = 0; return }
+        this._intAt = this._intAt || Date.now()
+        if (Date.now() - this._intAt > 8000) reject(new Error(`「${label}」が止まらないので打ち切った`))
+      }, 500)
+    })
     try {
-      const value = await fn()
+      const value = await Promise.race([fn(), abandoned])
       return { success: true, value, message: bot.output, interrupted: !!bot.interrupt_code, timedout: this.timedout }
     } catch (err) {
       return { success: false, error: err, message: bot.output + `(エラー: ${err?.message || err})`, interrupted: !!bot.interrupt_code, timedout: this.timedout }
     } finally {
       clearTimeout(timer)
+      clearInterval(watchdog)
+      this._intAt = 0
+      try { bot.pathfinder?.stop(); bot.pathfinder?.setGoal(null); bot.clearControlStates() } catch {}
       this.executing = false
       this.currentActionLabel = ''
       if (!bot.interrupt_code) bot.emit('idle')
