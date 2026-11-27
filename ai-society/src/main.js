@@ -14,6 +14,16 @@ import { startInputServer } from './voice/inputServer.js'
 import { Society } from './society/society.js'
 import { Agent } from './agent/agent.js'
 import { makeDisplay } from './society/display.js'
+import { ensureVillage } from './society/village.js'
+import { MorningMeeting } from './society/meeting.js'
+import fs from 'node:fs'
+
+// サーバーにコマンドを送る: いつもは起動役 (launch.js) が @@CMD 行を拾ってサーバーに渡す。
+// テスト用に AI_SOCIETY_CMD_FIFO があれば、そのファイル (サーバーの入力) に直接書く
+function sendServerCommand (cmd) {
+  if (process.env.AI_SOCIETY_CMD_FIFO) { try { fs.appendFileSync(process.env.AI_SOCIETY_CMD_FIFO, cmd + '\n'); return } catch {} }
+  console.log('@@CMD ' + cmd)
+}
 import { log, sleep } from './util/log.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -119,7 +129,7 @@ export async function main (argv = process.argv.slice(2)) {
   if (args['no-voice-in']) overrides.voice_input = { enabled: false }
   if (args.player) overrides.player = { name: args.player }
   const cfg = loadConfig(ROOT, overrides)
-  const { selected } = loadCharacters(ROOT, cfg)
+  const { selected, all: allCharacters } = loadCharacters(ROOT, cfg)
   if (!selected.length) throw new Error('参加するキャラクターがいません (characters/*.json の enabled か --agents を確認)')
 
   if (cfg.llm.provider === 'anthropic') {
@@ -196,6 +206,25 @@ export async function main (argv = process.argv.slice(2)) {
     await sleep(cfg.minecraft.join_interval_ms ?? 4000) // サーバーの連続ログイン制限を避ける
   }
 
+  // みんなの家: 最初の起動で、スポーン近くに全員分 (まだ来ていない人の分も) のベッド付きの家を建てる
+  if (cfg.village?.enabled !== false) {
+    const builder = agents.find(a => a.ready())
+    if (builder) {
+      try {
+        const village = await ensureVillage({ society, bot: builder.bot, all: allCharacters, send: sendServerCommand })
+        for (const a of agents) a.moveIntoVillage(village)
+      } catch (e) { log.warn('village', '家を用意できなかった: ' + e.message) }
+    }
+  }
+
+  // 朝の会議: 朝になったら (1日1回) みんなの家に集まって、今日の仕事と一緒にやる相手を決める
+  const meeting = new MorningMeeting(society)
+  society.meeting = meeting
+  const meetingTimer = setInterval(() => {
+    if (cfg.meeting?.enabled === false || agents.length < 1) return
+    if (meeting.shouldStart(agents)) meeting.run(agents).catch(e => log.warn('meeting', e.message))
+  }, 5000)
+
   // ゲーム内時間が取れないサーバー向けの日記タイマー (保険)
   const fallbackMin = cfg.diary?.fallback_interval_min ?? 20
   const fallback = setInterval(async () => {
@@ -227,7 +256,7 @@ export async function main (argv = process.argv.slice(2)) {
     if (stopping) return
     stopping = true
     log.info('main', '終了します… ' + llm.summary())
-    clearInterval(fallback); clearInterval(stats); clearInterval(memWatch)
+    clearInterval(fallback); clearInterval(stats); clearInterval(memWatch); clearInterval(meetingTimer)
     inputServer?.close()
     for (const a of agents) { a.stop(); society.display.detach(a.character) }
     await sleep(500)

@@ -141,12 +141,29 @@ export const BODY_ACTIONS = {
   sleep: {
     async run (ctx) {
       const { bot, agent } = ctx
-      // 自分のベッドが遠くにあれば戻る。無くてベッドを持っていれば、その場に置く
-      let bed = nearestBed(bot, 32)
-      if (!bed && agent.bedPos) {
-        await skills.goToPosition(bot, agent.bedPos.x, agent.bedPos.y, agent.bedPos.z, 2)
-        bed = nearestBed(bot, 8)
+      // ベッドのそばで待つ・寝ている間は「はまった」と思われて動かされないように
+      for (const m of ['unstuck', 'elbow_room', 'item_collecting', 'torch_placing']) bot.modes?.pause(m)
+      // 自分のベッド (みんなの家) があれば、そこへ帰って寝る
+      if (agent.bedPos) {
+        const bp = new Vec3(agent.bedPos.x, agent.bedPos.y, agent.bedPos.z)
+        if (bot.entity.position.distanceTo(bp) > 3) await skills.goToPosition(bot, bp.x, bp.y, bp.z, 2)
+        if (bot.interrupt_code) return '家に帰る途中で中断した'
+        const bed = bot.blockAt(bp)
+        if (!bed || !bed.name.endsWith('_bed')) return '自分のベッドが無くなっていた'
+        // まだ寝られる時間でなければ、ベッドのそばで少し待つ (最大90秒)
+        for (let i = 0; i < 30 && !bot.interrupt_code; i++) {
+          try { await bot.sleep(bed); break } catch (e) {
+            if (/occupied/i.test(e.message)) return '自分のベッドに誰かが寝ていた'
+            if (/monster|enemies|安全/i.test(e.message)) return '近くにモンスターがいて眠れない'
+            await new Promise(resolve => setTimeout(resolve, 3000))
+          }
+        }
+        if (!bot.isSleeping) return '眠れなかった (まだ夜じゃない)'
+        while (bot.isSleeping && !bot.interrupt_code) await new Promise(resolve => setTimeout(resolve, 1000))
+        return 'ぐっすり眠った'
       }
+      // 家が無いとき: 近くのベッドか、持っているベッドを置いて寝る
+      let bed = nearestBed(bot, 32)
       const item = bot.inventory.items().find(i => i.name.endsWith('_bed'))
       if (!bed && item) {
         const p = world.getNearestFreeSpace(bot, 2, 6)
@@ -163,8 +180,20 @@ export const BODY_ACTIONS = {
   attack: {
     async run (ctx, a) {
       const { bot } = ctx
-      const t = String(a.target || '')
+      let t = String(a.target || '')
       if (bot.players[t] || ctx.agent.society.isAgent(t)) return 'プレイヤーは攻撃しない'
+      // 「動物」なら近くの食べられる動物 (牛・豚・羊・鶏) を探す。いなければ少し歩いて探す
+      if (/^(animal|food|動物)$/.test(t)) {
+        const ANIMALS = ['cow', 'pig', 'sheep', 'chicken', 'rabbit']
+        let e = bot.nearestEntity(en => ANIMALS.includes(en.name) && en.position.distanceTo(bot.entity.position) < 32)
+        if (!e) {
+          const p = bot.entity.position; const ang = Math.random() * Math.PI * 2
+          await skills.goToPosition(bot, Math.round(p.x + Math.cos(ang) * 40), p.y, Math.round(p.z + Math.sin(ang) * 40), 4)
+          e = bot.nearestEntity(en => ANIMALS.includes(en.name) && en.position.distanceTo(bot.entity.position) < 32)
+        }
+        if (!e) return '近くに動物がいなかった'
+        t = e.name
+      }
       const ok = await skills.attackNearest(bot, t, true)
       return ok ? `${t}を倒した` : `${t}を倒せなかった (${why(bot)})`
     }
@@ -276,6 +305,7 @@ export const BODY_ACTIONS = {
   },
   rest: {
     async run (ctx, a) {
+      ctx.bot.modes?.pause('unstuck')
       const sec = Math.min(60, Number(a.seconds) || 5)
       for (let i = 0; i < sec * 2 && !ctx.bot.interrupt_code; i++) await new Promise(resolve => setTimeout(resolve, 500))
       return '少し休んだ'

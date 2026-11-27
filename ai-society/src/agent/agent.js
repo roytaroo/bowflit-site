@@ -7,6 +7,7 @@ import { DECIDE_ACTIONS } from './prompts.js'
 import { voiceIssues, fixVoice } from './voiceStyle.js'
 import { requestFromText } from './requests.js'
 import { Body } from '../body/body.js'
+import { DAY_TASKS } from '../society/meeting.js'
 import { Safety } from './safety.js'
 import { ACTIONS } from './actions.js'
 import { AgentMemory } from '../memory/memory.js'
@@ -34,6 +35,9 @@ export class Agent {
     this.home = this.row.home ? JSON.parse(this.row.home) : null
     this.bedPos = this.store.getState(`bed:${this.name}`, null) // 自分で置いたベッドの場所
     this.houseSite = this.store.getState(`house_site:${this.name}`, null) // 家を建てている場所
+    const village = this.store.getState('village', null)
+    if (village) this.moveIntoVillage(village)
+    this.dayPlan = this.store.getState(`day_plan:${this.name}`, null)
     this.memory = new AgentMemory(this.store, this.name, this.cfg.memory || {})
     this.safety = new Safety(this.cfg.safety || {}, this.row)
     this.heard = []          // この人が実際に聞いた会話だけ (他人の記憶とは混ざらない)
@@ -174,7 +178,9 @@ export class Agent {
 
   // 夜になったら、ベッドを持っている(置いてある)住人は寝る。夜の外は危ないので LLM の判断を待たない
   _bedtime (s) {
-    if (this.cfg.world?.auto_sleep === false || !s.night || this.bot.isSleeping) return null
+    // みんなの家があれば、日が暮れ始めたら (夕方) 家に帰り始める
+    const dusk = s.night || (this.village && s.timeOfDay != null && s.timeOfDay >= 11800 && s.timeOfDay < 23000)
+    if (this.cfg.world?.auto_sleep === false || !dusk || this.bot.isSleeping) return null
     if (this.currentAction?.name === 'sleep' || Date.now() - (this._lastBedTry || 0) < 45000) return null
     const hasBed = s.inventory.some(i => i.name.endsWith('_bed')) || this.bedPos
     if (!hasBed || s.hostiles.some(h => h.dist <= 10) || s.inWater) return null
@@ -291,6 +297,8 @@ export class Agent {
           await this._execute(a, a.reflex ? 'reflex' : 'reply')
           continue
         }
+        // 朝の会議の間は、考えるのも仕事も止めて会議に出る
+        if (this.society.meetingActive) { await sleep(1000); continue }
         const since = Date.now() - this.lastDecision
         // 待ち時間は、ぼーっとせずに自分の仕事 (素材集めなど) をする
         if (since < minGap) { await this._choreOnce(); continue }
@@ -318,15 +326,27 @@ export class Agent {
   _pickChore () {
     if (this.cfg.agent?.auto_work === false) return null
     const s = this.state({ scanBlocks: false })
-    if (s.night || s.inWater || s.health < 10 || s.hostiles.some(h => h.dist < 12) || this.bot.isSleeping) return null
+    const dusk = this.village && s.timeOfDay != null && s.timeOfDay >= 11800 && s.timeOfDay < 23000
+    if (s.night || dusk || s.inWater || s.health < 10 || s.hostiles.some(h => h.dist < 12) || this.bot.isSleeping) return null
     const now = Date.now()
     this._choreBan = this._choreBan || {}
     const ok = key => !(this._choreBan[key] > now)
     const count = re => s.inventory.filter(i => re.test(i.name)).reduce((n, i) => n + i.count, 0)
     const logs = count(/_log$/); const planks = count(/_planks$/); const stone = count(/^(cobblestone|stone|cobbled_deepslate)$/)
     const mats = logs * 4 + planks + stone
+    if (this.society.meetingActive) return null
     const gift = this._giftChore(s)
     if (gift) return gift
+    // 朝の会議で決めた今日の仕事 (約束した相手がいれば、まずその人のそばへ)
+    const plan = this.dayPlan
+    if (plan && plan.day === s.day && DAY_TASKS[plan.task]) {
+      if (plan.with) {
+        const p = this.bot.players[plan.with]?.entity
+        if (p && p.position.distanceTo(this.bot.entity.position) > 12 && ok('join:' + plan.with)) return { name: 'go_to_player', args: { name: plan.with }, key: 'join:' + plan.with }
+      }
+      const c = this._dayTaskChore(plan.task, s)
+      if (c && ok('day:' + plan.task + JSON.stringify(c.args))) return { ...c, key: 'day:' + plan.task + JSON.stringify(c.args) }
+    }
     if (logs * 4 + planks < 16 && ok('log')) return { name: 'collect', args: { block: 'log', count: 6 }, key: 'log' }
     // ツルハシが無ければ作る (壊れたときも)。丸石があれば石のツルハシ
     if (!s.inventory.some(i => /_pickaxe$/.test(i.name)) && ok('pickaxe')) {
@@ -344,6 +364,31 @@ export class Agent {
     if (chores.length) { const c = chores[Math.floor(Math.random() * chores.length)]; return { ...c, key: 'role:' + c.name + JSON.stringify(c.args || {}) } }
     if (logs < 32 && ok('log')) return { name: 'collect', args: { block: 'log', count: 8 }, key: 'log' }
     return null
+  }
+
+  // 今日の仕事を、実際の行動1回分にする
+  _dayTaskChore (task, s) {
+    if (task === 'tools') {
+      const has = n => s.inventory.some(i => i.name === n)
+      const item = ['stone_pickaxe', 'stone_sword', 'stone_axe', 'stone_shovel'].find(n => !has(n))
+      if (item) return { name: 'craft', args: { item, count: 1 } }
+      return { name: 'craft', args: { item: 'torch', count: 8 } }
+    }
+    if (task === 'food') return { name: 'attack', args: { target: 'animal' } }
+    if (task === 'explore') return { name: 'explore', args: { direction: ['north', 'south', 'east', 'west'][Math.floor(Math.random() * 4)], distance: 64 } }
+    return DAY_TASKS[task]?.chore || null
+  }
+
+  setDayPlan (plan) {
+    this.dayPlan = plan
+    this.store.setState(`day_plan:${this.name}`, plan)
+    if (plan?.task) this.store.updateAgent(this.name, { current_goal: (plan.with ? `${this.society.displayName(plan.with)}と` : '') + DAY_TASKS[plan.task].ja })
+  }
+
+  // 今の行動をすぐ止める (会議・寝る時間・頼みごとなど)
+  interruptAction () {
+    this.interruptFlag = true
+    try { this.body?.requestInterrupt(); this.bot?.pathfinder?.stop() } catch {}
   }
 
   async _choreOnce () {
@@ -546,6 +591,20 @@ export class Agent {
   }
 
   // ------------------------------------------------------------------ 家・建築
+  // みんなの家に住む: 自分のベッド・家 (家の中) を決める。自分で家を建てる仕事はしない
+  moveIntoVillage (village) {
+    if (!village) return
+    this.village = village
+    const bed = village.beds?.[this.name]
+    if (bed) { this.bedPos = bed; this.store.setState(`bed:${this.name}`, bed) }
+    if (!this.home || this.home.x !== village.center.x || this.home.z !== village.center.z) {
+      this.home = village.center
+      this.store.updateAgent(this.name, { home: village.center })
+    }
+    this.store.setState(`build:${this.name}:house`, 70) // 家はもうある
+    this.houseSite = null
+  }
+
   setHome (pos) {
     this.home = pos
     this.store.updateAgent(this.name, { home: pos })

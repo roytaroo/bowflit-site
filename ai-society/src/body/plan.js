@@ -126,11 +126,13 @@ export async function obtain (bot, item, n = 1, depth = 0) {
   }
   // クラフトは、サーバーとのずれで失敗することがあるので、少し待って1回だけやり直す
   for (let attempt = 0; attempt < 2 && count(bot, item) < n && !bot.interrupt_code; attempt++) {
-    try { await skills.craftRecipe(bot, item, Math.ceil((n - count(bot, item)) / perCraft)) } catch (e) {
+    let crafted = false
+    try { crafted = await skills.craftRecipe(bot, item, Math.ceil((n - count(bot, item)) / perCraft)) } catch (e) {
       skills.log(bot, `${item}のクラフトでエラー: ${String(e?.message || e).slice(0, 60)}`)
       try { bot.closeWindow(bot.currentWindow) } catch {}
-      await new Promise(resolve => setTimeout(resolve, 1500))
     }
+    // 失敗したら、持ち物の情報が落ち着くのを待ってからもう1回
+    if (!crafted || count(bot, item) < n) await new Promise(resolve => setTimeout(resolve, 1500))
   }
   return count(bot, item) >= n
 }
