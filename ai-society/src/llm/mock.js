@@ -23,7 +23,10 @@ export class MockProvider {
       const tasks = ['wood', 'stone', 'coal', 'food', 'farm', 'explore', 'tools', 'storage']
       const others = [...user.matchAll(/([A-Za-z_]+)\(/g)].map(m => m[1])
       out = { say: `今日は${tasks[Math.floor(Math.random() * tasks.length)]}をやるよ`, task: tasks[Math.floor(Math.random() * tasks.length)], with: others.length && Math.random() < 0.5 ? others[0] : null }
-    } else if (sys.includes('記憶を整理する係')) out = { summary: '昔のことをまとめた記憶' }
+    } else if (sys.includes('最期のひとこと')) out = { say: ['ここまで…か…', 'あとは…たのむ…', 'くやしい…'][Math.floor(Math.random() * 3)] }
+    else if (sys.includes('倒れた (この世界では') || sys.includes('の悲鳴が聞こえた')) out = { say: /回目/.test(sys) ? '最近倒れすぎじゃない？' : 'え、大丈夫！？', feeling: '心配', go_help: true }
+    else if (sys.includes('家のベッドで目を覚ました')) out = { say: 'うう、やられちゃった…', lesson: '暗い所に気をつける' }
+    else if (sys.includes('記憶を整理する係')) out = { summary: '昔のことをまとめた記憶' }
     else if (sys.includes('日記を書く')) {
       out = { diary: '今日は木を集めて、仲間と少し話した。明日はもっと頑張りたい。', tomorrow: '家を建てる材料を集める', impressions: [], growth: '', lesson: '' }
     } else if (sys.includes('が亡くなった') || sys.includes('死んでしまった')) {

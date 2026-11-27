@@ -167,12 +167,12 @@ export class Society {
     return out
   }
 
-  async onAgentDeath (dead, { cause, pos, day, permanent }) {
+  async onAgentDeath (dead, { cause, pos, day, permanent, lastWords = null }) {
     const deadName = this.displayName(dead)
     const known = this.witnesses(dead, pos)
     if (!permanent && !this.config.death?.react_on_respawn) {
       if (known.length) log.info('society', `${deadName}が倒れたのに気づいた: ${known.map(k => `${k.agent.display}(${k.how === 'saw' ? '見た' : '悲鳴'})`).join(', ')}`)
-      await Promise.allSettled(known.map(k => k.agent.reactToDeath(dead, { cause, pos, day, permanent, how: k.how })))
+      await Promise.allSettled(known.map(k => k.agent.reactToDeath(dead, { cause, pos, day, permanent, how: k.how, lastWords })))
       return
     }
     this.shared.add('death', `${deadName}が${cause}で${permanent ? '亡くなった' : '死んでしまった'}${pos ? ` (場所 ${pos.x},${pos.y},${pos.z})` : ''}`, { importance: permanent ? 10 : 7, participants: [dead], day })

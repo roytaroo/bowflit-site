@@ -15,6 +15,7 @@ import { Society } from './society/society.js'
 import { Agent } from './agent/agent.js'
 import { makeDisplay } from './society/display.js'
 import { ensureVillage, repairBeds } from './society/village.js'
+import { LiveSettings } from './society/settings.js'
 import { MorningMeeting } from './society/meeting.js'
 import fs from 'node:fs'
 
@@ -197,7 +198,12 @@ export async function main (argv = process.argv.slice(2)) {
   society.display = makeDisplay(cfg)
   society.seedRelationships(selected)
   society.applyProfileUpgrades(selected)
+  // だいき専用の設定の本: 前回変えた設定を先に戻す (住人の体ができる前に)
+  const settings = new LiveSettings({ society, cfg, store, send: sendServerCommand, agents: [], llm })
+  society.settings = settings
+  settings.load()
   const agents = selected.map(c => new Agent(c, society))
+  settings.agents = agents
   society.bus.on('say', msg => { for (const a of agents) a.hearBot(msg) })
   society.display.setupTeam(agents.map(a => a.name))
 
@@ -225,6 +231,9 @@ export async function main (argv = process.argv.slice(2)) {
   const meetingTimer = setInterval(() => {
     if (cfg.meeting?.enabled === false || agents.length < 1) return
     if (meeting.shouldStart(agents)) meeting.run(agents).catch(e => log.warn('meeting', e.message))
+    // だいきが初めて来たら、設定の本を渡す (1回だけ。なくしたらチャットで「設定」)
+    const pn = cfg.player?.name
+    if (pn && !store.getState('settings_book_given', false) && agents.some(a => a.ready() && a.bot?.players?.[pn])) settings.giveBook()
     // 夕方 (1日1回): ベッドが無くなっていたら置き直す
     const t = agents.find(a => a.ready())?.bot?.time
     const village = store.getState('village', null)

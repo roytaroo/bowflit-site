@@ -176,7 +176,7 @@ test('死亡: 記録・教訓・慎重さ上昇・仲間への通知・墓の提
   await popo._onDeath()
   await new Promise(resolve => setTimeout(resolve, 100))
   const d = soc.store.get('SELECT * FROM deaths')
-  assert.match(d.cause, /lava/)
+  assert.match(d.cause, /溶岩/)
   assert.equal(d.permanent, 1)
   assert.equal(soc.store.getAgent('Popo').alive, 0)
   assert.equal(soc.store.getAgent('Popo').caution, 1)

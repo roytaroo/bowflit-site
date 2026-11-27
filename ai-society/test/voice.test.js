@@ -173,12 +173,13 @@ test('呼び方から名前を引く (住人・プレイヤー)', () => {
   assert.equal(soc.resolveName('誰か'), null)
 })
 
-test('復活するモードでは、死んでも皆がLLMで悲しまない (記憶だけ)', async () => {
+test('復活するモードでは、倒れたのに気づいた人だけが一言反応し、お墓は作らない', async () => {
   let calls = 0
   const { soc, agents } = world({ provider: { chat: async () => { calls++; return { text: '{"say":"そんな…","propose_grave":true}' } } } })
   agents[2].bot.entity.position = new Vec3(100, 64, 0) // 遠くにいた人は気づかない
-  await soc.onAgentDeath('Metan', { cause: 'was shot by Skeleton', day: 1, permanent: false, pos: new Vec3(0, 64, 0) })
-  assert.equal(calls, 0)
+  await soc.onAgentDeath('Metan', { cause: 'スケルトンの矢', day: 1, permanent: false, pos: new Vec3(0, 64, 0) })
+  assert.ok(calls >= 1 && calls <= 2) // 気づいた人だけ (遠くの人は呼ばれない)
+  assert.equal(agents[0].experience.knownDeathsOf('Metan'), 1)
   assert.ok(agents[0].memory.recent(5).some(m => m.content.includes('倒れるのを見た')))
   assert.ok(!agents[2].memory.recent(5).some(m => m.content.includes('Metan') || m.content.includes('めたん')))
   assert.equal(soc.store.get("SELECT COUNT(*) n FROM projects WHERE kind = 'grave'").n, 0)

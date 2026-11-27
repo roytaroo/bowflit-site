@@ -6,6 +6,7 @@ import * as skills from '../body/skills.js'
 import * as world from '../body/world.js'
 import * as plan from '../body/plan.js'
 import { log } from '../util/log.js'
+import { relativePlace } from './perception.js'
 
 const BEDS = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'].map(c => c + '_bed')
 const nearestBed = (bot, d) => world.getNearestBlocks(bot, BEDS, d, 1)[0] || null
@@ -39,26 +40,42 @@ function normalizeBlock (b) {
 
 // 家まで歩く (1回あたり時間制限つき)。地下や遠くで道が見つからなければ地上に出てもう一度。
 // それでもだめなら (迷子)、サーバーに家まで送ってもらう。夜に1人帰れないと、みんな朝を迎えられないので
+// 時間制限つきで歩く (道が見つからず何分も迷い続けないように)
+async function limited (bot, promise, ms) {
+  let timer
+  await Promise.race([
+    promise.catch(() => false),
+    new Promise(resolve => { timer = setTimeout(() => { try { bot.pathfinder.stop(); bot.pathfinder.setGoal(null) } catch {} resolve() }, ms) })
+  ])
+  clearTimeout(timer)
+}
+function limitedGo (bot, p, range, ms) { return limited(bot, skills.goToPosition(bot, p.x, p.y, p.z, range), ms) }
+
+// 周りに見える鉱石を覚える (探検の途中で見つけた場所に、あとで掘りに来られるように)
+const ORES = ['iron_ore', 'deepslate_iron_ore', 'coal_ore', 'deepslate_coal_ore', 'diamond_ore', 'deepslate_diamond_ore', 'gold_ore', 'copper_ore']
+function noteOres (ctx) {
+  const { bot, agent } = ctx
+  if (!agent.experience || !bot.entity) return
+  for (const n of ORES) {
+    const b = world.getNearestBlock(bot, n, 16)
+    if (b) agent.experience.found(n.replace('deepslate_', ''), b.position)
+  }
+}
+
 async function walkHome (ctx, p, range) {
   const { bot, agent } = ctx
   const dist = () => bot.entity.position.distanceTo(new Vec3(p.x, p.y, p.z))
-  const limited = async (promise, ms) => {
-    let timer
-    await Promise.race([
-      promise.catch(() => false),
-      new Promise(resolve => { timer = setTimeout(() => { try { bot.pathfinder.stop(); bot.pathfinder.setGoal(null) } catch {} resolve() }, ms) })
-    ])
-    clearTimeout(timer)
-  }
-  const tryGo = ms => limited(skills.goToPosition(bot, p.x, p.y, p.z, range), ms)
+  const tryGo = ms => limitedGo(bot, p, range, ms)
   for (let k = 0; k < 3 && dist() > range + 2 && !bot.interrupt_code; k++) {
-    if (k > 0) await limited(skills.goToSurface(bot), 30000)
+    if (k > 0) await limited(bot, skills.goToSurface(bot), 30000)
     await tryGo(k === 0 ? 75000 : 45000)
   }
   if (bot.interrupt_code || dist() <= range + 2) return { ok: dist() <= range + 2, rescued: false }
   const send = agent.society?.sendCommand
   const c = agent.village?.center
-  if (!send || !c || agent.society?.config?.village?.rescue_tp === false) return { ok: false, rescued: false }
+  if (!send || !c || agent.society?.config?.village?.rescue_tp === false) { agent.experience?.add('lost', { pos: bot.entity.position }); return { ok: false, rescued: false } }
+  agent.experience?.add('rescued', { pos: bot.entity.position })
+  agent.memory?.add('event', `${relativePlace(bot.entity.position, c)}で道に迷って、家に帰れなくなった`, { importance: 5, day: agent.day?.() })
   log.info(agent.name, `迷子になったので家まで送ってもらう (${Math.round(dist())}ブロック離れていた)`)
   send(`tp ${agent.name} ${c.x} ${c.y} ${c.z}`)
   await new Promise(resolve => setTimeout(resolve, 2500))
@@ -106,13 +123,20 @@ export const BODY_ACTIONS = {
   explore: {
     async run (ctx, a) {
       const { bot } = ctx
-      const dirs = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0], 北: [0, -1], 南: [0, 1], 東: [1, 0], 西: [-1, 0] }
-      const d = dirs[a.direction] || Object.values(dirs)[Math.floor(Math.random() * 4)]
-      const dist = Math.min(96, Number(a.distance) || 48)
+      const dirs = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] }
+      const JA = { 北: 'north', 南: 'south', 東: 'east', 西: 'west' }
+      const exp = ctx.agent.experience
+      // 最近ひどい目にあった (死んだ・迷子) なら遠出を控え、危なかった場所の方向は避ける
+      const dist = Math.round(Math.min(96, Number(a.distance) || 48) * (exp ? exp.exploreFactor() : 1))
       const p = bot.entity.position
+      const wanted = JA[a.direction] || (dirs[a.direction] ? a.direction : null)
+      const pick = exp ? exp.safeDirection(p, wanted, dist) : { dir: wanted || Object.keys(dirs)[Math.floor(Math.random() * 4)], avoided: null }
+      const d = dirs[pick.dir]
+      if (pick.avoided) bot.output += `${pick.avoided}は前に危ない目にあったので避けた。`
       const ok = await skills.goToPosition(bot, Math.round(p.x + d[0] * dist), p.y, Math.round(p.z + d[1] * dist), 4)
+      noteOres(ctx)
       if (ok) ctx.agent.society.recordDiscovery?.(ctx.agent.name, bot.entity.position)
-      return ok ? `${a.direction || 'あちこち'}へ${dist}m探索した` : `探索を途中でやめた (${Math.round(bot.entity.position.distanceTo(p))}m進んだ)`
+      return ok ? `${bot.output}${pick.dir}へ${dist}m探索した` : `探索を途中でやめた (${Math.round(bot.entity.position.distanceTo(p))}m進んだ)`
     }
   },
   wander: {
@@ -142,9 +166,20 @@ export const BODY_ACTIONS = {
       if (/iron|copper|lapis/.test(block) && !bot.inventory.items().some(i => /(stone|iron|diamond|netherite)_pickaxe/.test(i.name))) await plan.obtain(bot, 'stone_pickaxe', 1)
       if (/coal|_ore|diamond|redstone|emerald|gold/.test(block) && !bot.inventory.items().some(i => i.name.endsWith('_pickaxe'))) await plan.obtain(bot, 'wooden_pickaxe', 1)
       const before = bot.inventory.items().reduce((n, i) => n + i.count, 0)
+      const exp = ctx.agent.experience
+      // 近くに無くて、前に見つけた場所を覚えていれば、そこへ行ってから掘る
+      let went = ''
+      let near = null
+      try { near = world.getNearestBlock(bot, block, 32) } catch {}
+      const spot = !near && exp ? exp.resourceSpot(block) : null
+      if (spot && bot.entity.position.distanceTo(new Vec3(spot.x, spot.y, spot.z)) > 12) {
+        await limitedGo(bot, spot, 3, 60000)
+        went = '前に見つけた場所へ行った。'
+      }
       const ok = await skills.collectBlock(bot, block, want)
       const got = bot.inventory.items().reduce((n, i) => n + i.count, 0) - before
-      return ok && got > 0 ? `${a.block}を集めた (持ち物+${got})` : `${a.block}を集められなかった (${why(bot)})`
+      if (ok && got > 0 && exp && /_ore$|^coal$/.test(block)) exp.found(block, bot.entity.position)
+      return ok && got > 0 ? `${went}${a.block}を集めた (持ち物+${got})` : `${went}${a.block}を集められなかった (${why(bot)})`
     }
   },
   craft: {

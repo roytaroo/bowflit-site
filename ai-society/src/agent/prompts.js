@@ -32,7 +32,7 @@ function memoryLines (mems) {
 }
 
 export function buildDecidePrompt (ctx) {
-  const { character, agentRow, stateText, memories, lessons, relations, shared, projects, recentChat, lastResult, rejected, names } = ctx
+  const { character, agentRow, stateText, memories, lessons, relations, shared, projects, recentChat, lastResult, rejected, names, experience = '' } = ctx
   const system = personaBlock(character, agentRow, { compact: true }) + `
 
 あなたは次に何をするか自分で決める。体力・時間・仲間の状況・自分の目標と性格を考えて選ぶこと。
@@ -59,7 +59,7 @@ ${memoryLines(memories)}
 
 【過去の教訓】
 ${memoryLines(lessons)}
-
+${experience ? `\n【自分の最近の経験】(これを踏まえて行動を変える。危なかった場所は避ける・見つけた場所にまた行く 等)\n${experience}\n` : ''}
 【仲間との関係】
 ${relations || '- (まだ誰とも親しくない)'}
 
@@ -85,7 +85,7 @@ export const DECIDE_ACTIONS = ['collect', 'craft', 'build_house', 'explore', 'go
 export const REQUEST_ACTIONS = ['go_to_player', 'follow', 'give', 'rest', 'collect', 'explore', 'go_home', 'fish', 'plant_and_harvest', 'build_house', 'store_items', 'wander', 'sleep', 'set_home', 'craft', 'eat']
 
 export function buildReplyPrompt (ctx) {
-  const { character, agentRow, speakerDisplay, text, relationText, aboutMemories, recentChat, stateText, isHuman, thread, stance, why, isGroup, others = [], sightings = '' } = ctx
+  const { character, agentRow, speakerDisplay, text, relationText, aboutMemories, recentChat, stateText, isHuman, thread, stance, why, isGroup, others = [], sightings = '', experience = '' } = ctx
   const types = Object.keys(EVENT_EFFECTS).filter(k => k !== 'died').join('|')
   const threadText = thread && thread.length > 1
     ? thread.slice(1).map(l => `- ${l.display}「${l.text}」`).join('\n')
@@ -112,7 +112,7 @@ ${stateText}
 
 【見かけた人】
 ${sightings || '- (最近だれも見かけていない)'}
-
+${experience ? `\n【自分の最近の経験】(聞かれたら話してよい。自分から持ち出してもよい)\n${experience}\n` : ''}
 【${speakerDisplay}${isHuman ? '(人間のプレイヤー)' : ''}との関係】
 ${relationText || '特になし'}
 
@@ -165,4 +165,47 @@ export function buildSummarizePrompt (name, texts) {
     { role: 'system', content: `あなたは${name}の記憶を整理する係。重要な人・場所・出来事・感情を残し、古い記憶を150字以内に要約する。JSONで {"summary":"..."} だけを返す。` },
     { role: 'user', content: texts.join('\n') }
   ]
+}
+
+// 最期のひとこと: 倒れる瞬間に口にする言葉 (短く・すぐ返せるように)
+export function buildLastWordsPrompt ({ character, agentRow, situation, nearby }) {
+  const system = personaBlock(character, agentRow, { compact: true }) + `
+
+今まさに力尽きて倒れようとしている (この世界では、あとで家のベッドで目を覚ます)。
+倒れる瞬間に思わず口にする最期のひとことを、自分の口調で言う。20字以内。
+近くに仲間がいれば、その人への言葉でもよい。状況に合わせて、いつも同じにならないように。
+必ず次のJSONだけで答える: {"say":"最期のひとこと"}`
+  const user = `状況: ${situation}\n近くにいる人: ${nearby || 'だれもいない'}\nJSONで答えて。`
+  return [{ role: 'system', content: system }, { role: 'user', content: user }]
+}
+
+// 仲間が倒れたのを見た / 悲鳴を聞いた (復活する世界)
+export function buildWitnessPrompt ({ character, agentRow, deadDisplay, how, cause, lastWords, count, relationText, experience }) {
+  const scene = how === 'saw'
+    ? `今、目の前で${deadDisplay}が${cause ? cause + 'で' : ''}倒れた (この世界では、倒れても家のベッドで目を覚ます)。${lastWords ? `倒れる前に「${lastWords}」と言っていた。` : ''}`
+    : `少し遠くから${deadDisplay}の悲鳴が聞こえた。何が起きたかは見ていないので分からない。`
+  const system = personaBlock(character, agentRow, { compact: true }) + `
+
+${scene}
+自分の性格と${deadDisplay}との関係どおりに、思わず口にする一言を言う (30字以内)。
+${count >= 2 ? `${deadDisplay}が倒れたのは、自分が知っているだけで最近${count}回目。${count >= 3 ? '「死にすぎ」「またか」のように、そのことに触れるのが自然。' : '多いと感じたら触れてよい。'}` : ''}
+心配・ツッコミ・からかい・驚きなど、関係に合った反応にする。何も言わない方が自然なら say を空にする。
+必ず次のJSONだけで答える: {"say":"口にする一言","feeling":"心の中(30字以内)","go_help":true/false}`
+  const user = `【${deadDisplay}との関係】${relationText || '特になし'}
+【自分の最近の経験】
+${experience || '- 特になし'}
+JSONで答えて。`
+  return [{ role: 'system', content: system }, { role: 'user', content: user }]
+}
+
+// 倒れて、家のベッドで目を覚ました
+export function buildRespawnPrompt ({ character, agentRow, cause, count, nearby, experience }) {
+  const system = personaBlock(character, agentRow, { compact: true }) + `
+
+さっき${cause ? cause + 'で' : ''}倒れて、今、家のベッドで目を覚ました。${count >= 2 ? `最近${count}回目。` : ''}
+目を覚ましての一言を、自分の口調で言う (30字以内)。悔しい・恥ずかしい・反省・強がりなど、性格どおりに。
+${nearby ? `近くに${nearby}がいる。話しかけてもよい。` : '近くに誰もいないなら、ひとりごと。'}
+必ず次のJSONだけで答える: {"say":"一言","lesson":"次から気をつけること(20字以内)"}`
+  const user = `【自分の最近の経験】\n${experience || '- 特になし'}\nJSONで答えて。`
+  return [{ role: 'system', content: system }, { role: 'user', content: user }]
 }

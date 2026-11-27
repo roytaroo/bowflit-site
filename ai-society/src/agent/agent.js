@@ -9,12 +9,13 @@ import { requestFromText } from './requests.js'
 import { Body } from '../body/body.js'
 import { DAY_TASKS } from '../society/meeting.js'
 import { Safety } from './safety.js'
+import { Experience, causeJa } from './experience.js'
 import { ACTIONS } from './actions.js'
 import { AgentMemory } from '../memory/memory.js'
 import { Relationships } from '../society/relationships.js'
 import { findAddressed, splitChat, normName } from '../society/conversation.js'
 import { PRIORITY } from '../llm/client.js'
-import { REQUEST_ACTIONS, buildDecidePrompt, buildReplyPrompt, buildDiaryPrompt, buildDeathReactionPrompt, buildSummarizePrompt } from './prompts.js'
+import { REQUEST_ACTIONS, buildDecidePrompt, buildReplyPrompt, buildDiaryPrompt, buildDeathReactionPrompt, buildSummarizePrompt, buildLastWordsPrompt, buildWitnessPrompt, buildRespawnPrompt } from './prompts.js'
 import { log, sleep, withTimeout } from '../util/log.js'
 
 const require = createRequire(import.meta.url)
@@ -40,6 +41,7 @@ export class Agent {
     this.dayPlan = this.store.getState(`day_plan:${this.name}`, null)
     this.memory = new AgentMemory(this.store, this.name, this.cfg.memory || {})
     this.safety = new Safety(this.cfg.safety || {}, this.row)
+    this.experience = new Experience(this) // 死んだ・やられた・迷子・見つけた などの経験 (次の行動に反映)
     this.heard = []          // この人が実際に聞いた会話だけ (他人の記憶とは混ざらない)
     this.inbox = []
     this.pendingAction = null
@@ -120,11 +122,15 @@ export class Agent {
     // スポーンのたび (リスポーン含む) に頭上の名前・吹き出しを付け直す
     bot.on('spawn', () => setTimeout(() => this.society.display?.attach(this.character), 1500))
     bot.on('chat', (username, message) => this._onGameChat(username, message))
+    // 設定の本のボタン (だいきからのささやき「#set ...」)
+    bot.on('whisper', (username, message) => { try { this.society.settings?.handle(username, message) } catch (e) { log.warn('settings', e.message) } })
     bot.on('messagestr', (msg, position) => {
       if (position === 'chat') return
       if (msg.startsWith(this.name + ' ') && DEATH_WORDS.test(msg)) this.lastDeathMsg = { msg, t: Date.now() }
     })
     bot.on('death', () => this._onDeath().catch(e => log.error(this.name, 'death処理失敗: ' + e.message)))
+    bot.on('health', () => this._onHealth())
+    bot.on('spawn', () => { if (this._justDied) { const d = this._justDied; this._justDied = null; setTimeout(() => this._onRespawn(d).catch(e => log.warn(this.name, e.message)), 3000) } })
     bot.on('playerJoined', p => this._onPlayerJoined(p))
     bot.on('time', () => this._onTime())
     bot.on('kicked', r => log.warn(this.name, 'キックされた: ' + JSON.stringify(r).slice(0, 200)))
@@ -178,6 +184,7 @@ export class Agent {
 
   // 夜になったら、ベッドを持っている(置いてある)住人は寝る。夜の外は危ないので LLM の判断を待たない
   _bedtime (s) {
+    if (this.cfg.world?.auto_sleep === false) return null // 設定で「夜は寝る」を切っている
     // 遠く・地下にいるときは、夕方より早めに (夜まであと約1分半) 家へ向かい始める
     if (this.village && s.timeOfDay != null && s.timeOfDay >= 10000 && s.timeOfDay < 11800 && s.pos && !this._headingHome) {
       const h = this.village.center
@@ -321,8 +328,8 @@ export class Agent {
 
   // ------------------------------------------------------------------ 意思決定ループ
   async _decideLoop () {
-    const minGap = this.cfg.agent?.decide_interval_ms ?? 5000
     while (this.running) {
+      const minGap = this.cfg.agent?.decide_interval_ms ?? 5000 // 設定の本で変えられるので毎回読む
       try {
         if (!this.ready() || !this.alive) { await sleep(1000); continue }
         if (this.pendingAction) {
@@ -467,6 +474,7 @@ export class Agent {
 
   // 仲間へのおすそ分け: 近くの仲間が食べ物を持っていない、素材が全然ない、なら自分の余りを渡す
   _giftChore (s) {
+    if (this.cfg.agent?.gifts === false) return null
     const now = Date.now()
     if (now - (this._lastGift || 0) < 90000) return null
     const mine = name => s.inventory.filter(i => i.name === name).reduce((n, i) => n + i.count, 0)
@@ -516,6 +524,7 @@ export class Agent {
       recentChat: this._recentChatText(),
       lastResult: this.lastResult,
       rejected: this.rejected,
+      experience: this.experience.text(5),
       // 今ワールドにいる人だけ (いない仲間の名前を出すと、探しに行って迷う)
       names: Object.keys(this.bot.players || {}).filter(n => n !== this.name).map(n => `${n}(${this.society.displayName(n)})`)
     })
@@ -656,7 +665,7 @@ export class Agent {
   }
 
   // ------------------------------------------------------------------ 会話
-  async say (text, to = null, { voicePriority = 1, shout = null } = {}) {
+  async say (text, to = null, { voicePriority = 1, shout = null, noReply = false } = {}) {
     text = String(text || '').trim()
     // 小さいモデルが指示文をそのまま書き写したものは話さない
     if (/字以内|JSON|その場で口にする|返事をJSON|^\(.*\)$|null$/.test(text)) { log.debug(this.name, '指示文の書き写しを除外: ' + text); return }
@@ -698,7 +707,7 @@ export class Agent {
     // 声は、プレイヤーの近くにいる住人のものだけ聞こえる (遠いほど小さく)
     const { volume: vol, pan } = this._voiceForPlayer(shout)
     if (vol > 0) this.society.voice?.speak(this.character, text, { priority: voicePriority, volume: vol, pan })
-    this.society.bus.emit('say', { id, from: this.name, to, text, pos, shout })
+    this.society.bus.emit('say', { id, from: this.name, to, text, pos, shout, noReply })
   }
 
   // プレイヤーに聞こえる声の大きさと左右 (ふつう16ブロック・叫ぶと36ブロックまで届く)
@@ -723,11 +732,22 @@ export class Agent {
     const addressedNames = msg.to ? [msg.to] : findAddressed(msg.text, this._allAliases())
     const addressed = this._resolveAliases(addressedNames)
     if (distance != null && distance > range) return // 聞こえない (名前を呼ばれても、届かなければ聞こえない)
+    // 最期のひとことなど、返事をする場面ではない言葉は聞いて覚えるだけ (反応は「倒れたのを見た」側で)
+    if (msg.noReply) {
+      this.heard.push({ from: msg.from, fromDisplay: this.society.displayName(msg.from), text: msg.text, t: Date.now() })
+      this.heard = this.heard.slice(-20)
+      return
+    }
     this._hear({ id: msg.id, from: msg.from, fromIsBot: true, text: msg.text, addressed, distance })
   }
 
   _onGameChat (username, message) {
     if (username === this.name || this.society.isAgent(username)) return // AIの発言はバスで受け取る
+    // 「設定」と言ったら設定の本をもう一度渡す (住人は返事しない)。同じ発言が全員に届くので1回だけ
+    if (username === this.cfg.player?.name && /^(設定|せってい|設定の本)$/.test(String(message).trim())) {
+      if (Date.now() - (this.society._bookAt || 0) > 3000) { this.society._bookAt = Date.now(); this.society.settings?.giveBook() }
+      return
+    }
     // 人間の発言は「進行役」が一度だけ処理する (同じ発言が全ボットから届くので重複は進行役が除く)
     this.society.floor.handleHuman(username, message, { source: 'chat' }).catch(e => log.warn('floor', e.message))
   }
@@ -806,6 +826,7 @@ export class Agent {
       recentChat: this._recentChatText(6),
       stateText: describeState(s).split('\n').slice(0, 5).join('\n'), // 時間・体力・位置・持ち物・近くの人 (「鉄ある？」に正直に答えられるように)
       sightings: this.sightingsText(),
+      experience: this.experience.text(4),
       thread,
       stance,
       why,
@@ -968,9 +989,12 @@ export class Agent {
   async _onDeath () {
     const pos = this.bot.entity?.position
     const p = pos ? { x: Math.round(pos.x), y: Math.round(pos.y), z: Math.round(pos.z) } : null
+    // 最期のひとこと: 倒れる瞬間に (近くの人には聞こえる。叫びなので遠くまで届く)
+    const lastWords = this.cfg.death?.last_words === false ? null : await this._lastWords().catch(() => null)
     await sleep(600)
-    const m = this.lastDeathMsg && Date.now() - this.lastDeathMsg.t < 5000 ? this.lastDeathMsg.msg : null
-    const cause = m ? m.replace(this.name, '').trim() : '不明な原因'
+    const m = this.lastDeathMsg && Date.now() - this.lastDeathMsg.t < 8000 ? this.lastDeathMsg.msg : null
+    const rawCause = m ? m.replace(this.name, '').trim() : ''
+    const cause = causeJa(rawCause)
     const day = this.day()
     const permanent = !!this.cfg.death?.permanent
     this.store.run('INSERT INTO deaths (agent, cause, x, y, z, dimension, day, permanent, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -979,10 +1003,13 @@ export class Agent {
     const caution = Math.min(6, (row.caution || 0) + 1)
     this.store.updateAgent(this.name, { deaths: (row.deaths || 0) + 1, caution })
     this.safety.setCaution(caution)
-    const lesson = Safety.lessonFromDeath(cause)
-    this.memory.add('death', `${day}日目に${cause}で死んでしまった${p ? ` (場所 ${p.x},${p.y},${p.z})` : ''}`, { importance: 9, day })
+    const lesson = Safety.lessonFromDeath(rawCause)
+    this.experience.add('died', { cause, pos: p, lastWords })
+    const n = this.experience.myDeaths().length
+    this.memory.add('death', `${day}日目に${relativePlace(p, this.village?.center || this.home)}で${cause}のせいで倒れた${lastWords ? ` (最期に「${lastWords}」と言った)` : ''}${n >= 2 ? ` 最近${n}回目` : ''}`, { importance: 9, day })
     this.memory.add('lesson', lesson, { importance: 8, day })
-    log.warn(this.name, `☠ 死亡: ${cause} → 教訓「${lesson}」 慎重さ${caution}`)
+    log.warn(this.name, `☠ 死亡: ${cause} → 教訓「${lesson}」 慎重さ${caution}${n >= 2 ? ` (最近${n}回目)` : ''}`)
+    this._justDied = { cause, pos: p, day }
     this.interruptFlag = true
     if (permanent) {
       this.alive = false
@@ -990,17 +1017,98 @@ export class Agent {
       this.society.shared.add('memorial', `${this.display}の家と持ち物はそのまま残されている`, { importance: 6, participants: [this.name], day })
       setTimeout(() => this.stop(), 3000)
     }
-    this.society.onAgentDeath(this.name, { cause, pos: p, day, permanent }).catch(e => log.warn('society', e.message))
+    this.society.onAgentDeath(this.name, { cause, pos: p, day, permanent, lastWords }).catch(e => log.warn('society', e.message))
   }
 
-  async reactToDeath (dead, { cause, permanent, day, how = 'saw' }) {
+  // 倒れる瞬間のひとこと。AIが遅いときは用意したセリフで (倒れてから何秒も後に言うと不自然)
+  async _lastWords () {
+    const bot = this.bot
+    const hostiles = Object.values(bot.entities || {}).filter(e => e.type === 'hostile' && e.position && bot.entity && e.position.distanceTo(bot.entity.position) < 12).map(e => causeJa('by ' + e.name).replace(/の攻撃$/, ''))
+    const hurt = this.experience.recent('hurt', 15000).pop()
+    const situation = [
+      hostiles.length ? `${[...new Set(hostiles)].join('・')}に囲まれている` : '',
+      bot.entity?.isInWater ? '水の中で息が続かない' : '',
+      bot.entity?.isInLava ? '溶岩の中' : '',
+      hurt ? `${hurt.by}にやられた` : '',
+      bot.food === 0 ? 'お腹がすきすぎた' : ''
+    ].filter(Boolean).join('、') || '体力が尽きた'
+    const nearby = this.state().players.filter(p => p.dist <= 16).map(p => this.society.displayName(p.name)).join('、')
+    const fallback = (this.character.lines?.last_words || ['うっ…ここまで、か…', 'まだ…やれたのに…', 'あとは…たのんだ…'])
+    const fresh = fallback.filter(t => t !== this._lastLastWords)
+    let text = fresh[Math.floor(Math.random() * fresh.length)] || fallback[0]
+    try {
+      const messages = buildLastWordsPrompt({ character: this.character, agentRow: this.store.getAgent(this.name), situation, nearby })
+      const r = await withTimeout(this.society.llm.requestJson(messages, { priority: PRIORITY.URGENT, tag: `${this.name}:last_words` }), 3500)
+      if (r?.say) text = fixVoice(this.character, String(r.say).slice(0, 30))
+    } catch {}
+    text = text.replace(/[。.]$/, '')
+    if (text === this._lastLastWords) text = fallback.find(t => t !== text) || text
+    this._lastLastWords = text
+    this._said = (this._said || []).filter(x => x.text !== text) // 最期の言葉は「繰り返し」扱いで消さない
+    log.info(this.name, `🕯 最期のひとこと: ${text}`)
+    await this.say(text, null, { shout: true, voicePriority: 3, noReply: true })
+    return text
+  }
+
+  // 体力が減った: 近くの敵にやられたなら、どこで誰にやられたかを覚える
+  _onHealth () {
+    const bot = this.bot
+    const h = bot.health
+    const prev = this._prevHealth ?? h
+    this._prevHealth = h
+    if (!(h < prev) || !bot.entity) return
+    const foe = Object.values(bot.entities || {}).filter(e => e.type === 'hostile' && e.position && e.position.distanceTo(bot.entity.position) < 6)
+      .sort((a, b) => a.position.distanceTo(bot.entity.position) - b.position.distanceTo(bot.entity.position))[0]
+    if (foe) this.experience.hurt(causeJa('by ' + foe.name).replace(/の攻撃$/, ''), bot.entity.position)
+  }
+
+  // 家のベッドで目を覚ました (復活)
+  async _onRespawn ({ cause }) {
+    if (!this.bot?.entity) return
+    const n = this.experience.myDeaths().length
+    this.memory.add('event', `${cause}で倒れて、家で目を覚ました`, { importance: 4, day: this.day() })
+    if (this.cfg.death?.respawn_talk === false) return
+    const near = this.state().players.filter(p => p.dist <= 16).map(p => this.society.displayName(p.name))
+    // 誰もいないときは、ひとりごとを言う気分のときだけ
+    if (!near.length && Math.random() < 0.5) return
+    try {
+      const messages = buildRespawnPrompt({ character: this.character, agentRow: this.store.getAgent(this.name), cause, count: n, nearby: near.join('、'), experience: this.experience.text(4) })
+      const r = await this.society.llm.requestJson(messages, { priority: PRIORITY.CHAT, tag: `${this.name}:respawn` })
+      if (r.lesson) this.memory.add('lesson', String(r.lesson).slice(0, 40), { importance: 7, day: this.day() })
+      if (r.say) await this.say(await this._inVoice(String(r.say), messages, PRIORITY.CHAT))
+    } catch (e) { log.debug(this.name, '目覚めの一言を作れなかった: ' + e.message) }
+  }
+
+  // 仲間が倒れたのを見た / 悲鳴を聞いた (復活する世界)。覚えて、性格どおりに反応する
+  async _witnessDeath (dead, { cause, how, day, lastWords, pos: deadPos }) {
+    const d = this.society.displayName(dead)
+    this.experience.add(how === 'saw' ? 'saw_death' : 'heard_scream', { who: dead, cause: how === 'saw' ? cause : null, lastWords: how === 'saw' ? lastWords : null, pos: how === 'saw' ? deadPos : null })
+    const count = this.experience.knownDeathsOf(dead)
+    this.memory.add('event', how === 'saw'
+      ? `${d}が${cause}で倒れるのを見た${lastWords ? ` (最期に「${lastWords}」と言っていた)` : ''}${count >= 2 ? ` 最近${count}回目` : ''}`
+      : `どこかで${d}の悲鳴が聞こえた`, { importance: count >= 3 ? 6 : 4, about: dead, day })
+    if (this.cfg.death?.witness_react === false) return null
+    // 悲鳴は、親しい相手か、何度も続いているときだけ口に出す
+    const rel = this.society.relations.get(this.name, dead)
+    const closeness = rel ? (rel.affinity + rel.trust) / 2 : 0
+    if (how !== 'saw' && closeness < 45 && count < 2) return null
+    if (Date.now() - (this._lastWitnessTalk || 0) < 30000) return null
+    this._lastWitnessTalk = Date.now()
+    await sleep(1200 + Math.random() * 2500) // 最期の言葉の後に、少し間を置いて
+    try {
+      const messages = buildWitnessPrompt({ character: this.character, agentRow: this.store.getAgent(this.name), deadDisplay: d, how, cause, lastWords, count, relationText: this.society.relations.describe(this.name, [dead]), experience: this.experience.text(4) })
+      const r = await this.society.llm.requestJson(messages, { priority: PRIORITY.URGENT, tag: `${this.name}:witness` })
+      if (r.feeling) this.memory.add('reflection', `${d}が倒れたことについて: ${r.feeling}`, { importance: 5, about: dead, day })
+      if (r.say) await this.say(await this._inVoice(String(r.say), messages, PRIORITY.URGENT), dead)
+      // 悲鳴を聞いて、親しい相手なら様子を見に行く
+      if (how !== 'saw' && r.go_help && closeness >= 45 && !this.pendingAction) this.pendingAction = { name: 'go_to_player', args: { name: dead }, reflex: true }
+      return r
+    } catch { return null }
+  }
+
+  async reactToDeath (dead, { cause, permanent, day, how = 'saw', lastWords = null, pos = null }) {
     if (!this.alive) return null
-    if (!permanent && !this.cfg.death?.react_on_respawn) {
-      // 復活するモードでは、いちいち悲しまない。見た/聞いた出来事として覚えるだけ
-      const d = this.society.displayName(dead)
-      this.memory.add('event', how === 'saw' ? `${d}が${cause}で倒れるのを見た (復活した)` : `どこかで${d}の悲鳴が聞こえた`, { importance: 3, about: dead, day })
-      return null
-    }
+    if (!permanent && !this.cfg.death?.react_on_respawn) return this._witnessDeath(dead, { cause, how, day, lastWords, pos })
     const deadDisplay = this.society.displayName(dead)
     const messages = buildDeathReactionPrompt({
       character: this.character,
