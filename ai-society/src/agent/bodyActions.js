@@ -5,6 +5,7 @@ import { Vec3 } from 'vec3'
 import * as skills from '../body/skills.js'
 import * as world from '../body/world.js'
 import * as plan from '../body/plan.js'
+import { log } from '../util/log.js'
 
 const BEDS = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'].map(c => c + '_bed')
 const nearestBed = (bot, d) => world.getNearestBlocks(bot, BEDS, d, 1)[0] || null
@@ -35,6 +36,36 @@ function normalizeBlock (b) {
   return s
 }
 
+
+// 家まで歩く (1回あたり時間制限つき)。地下や遠くで道が見つからなければ地上に出てもう一度。
+// それでもだめなら (迷子)、サーバーに家まで送ってもらう。夜に1人帰れないと、みんな朝を迎えられないので
+async function walkHome (ctx, p, range) {
+  const { bot, agent } = ctx
+  const dist = () => bot.entity.position.distanceTo(new Vec3(p.x, p.y, p.z))
+  const limited = async (promise, ms) => {
+    let timer
+    await Promise.race([
+      promise.catch(() => false),
+      new Promise(resolve => { timer = setTimeout(() => { try { bot.pathfinder.stop(); bot.pathfinder.setGoal(null) } catch {} resolve() }, ms) })
+    ])
+    clearTimeout(timer)
+  }
+  const tryGo = ms => limited(skills.goToPosition(bot, p.x, p.y, p.z, range), ms)
+  for (let k = 0; k < 3 && dist() > range + 2 && !bot.interrupt_code; k++) {
+    if (k > 0) await limited(skills.goToSurface(bot), 30000)
+    await tryGo(k === 0 ? 75000 : 45000)
+  }
+  if (bot.interrupt_code || dist() <= range + 2) return { ok: dist() <= range + 2, rescued: false }
+  const send = agent.society?.sendCommand
+  const c = agent.village?.center
+  if (!send || !c || agent.society?.config?.village?.rescue_tp === false) return { ok: false, rescued: false }
+  log.info(agent.name, `迷子になったので家まで送ってもらう (${Math.round(dist())}ブロック離れていた)`)
+  send(`tp ${agent.name} ${c.x} ${c.y} ${c.z}`)
+  await new Promise(resolve => setTimeout(resolve, 2500))
+  await tryGo(20000)
+  return { ok: dist() <= range + 2, rescued: true }
+}
+
 export const BODY_ACTIONS = {
   go_to: {
     async run (ctx, a) {
@@ -49,12 +80,9 @@ export const BODY_ACTIONS = {
       const h = ctx.agent.village?.center || ctx.agent.home
       if (!h) return 'まだ家がない'
       const { bot } = ctx
-      const near = () => bot.entity.position.distanceTo(new Vec3(h.x, h.y, h.z)) <= 4
-      for (let k = 0; k < 3 && !near() && !bot.interrupt_code; k++) {
-        if (k > 0) await skills.goToSurface(bot) // 地下から帰れないときは、まず地上へ
-        await skills.goToPosition(bot, h.x, h.y, h.z, 2)
-      }
-      return near() ? '家に帰ってきた' : '家にたどり着けなかった'
+      const r = await walkHome(ctx, h, 2)
+      if (bot.interrupt_code && !r.ok) return '家に帰る途中で中断した'
+      return r.ok ? (r.rescued ? '迷子になって、家まで送ってもらった' : '家に帰ってきた') : '家にたどり着けなかった'
     }
   },
   go_to_player: {
@@ -152,10 +180,7 @@ export const BODY_ACTIONS = {
       if (agent.bedPos) {
         const bp = new Vec3(agent.bedPos.x, agent.bedPos.y, agent.bedPos.z)
         // 家まで帰る。地下や遠くで道が見つからなければ、地上に出てからもう一度
-        for (let k = 0; k < 3 && bot.entity.position.distanceTo(bp) > 3 && !bot.interrupt_code; k++) {
-          if (k > 0) await skills.goToSurface(bot)
-          await skills.goToPosition(bot, bp.x, bp.y, bp.z, 2)
-        }
+        await walkHome(ctx, bp, 1)
         if (bot.interrupt_code) return '家に帰る途中で中断した'
         if (bot.entity.position.distanceTo(bp) > 4) return `家に帰れなかった (${Math.round(bot.entity.position.distanceTo(bp))}ブロック離れている)`
         const bed = bot.blockAt(bp)

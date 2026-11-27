@@ -139,7 +139,7 @@ function startAgents (pass) {
         // 住人側からのサーバーコマンド (表示用: tellraw / text_display / team のみ許可)
         const cmd = line.slice(6).replace(/[\r\n]/g, '')
         // 村の家を建てる fill / setblock も通す (住人のセリフからは @@CMD 行は作られない)
-        if (/^(tellraw|execute at \w+ run summon text_display|data merge entity @e\[type=text_display|kill @e\[type=text_display|team (add|modify|join) ais|fill -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ [a-z_]+(\[[a-z_=,]+\])?( (hollow|replace [a-z_]+))?$|setblock -?\d+ -?\d+ -?\d+ [a-z_]+(\[[a-z_=,]+\])?$)/.test(cmd) && children.server && children.server.exitCode == null) {
+        if (/^(tellraw|execute at \w+ run summon text_display|data merge entity @e\[type=text_display|kill @e\[type=text_display|team (add|modify|join) ais|fill -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ [a-z_]+(\[[a-z_=,]+\])?( (hollow|replace [a-z_]+))?$|tp [A-Za-z0-9_]{1,16} -?\d+ -?\d+ -?\d+|setblock -?\d+ -?\d+ -?\d+ [a-z_]+(\[[a-z_=,]+\])?( keep)?$)/.test(cmd) && children.server && children.server.exitCode == null) {
           try { children.server.stdin.write(cmd + '\n') } catch {}
         }
       } else process.stdout.write(line + '\n')

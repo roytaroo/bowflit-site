@@ -14,7 +14,7 @@ import { startInputServer } from './voice/inputServer.js'
 import { Society } from './society/society.js'
 import { Agent } from './agent/agent.js'
 import { makeDisplay } from './society/display.js'
-import { ensureVillage } from './society/village.js'
+import { ensureVillage, repairBeds } from './society/village.js'
 import { MorningMeeting } from './society/meeting.js'
 import fs from 'node:fs'
 
@@ -193,6 +193,7 @@ export async function main (argv = process.argv.slice(2)) {
   }
 
   const society = new Society({ store, llm, config: cfg, voice })
+  society.sendCommand = sendServerCommand
   society.display = makeDisplay(cfg)
   society.seedRelationships(selected)
   society.applyProfileUpgrades(selected)
@@ -213,6 +214,7 @@ export async function main (argv = process.argv.slice(2)) {
       try {
         const village = await ensureVillage({ society, bot: builder.bot, all: allCharacters, send: sendServerCommand })
         for (const a of agents) a.moveIntoVillage(village)
+        repairBeds(village, sendServerCommand, allCharacters)
       } catch (e) { log.warn('village', '家を用意できなかった: ' + e.message) }
     }
   }
@@ -223,6 +225,13 @@ export async function main (argv = process.argv.slice(2)) {
   const meetingTimer = setInterval(() => {
     if (cfg.meeting?.enabled === false || agents.length < 1) return
     if (meeting.shouldStart(agents)) meeting.run(agents).catch(e => log.warn('meeting', e.message))
+    // 夕方 (1日1回): ベッドが無くなっていたら置き直す
+    const t = agents.find(a => a.ready())?.bot?.time
+    const village = store.getState('village', null)
+    if (village && t?.timeOfDay > 9000 && t.timeOfDay < 12000 && store.getState('bed_check_day', -1) !== t.day) {
+      store.setState('bed_check_day', t.day)
+      repairBeds(village, sendServerCommand, allCharacters)
+    }
   }, 5000)
 
   // ゲーム内時間が取れないサーバー向けの日記タイマー (保険)

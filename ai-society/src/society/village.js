@@ -60,7 +60,7 @@ export function houseBlueprint (x0, y, z0, residents) {
     const color = bedColor(c.color)
     cmds.push(`setblock ${x} ${y} ${z1 - 1} ${color}_bed[facing=south,part=head]`)
     cmds.push(`setblock ${x} ${y} ${z1 - 2} ${color}_bed[facing=south,part=foot]`)
-    beds[c.username] = { x, y, z: z1 - 1 }
+    beds[c.username] = { x, y, z: z1 - 1, color }
   })
   // ラージチェスト (入口の左に2つ並べる)、作業台、かまど (入口の右)
   const chest = { x: x0 + 1, y, z: z0 + 1 }
@@ -126,4 +126,14 @@ export async function ensureVillage ({ society, bot, all, send = c => console.lo
   society.shared.add('village', `みんなの家が(${plan.center.x},${plan.center.z})にできた`, { importance: 6, participants: all.map(c => c.username) })
   log.info('village', `みんなの家を建てた (${plan.center.x},${plan.center.y},${plan.center.z})。ベッド${Object.keys(plan.beds).length}個・ラージチェスト・作業台・かまど`)
   return village
+}
+
+// 夕方の点検: 壊れたり無くなったりしたベッドを置き直す (keep なので、あるベッドはそのまま)
+export function repairBeds (village, send, all = []) {
+  for (const [name, b] of Object.entries(village?.beds || {})) {
+    const c = all.find(x => x.username === name)
+    const color = b.color || (c ? bedColor(c.color) : 'white')
+    send(`setblock ${b.x} ${b.y} ${b.z} ${color}_bed[facing=south,part=head] keep`)
+    send(`setblock ${b.x} ${b.y} ${b.z - 1} ${color}_bed[facing=south,part=foot] keep`)
+  }
 }
